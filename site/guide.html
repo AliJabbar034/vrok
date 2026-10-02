@@ -8,7 +8,10 @@
       name="description"
       content="How to share a file, a folder or a localhost server with vrok: every command and flag, what visitors see, who can open the URL, privacy and security."
     />
-    <link rel="canonical" href="https://alijabbar034.github.io/vrok/guide.html" />
+    <link
+      rel="canonical"
+      href="https://alijabbar034.github.io/vrok/guide.html"
+    />
     <meta name="theme-color" content="#0c3a3f" />
     <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
     <link
@@ -22,9 +25,18 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="vrok" />
     <meta property="og:title" content="How to use vrok" />
-    <meta property="og:description" content="Commands, flags, what visitors see, reach, privacy and the security model." />
-    <meta property="og:url" content="https://alijabbar034.github.io/vrok/guide.html" />
-    <meta property="og:image" content="https://alijabbar034.github.io/vrok/assets/og-card.png" />
+    <meta
+      property="og:description"
+      content="Commands, flags, what visitors see, reach, privacy and the security model."
+    />
+    <meta
+      property="og:url"
+      content="https://alijabbar034.github.io/vrok/guide.html"
+    />
+    <meta
+      property="og:image"
+      content="https://alijabbar034.github.io/vrok/assets/og-card.png"
+    />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -33,44 +45,44 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">
-[
-  {
-    "@context": "https://schema.org",
-    "@type": "TechArticle",
-    "headline": "How to use vrok",
-    "description": "Commands, flags, what visitors see, who can open the URL, privacy and the security model.",
-    "url": "https://alijabbar034.github.io/vrok/guide.html",
-    "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
-    "author": {
-      "@type": "Person",
-      "name": "Ali Jabbar",
-      "url": "https://github.com/AliJabbar034"
-    },
-    "about": {
-      "@type": "SoftwareApplication",
-      "name": "vrok",
-      "url": "https://alijabbar034.github.io/vrok/"
-    }
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "vrok",
-        "item": "https://alijabbar034.github.io/vrok/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Guide",
-        "item": "https://alijabbar034.github.io/vrok/guide.html"
-      }
-    ]
-  }
-]
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          "headline": "How to use vrok",
+          "description": "Commands, flags, what visitors see, who can open the URL, privacy and the security model.",
+          "url": "https://alijabbar034.github.io/vrok/guide.html",
+          "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
+          "author": {
+            "@type": "Person",
+            "name": "Ali Jabbar",
+            "url": "https://github.com/AliJabbar034"
+          },
+          "about": {
+            "@type": "SoftwareApplication",
+            "name": "vrok",
+            "url": "https://alijabbar034.github.io/vrok/"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "vrok",
+              "item": "https://alijabbar034.github.io/vrok/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Guide",
+              "item": "https://alijabbar034.github.io/vrok/guide.html"
+            }
+          ]
+        }
+      ]
     </script>
   </head>
 
@@ -558,16 +570,16 @@ vrok config set ttl 30m # store a default</code></pre>
           <section id="teams">
             <h2>For teams evaluating vrok</h2>
             <p>
-              vrok is a program you run, not a service you sign up to. There
-              is no account, no vrok server and no stored copy of anything you
+              vrok is a program you run, not a service you sign up to. There is
+              no account, no vrok server and no stored copy of anything you
               share, so there is no vendor holding your data and nothing to
               certify. What matters is where the bytes travel:
             </p>
             <ul>
               <li>
                 <strong>Default route.</strong> Through a Cloudflare quick
-                tunnel. Cloudflare terminates TLS, so it can see the traffic
-                in transit, and its terms apply.
+                tunnel. Cloudflare terminates TLS, so it can see the traffic in
+                transit, and its terms apply.
               </li>
               <li>
                 <strong><code>--local</code></strong> keeps a share on your
@@ -580,11 +592,11 @@ vrok config set ttl 30m # store a default</code></pre>
               </li>
             </ul>
             <p>
-              Releases carry SHA-256 checksums, a software bill of materials
-              per archive, and signed build provenance you can check with
+              Releases carry SHA-256 checksums, a software bill of materials per
+              archive, and signed build provenance you can check with
               <code>gh attestation verify</code>. Dependencies are scanned for
-              known vulnerabilities on every change and weekly. The full
-              threat model is in
+              known vulnerabilities on every change and weekly. The full threat
+              model is in
               <a
                 href="https://github.com/AliJabbar034/vrok/blob/main/docs/security.md"
                 >docs/security.md</a
@@ -601,8 +613,8 @@ vrok config set ttl 30m # store a default</code></pre>
             </p>
             <ul>
               <li>
-                On the default route your share passes through Cloudflare's
-                free quick tunnels, which are meant for testing and come with
+                On the default route your share passes through Cloudflare's free
+                quick tunnels, which are meant for testing and come with
                 <a href="https://www.cloudflare.com/website-terms/"
                   >Cloudflare's terms</a
                 >. Do not use them to host phishing, malware or anything you
@@ -610,8 +622,8 @@ vrok config set ttl 30m # store a default</code></pre>
               </li>
               <li>
                 For confidential, personal or regulated data, use
-                <code>--local</code>, your own relay, or a password and a
-                short <code>--ttl</code>.
+                <code>--local</code>, your own relay, or a password and a short
+                <code>--ttl</code>.
               </li>
             </ul>
           </section>
@@ -622,15 +634,14 @@ vrok config set ttl 30m # store a default</code></pre>
               <strong>The CLI collects nothing.</strong> It sends no telemetry
               and reports no usage. Download counts are kept in the running
               process and printed in your terminal when the share ends. It
-              connects only to the tunnel or relay you use, and to GitHub
-              once, to fetch <code>cloudflared</code> if it is missing.
+              connects only to the tunnel or relay you use, and to GitHub once,
+              to fetch <code>cloudflared</code> if it is missing.
             </p>
             <p>
               <strong>This site sets no cookies and runs no analytics.</strong>
-              Fonts are served from the site itself. Your browser asks
-              GitHub's public API for the latest release, and remembers in
-              local storage that you dismissed the release banner. That is
-              all.
+              Fonts are served from the site itself. Your browser asks GitHub's
+              public API for the latest release, and remembers in local storage
+              that you dismissed the release banner. That is all.
             </p>
             <p>
               <strong>Share pages</strong> set only the cookies they need: one

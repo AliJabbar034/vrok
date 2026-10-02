@@ -22,10 +22,19 @@
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="vrok" />
-    <meta property="og:title" content="vrok — a URL for a file, a folder, or localhost" />
-    <meta property="og:description" content="Free and open source. One command turns a file, folder or localhost server into a public URL. Nothing is uploaded. The link expires." />
+    <meta
+      property="og:title"
+      content="vrok — a URL for a file, a folder, or localhost"
+    />
+    <meta
+      property="og:description"
+      content="Free and open source. One command turns a file, folder or localhost server into a public URL. Nothing is uploaded. The link expires."
+    />
     <meta property="og:url" content="https://alijabbar034.github.io/vrok/" />
-    <meta property="og:image" content="https://alijabbar034.github.io/vrok/assets/og-card.png" />
+    <meta
+      property="og:image"
+      content="https://alijabbar034.github.io/vrok/assets/og-card.png"
+    />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -34,112 +43,112 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">
-[
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "vrok",
-    "url": "https://alijabbar034.github.io/vrok/",
-    "description": "Free, open-source command-line tool that shares files, folders and localhost servers through a temporary public URL, straight from your machine. Nothing is uploaded and the link expires.",
-    "applicationCategory": "DeveloperApplication",
-    "applicationSubCategory": "File sharing and localhost tunnelling",
-    "operatingSystem": "macOS, Linux, Windows, FreeBSD",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "license": "https://opensource.org/licenses/MIT",
-    "isAccessibleForFree": true,
-    "downloadUrl": "https://alijabbar034.github.io/vrok/download.html",
-    "installUrl": "https://alijabbar034.github.io/vrok/download.html",
-    "softwareHelp": "https://alijabbar034.github.io/vrok/guide.html",
-    "codeRepository": "https://github.com/AliJabbar034/vrok",
-    "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
-    "author": {
-      "@type": "Person",
-      "name": "Ali Jabbar",
-      "url": "https://github.com/AliJabbar034"
-    },
-    "keywords": "share files, share folder, share localhost, expose localhost, ngrok alternative, send large files, temporary link, file sharing CLI, no upload"
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "vrok",
-    "url": "https://alijabbar034.github.io/vrok/"
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "How do I share a large file without uploading it?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Run vrok ./video.mp4. vrok serves the file from your own machine through a temporary public URL, so nothing is uploaded first and there is no size limit beyond your disk. The person you send the link to can watch it in the browser or download the original, and an interrupted download resumes."
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "vrok",
+          "url": "https://alijabbar034.github.io/vrok/",
+          "description": "Free, open-source command-line tool that shares files, folders and localhost servers through a temporary public URL, straight from your machine. Nothing is uploaded and the link expires.",
+          "applicationCategory": "DeveloperApplication",
+          "applicationSubCategory": "File sharing and localhost tunnelling",
+          "operatingSystem": "macOS, Linux, Windows, FreeBSD",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "license": "https://opensource.org/licenses/MIT",
+          "isAccessibleForFree": true,
+          "downloadUrl": "https://alijabbar034.github.io/vrok/download.html",
+          "installUrl": "https://alijabbar034.github.io/vrok/download.html",
+          "softwareHelp": "https://alijabbar034.github.io/vrok/guide.html",
+          "codeRepository": "https://github.com/AliJabbar034/vrok",
+          "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
+          "author": {
+            "@type": "Person",
+            "name": "Ali Jabbar",
+            "url": "https://github.com/AliJabbar034"
+          },
+          "keywords": "share files, share folder, share localhost, expose localhost, ngrok alternative, send large files, temporary link, file sharing CLI, no upload"
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "vrok",
+          "url": "https://alijabbar034.github.io/vrok/"
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How do I share a large file without uploading it?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Run vrok ./video.mp4. vrok serves the file from your own machine through a temporary public URL, so nothing is uploaded first and there is no size limit beyond your disk. The person you send the link to can watch it in the browser or download the original, and an interrupted download resumes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I share my localhost with someone?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Run vrok localhost:3000 while your dev server is running. You get a public HTTPS URL that reverse-proxies to it, with WebSockets intact, so hot reload keeps working for the person you send it to. No account, no configuration."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is vrok a free ngrok alternative?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "For sharing, yes. vrok is free, open source (MIT) and needs no account. It exposes a localhost port like a tunnel does, and it also serves files and folders directly, with previews, download limits, passwords and an expiry."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is vrok different from WeTransfer or Google Drive?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Those services upload a copy of your file to their servers and keep it there. vrok uploads nothing: visitors read the file from your machine while the command runs, and the link stops working when you stop it or it expires."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I make a link that expires or works only once?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. --ttl 2h closes the share after two hours, --downloads 1 makes it a one-time link, and --password asks visitors for a password. While a share runs, press 1, e or p to change these without changing the URL."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can people see other files on my computer?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. A visitor reaches only what you named: sharing one file exposes that file, not the folder around it. Paths like ../ and symlinks that point outside a shared folder answer 404, and every URL carries a 128-bit random token."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does the other person need to install anything?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. They open the link in any browser. Only the person sharing runs vrok."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it work on Windows, macOS and Linux?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. vrok is a single binary for macOS (Apple silicon and Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD, installable with one command, Homebrew, Scoop, winget or a Linux package."
+              }
+            }
+          ]
         }
-      },
-      {
-        "@type": "Question",
-        "name": "How do I share my localhost with someone?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Run vrok localhost:3000 while your dev server is running. You get a public HTTPS URL that reverse-proxies to it, with WebSockets intact, so hot reload keeps working for the person you send it to. No account, no configuration."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Is vrok a free ngrok alternative?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "For sharing, yes. vrok is free, open source (MIT) and needs no account. It exposes a localhost port like a tunnel does, and it also serves files and folders directly, with previews, download limits, passwords and an expiry."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How is vrok different from WeTransfer or Google Drive?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Those services upload a copy of your file to their servers and keep it there. vrok uploads nothing: visitors read the file from your machine while the command runs, and the link stops working when you stop it or it expires."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I make a link that expires or works only once?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. --ttl 2h closes the share after two hours, --downloads 1 makes it a one-time link, and --password asks visitors for a password. While a share runs, press 1, e or p to change these without changing the URL."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can people see other files on my computer?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. A visitor reaches only what you named: sharing one file exposes that file, not the folder around it. Paths like ../ and symlinks that point outside a shared folder answer 404, and every URL carries a 128-bit random token."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does the other person need to install anything?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. They open the link in any browser. Only the person sharing runs vrok."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does it work on Windows, macOS and Linux?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. vrok is a single binary for macOS (Apple silicon and Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD, installable with one command, Homebrew, Scoop, winget or a Linux package."
-        }
-      }
-    ]
-  }
-]
+      ]
     </script>
   </head>
 
@@ -617,8 +626,8 @@
               <span class="unit__key" aria-hidden="true"></span>
               <h3>Show a teammate your localhost</h3>
               <p>
-                Your dev server gets a public URL, with hot reload still
-                working for whoever opens it.
+                Your dev server gets a public URL, with hot reload still working
+                for whoever opens it.
                 <a href="share-localhost.html">Sharing localhost</a>
               </p>
               <code>vrok localhost:3000</code>
@@ -627,8 +636,8 @@
               <span class="unit__key" aria-hidden="true"></span>
               <h3>Hand QA the test report</h3>
               <p>
-                A Playwright report or a built site opens as the real thing,
-                not a pile of files.
+                A Playwright report or a built site opens as the real thing, not
+                a pile of files.
               </p>
               <code>vrok ./playwright-report</code>
             </li>
@@ -657,9 +666,18 @@
           </p>
 
           <ul class="stats" aria-label="vrok at a glance">
-            <li><strong>0 bytes</strong><span>uploaded before they can start</span></li>
-            <li><strong>Seconds</strong><span>from command to a working link</span></li>
-            <li><strong>No limit</strong><span>on file size, beyond your disk</span></li>
+            <li>
+              <strong>0 bytes</strong
+              ><span>uploaded before they can start</span>
+            </li>
+            <li>
+              <strong>Seconds</strong
+              ><span>from command to a working link</span>
+            </li>
+            <li>
+              <strong>No limit</strong
+              ><span>on file size, beyond your disk</span>
+            </li>
             <li><strong>0 accounts</strong><span>for you or for them</span></li>
           </ul>
 
@@ -667,24 +685,24 @@
             <article class="why">
               <h3>Share now, not after an upload</h3>
               <p>
-                The link works the moment vrok starts. They are already downloading
-                while an upload service would still be uploading.
+                The link works the moment vrok starts. They are already
+                downloading while an upload service would still be uploading.
               </p>
               <code class="why__proof">vrok ./launch-cut.mov</code>
             </article>
             <article class="why">
               <h3>Any size, and it resumes</h3>
               <p>
-                A 50 GB disk image works like a 5 MB PDF. A dropped connection picks
-                up where it stopped, and your terminal shows the progress.
+                A 50 GB disk image works like a 5 MB PDF. A dropped connection
+                picks up where it stopped, and your terminal shows the progress.
               </p>
               <code class="why__proof">↓ 2.7 GB / 4.0 GB · 67% · 38 MB/s</code>
             </article>
             <article class="why">
               <h3>One tool instead of three</h3>
               <p>
-                Files, whole folders and a running dev server, with one command. No
-                more ngrok for one job, a file host for another and
+                Files, whole folders and a running dev server, with one command.
+                No more ngrok for one job, a file host for another and
                 <code>python -m http.server</code> for the third.
               </p>
               <code class="why__proof">vrok localhost:3000</code>
@@ -692,8 +710,8 @@
             <article class="why">
               <h3>You decide when it dies</h3>
               <p>
-                It lasts until you stop it, or closes itself after a set time or a
-                number of downloads. No forgotten link left on someone else's
+                It lasts until you stop it, or closes itself after a set time or
+                a number of downloads. No forgotten link left on someone else's
                 server.
               </p>
               <code class="why__proof">--ttl 2h --downloads 1</code>
@@ -701,16 +719,19 @@
             <article class="why">
               <h3>Only what you named is reachable</h3>
               <p>
-                Share <code>demo.pdf</code> and that file is all there is: not the
-                folder, not <code>../</code>, not a symlink that walks out.
+                Share <code>demo.pdf</code> and that file is all there is: not
+                the folder, not <code>../</code>, not a symlink that walks out.
               </p>
               <code class="why__proof">vrok ./demo.pdf</code>
             </article>
             <article class="why">
               <h3>Free, open, no signup</h3>
               <p>
-                MIT licensed. No account, no paid tier, no telemetry. Read the code,
-                or <a href="https://github.com/AliJabbar034/vrok">run your own relay</a>.
+                MIT licensed. No account, no paid tier, no telemetry. Read the
+                code, or
+                <a href="https://github.com/AliJabbar034/vrok"
+                  >run your own relay</a
+                >.
               </p>
               <code class="why__proof">MIT · no account · no telemetry</code>
             </article>
@@ -766,51 +787,89 @@
                 <tr>
                   <th scope="row">Time until the link works</th>
                   <td data-label="vrok" class="yes"><span>Seconds</span></td>
-                  <td data-label="ngrok / tunnels" class="yes"><span>Seconds</span></td>
-                  <td data-label="WeTransfer / file hosts" class="no"><span>After the upload finishes</span></td>
+                  <td data-label="ngrok / tunnels" class="yes">
+                    <span>Seconds</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="no">
+                    <span>After the upload finishes</span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">Share a file or folder from disk</th>
-                  <td data-label="vrok" class="yes"><span>Yes — preview, seek, zip</span></td>
-                  <td data-label="ngrok / tunnels" class="no"><span>Only if you run a file server</span></td>
-                  <td data-label="WeTransfer / file hosts" class="mid"><span>Yes, by uploading a copy</span></td>
+                  <td data-label="vrok" class="yes">
+                    <span>Yes — preview, seek, zip</span>
+                  </td>
+                  <td data-label="ngrok / tunnels" class="no">
+                    <span>Only if you run a file server</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="mid">
+                    <span>Yes, by uploading a copy</span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">Share a localhost app, hot reload intact</th>
-                  <td data-label="vrok" class="yes"><span>Yes — <code>vrok localhost:3000</code></span></td>
-                  <td data-label="ngrok / tunnels" class="yes"><span>Yes — their main job</span></td>
-                  <td data-label="WeTransfer / file hosts" class="no"><span>No</span></td>
+                  <td data-label="vrok" class="yes">
+                    <span>Yes — <code>vrok localhost:3000</code></span>
+                  </td>
+                  <td data-label="ngrok / tunnels" class="yes">
+                    <span>Yes — their main job</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="no">
+                    <span>No</span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">File size limit</th>
-                  <td data-label="vrok" class="yes"><span>None — your disk</span></td>
-                  <td data-label="ngrok / tunnels" class="mid"><span>Not applicable</span></td>
-                  <td data-label="WeTransfer / file hosts" class="no"><span>Set by the plan</span></td>
+                  <td data-label="vrok" class="yes">
+                    <span>None — your disk</span>
+                  </td>
+                  <td data-label="ngrok / tunnels" class="mid">
+                    <span>Not applicable</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="no">
+                    <span>Set by the plan</span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">Link that expires or works once</th>
-                  <td data-label="vrok" class="yes"><span>Time, downloads, password, revoke</span></td>
-                  <td data-label="ngrok / tunnels" class="no"><span>Up until you stop it</span></td>
-                  <td data-label="WeTransfer / file hosts" class="mid"><span>After their retention period</span></td>
+                  <td data-label="vrok" class="yes">
+                    <span>Time, downloads, password, revoke</span>
+                  </td>
+                  <td data-label="ngrok / tunnels" class="no">
+                    <span>Up until you stop it</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="mid">
+                    <span>After their retention period</span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">Account needed</th>
                   <td data-label="vrok" class="yes"><span>No</span></td>
-                  <td data-label="ngrok / tunnels" class="no"><span>Yes</span></td>
-                  <td data-label="WeTransfer / file hosts" class="mid"><span>Depends on the service</span></td>
+                  <td data-label="ngrok / tunnels" class="no">
+                    <span>Yes</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="mid">
+                    <span>Depends on the service</span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">Still there after you switch off</th>
-                  <td data-label="vrok" class="no"><span>No — by design</span></td>
-                  <td data-label="ngrok / tunnels" class="no"><span>No</span></td>
-                  <td data-label="WeTransfer / file hosts" class="yes"><span>Yes — their main job</span></td>
+                  <td data-label="vrok" class="no">
+                    <span>No — by design</span>
+                  </td>
+                  <td data-label="ngrok / tunnels" class="no">
+                    <span>No</span>
+                  </td>
+                  <td data-label="WeTransfer / file hosts" class="yes">
+                    <span>Yes — their main job</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p class="compare__note">
-            Use ngrok for a long-lived tunnel to a port you already serve. Use
-            a file host when the recipient must still have the file after you
+            Use ngrok for a long-lived tunnel to a port you already serve. Use a
+            file host when the recipient must still have the file after you
             switch off. Use vrok when someone needs what is on your machine
             <em>now</em>, and should not have it tomorrow.
             <a href="ngrok-alternative.html">The full comparison</a>.
@@ -846,9 +905,8 @@
             <div class="tariff__row">
               <dt>Nothing uploaded</dt>
               <dd>
-                Bytes are read from your disk as the visitor downloads. There
-                is no server holding a copy, so there is nothing to delete
-                later.
+                Bytes are read from your disk as the visitor downloads. There is
+                no server holding a copy, so there is nothing to delete later.
               </dd>
             </div>
             <div class="tariff__row" id="scope">
@@ -875,36 +933,83 @@
           <h2 class="faq__h" id="faq-h">Questions people ask</h2>
           <div class="faq__list">
             <details class="faq__item">
-              <summary>How do I share a large file without uploading it?</summary>
-              <p>Run <code>vrok ./video.mp4</code>. vrok serves the file from your own machine through a temporary public URL, so nothing is uploaded first and there is no size limit beyond your disk. The person you send the link to can watch it in the browser or download the original, and an interrupted download resumes.</p>
+              <summary>
+                How do I share a large file without uploading it?
+              </summary>
+              <p>
+                Run <code>vrok ./video.mp4</code>. vrok serves the file from
+                your own machine through a temporary public URL, so nothing is
+                uploaded first and there is no size limit beyond your disk. The
+                person you send the link to can watch it in the browser or
+                download the original, and an interrupted download resumes.
+              </p>
             </details>
             <details class="faq__item">
               <summary>How do I share my localhost with someone?</summary>
-              <p>Run <code>vrok localhost:3000</code> while your dev server is running. You get a public HTTPS URL that reverse-proxies to it, with WebSockets intact, so hot reload keeps working for the person you send it to. No account, no configuration.</p>
+              <p>
+                Run <code>vrok localhost:3000</code> while your dev server is
+                running. You get a public HTTPS URL that reverse-proxies to it,
+                with WebSockets intact, so hot reload keeps working for the
+                person you send it to. No account, no configuration.
+              </p>
             </details>
             <details class="faq__item">
               <summary>Is vrok a free ngrok alternative?</summary>
-              <p>For sharing, yes. vrok is free, open source (MIT) and needs no account. It exposes a localhost port like a tunnel does, and it also serves files and folders directly, with previews, download limits, passwords and an expiry. <a href="ngrok-alternative.html">How it compares</a>.</p>
+              <p>
+                For sharing, yes. vrok is free, open source (MIT) and needs no
+                account. It exposes a localhost port like a tunnel does, and it
+                also serves files and folders directly, with previews, download
+                limits, passwords and an expiry.
+                <a href="ngrok-alternative.html">How it compares</a>.
+              </p>
             </details>
             <details class="faq__item">
-              <summary>How is vrok different from WeTransfer or Google Drive?</summary>
-              <p>Those services upload a copy of your file to their servers and keep it there. vrok uploads nothing: visitors read the file from your machine while the command runs, and the link stops working when you stop it or it expires.</p>
+              <summary>
+                How is vrok different from WeTransfer or Google Drive?
+              </summary>
+              <p>
+                Those services upload a copy of your file to their servers and
+                keep it there. vrok uploads nothing: visitors read the file from
+                your machine while the command runs, and the link stops working
+                when you stop it or it expires.
+              </p>
             </details>
             <details class="faq__item">
-              <summary>Can I make a link that expires or works only once?</summary>
-              <p>Yes. <code>--ttl 2h</code> closes the share after two hours, <code>--downloads 1</code> makes it a one-time link, and <code>--password</code> asks visitors for a password. While a share runs, press <code>1</code>, <code>e</code> or <code>p</code> to change these without changing the URL.</p>
+              <summary>
+                Can I make a link that expires or works only once?
+              </summary>
+              <p>
+                Yes. <code>--ttl 2h</code> closes the share after two hours,
+                <code>--downloads 1</code> makes it a one-time link, and
+                <code>--password</code> asks visitors for a password. While a
+                share runs, press <code>1</code>, <code>e</code> or
+                <code>p</code> to change these without changing the URL.
+              </p>
             </details>
             <details class="faq__item">
               <summary>Can people see other files on my computer?</summary>
-              <p>No. A visitor reaches only what you named: sharing one file exposes that file, not the folder around it. Paths like <code>../</code> and symlinks that point outside a shared folder answer 404, and every URL carries a 128-bit random token.</p>
+              <p>
+                No. A visitor reaches only what you named: sharing one file
+                exposes that file, not the folder around it. Paths like
+                <code>../</code> and symlinks that point outside a shared folder
+                answer 404, and every URL carries a 128-bit random token.
+              </p>
             </details>
             <details class="faq__item">
               <summary>Does the other person need to install anything?</summary>
-              <p>No. They open the link in any browser. Only the person sharing runs vrok.</p>
+              <p>
+                No. They open the link in any browser. Only the person sharing
+                runs vrok.
+              </p>
             </details>
             <details class="faq__item">
               <summary>Does it work on Windows, macOS and Linux?</summary>
-              <p>Yes. vrok is a single binary for macOS (Apple silicon and Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD, installable with one command, Homebrew, Scoop, winget or a Linux package.</p>
+              <p>
+                Yes. vrok is a single binary for macOS (Apple silicon and
+                Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD,
+                installable with one command, Homebrew, Scoop, winget or a Linux
+                package.
+              </p>
             </details>
           </div>
         </div>
@@ -927,7 +1032,9 @@
             <li data-proof-release hidden>
               <strong data-proof-tag></strong><span>current release</span>
             </li>
-            <li><strong>macOS · Linux · Windows</strong><span>one binary</span></li>
+            <li>
+              <strong>macOS · Linux · Windows</strong><span>one binary</span>
+            </li>
             <li><strong>MIT</strong><span>free and open source</span></li>
           </ul>
           <p class="close__aside">

@@ -9,12 +9,12 @@ vrok is a program you run, not a service. There is no account, no vrok server
 and no stored copy of anything shared, so no vendor holds your data. What
 matters is the route:
 
-| Route | Who can see the traffic |
-| --- | --- |
+| Route                             | Who can see the traffic                                |
+| --------------------------------- | ------------------------------------------------------ |
 | Default (Cloudflare quick tunnel) | You, the visitor, and Cloudflare, which terminates TLS |
-| `--local` | Anyone on your local network path |
-| `--tunnel local` | Only this machine |
-| Your own relay | You, the visitor, and whoever runs the relay host |
+| `--local`                         | Anyone on your local network path                      |
+| `--tunnel local`                  | Only this machine                                      |
+| Your own relay                    | You, the visitor, and whoever runs the relay host      |
 
 Releases ship SHA-256 checksums, an SPDX SBOM per archive and signed build
 provenance (`gh attestation verify <file> --repo AliJabbar034/vrok`).

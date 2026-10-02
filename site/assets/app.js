@@ -222,7 +222,8 @@ async function wireStars() {
     if (!response.ok) return;
     const stars = (await response.json()).stargazers_count;
     if (!Number.isFinite(stars) || stars < STARS_WORTH_SHOWING) return;
-    count.textContent = stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars);
+    count.textContent =
+      stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars);
     row.hidden = false;
   } catch {
     // Offline or rate-limited: the row simply stays hidden.

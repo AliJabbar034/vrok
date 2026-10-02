@@ -191,6 +191,9 @@ jobs:
           version: "~> v2"
           args: check
 
+      # The snapshot builds SBOMs the same way a real release does.
+      - uses: anchore/sbom-action/download-syft@v0
+
       # A snapshot exercises the archives, packages and manifests without
       # needing a tag or any credentials.
       - uses: goreleaser/goreleaser-action@v6
