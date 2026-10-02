@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Share localhost with a public URL — free, no account | vrok</title>
+    <meta
+      name="description"
+      content="Expose a local dev server with one command: vrok localhost:3000 gives a public HTTPS URL with hot reload intact. Free, open source, no signup."
+    />
+    <link rel="canonical" href="https://alijabbar034.github.io/vrok/share-localhost.html" />
+    <meta name="theme-color" content="#0c3a3f" />
+    <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="fonts/archivo-var.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/style.css" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="vrok" />
+    <meta property="og:title" content="Share localhost with a public URL — free, no account | vrok" />
+    <meta property="og:description" content="Expose a local dev server with one command: vrok localhost:3000 gives a public HTTPS URL with hot reload intact. Free, open source, no signup." />
+    <meta property="og:url" content="https://alijabbar034.github.io/vrok/share-localhost.html" />
+    <meta property="og:image" content="https://alijabbar034.github.io/vrok/assets/og-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="vrok: a URL for a file, a folder, or localhost, straight from your machine"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Share your localhost with a public URL",
+    "description": "Expose a local dev server to the internet with one command: vrok localhost:3000 gives you a public HTTPS URL with hot reload intact. Free, open source, no signup.",
+    "url": "https://alijabbar034.github.io/vrok/share-localhost.html",
+    "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
+    "author": {
+      "@type": "Person",
+      "name": "Ali Jabbar",
+      "url": "https://github.com/AliJabbar034"
+    },
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "vrok",
+      "url": "https://alijabbar034.github.io/vrok/"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "vrok",
+        "item": "https://alijabbar034.github.io/vrok/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Share localhost",
+        "item": "https://alijabbar034.github.io/vrok/share-localhost.html"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I expose localhost to the internet for free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Install vrok and run vrok localhost:3000 (use your app's port). You get a public HTTPS URL through a free Cloudflare quick tunnel, with no account."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does hot reload work for the person I share with?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, on the default route. WebSocket upgrades are passed through, so the visitor's page updates when you save. With a self-hosted relay they need to refresh."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it safe to share my localhost?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Only the port you name is reachable, and only while vrok runs. Add --password or --ttl to limit who can open it and for how long."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need an account or a config file?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. vrok needs no signup, no auth token and no config file."
+        }
+      }
+    ]
+  }
+]
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#guide">Skip to content</a>
+
+    <aside class="release" data-release hidden role="status">
+      <div class="release__inner">
+        <p>
+          <span class="release__new" data-release-fresh hidden>New</span>
+          <strong data-latest-tag></strong> is out. Update with the same command
+          you used to install.
+          <a href="download.html#update">How to update</a>
+        </p>
+        <button type="button" class="release__hide" data-release-dismiss>
+          Hide
+        </button>
+      </div>
+    </aside>
+
+    <header class="bar">
+      <a class="wordmark" href="./" aria-label="vrok home">
+        <img
+          class="wordmark__mark"
+          src="assets/mark.svg?v=b"
+          alt=""
+          width="32"
+          height="32"
+        />
+        <span class="wordmark__text">vrok</span>
+        <span class="wordmark__tag">straight from your machine</span>
+      </a>
+      <nav class="bar__nav" aria-label="Primary">
+        <button
+          class="bar__toggle"
+          type="button"
+          data-nav
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          Menu
+        </button>
+        <div class="bar__links" id="site-nav">
+          <a href="./#use">Use cases</a>
+          <a href="./#compare">Why vrok</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a class="bar__cta" href="download.html">Download</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="guide" id="guide">
+      <div class="guide__layout guide__layout--single">
+        <article class="guide__body">
+          <nav class="crumbs-nav" aria-label="Breadcrumb">
+            <a href="./">vrok</a> <span aria-hidden="true">/</span>
+            <span aria-current="page">Share localhost</span>
+          </nav>
+          <header>
+            <h1>Share your localhost with a public URL</h1>
+            <p class="guide__lede">Your dev server is running on your laptop and someone else needs to see it. One command gives it a public HTTPS address. No account, no config file, no deploy.</p>
+          </header>
+          <section>
+            <h2>In one command</h2>
+            <p>Start your app as usual, then point vrok at its port:</p>
+            <div class="cmd">
+              <code class="cmd__text">vrok localhost:3000</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              vrok prints a public URL and copies it to your clipboard. Send
+              it to anyone: a teammate, a client, your own phone. Press
+              <code>x</code> to stop, and the URL stops working.
+            </p>
+          </section>
+          <section>
+            <h2>What keeps working</h2>
+            <ul>
+              <li><strong>Hot reload.</strong> WebSockets pass through on the default route, so Vite, Next.js and webpack dev servers update live for the visitor.</li>
+              <li><strong>Absolute asset paths.</strong> An app that loads <code>/assets/app.js</code> still works under the share URL.</li>
+              <li><strong>HTTPS.</strong> The public URL is HTTPS even though your dev server is plain HTTP.</li>
+              <li><strong>Any framework.</strong> vrok reverse-proxies whatever answers on the port: Rails, Django, Laravel, Express, Go, anything.</li>
+            </ul>
+          </section>
+          <section>
+            <h2>Common ports</h2>
+            <table class="guide-table">
+              <thead><tr><th>Stack</th><th>Command</th></tr></thead>
+              <tbody>
+                <tr><td>Vite</td><td><code>vrok localhost:5173</code></td></tr>
+                <tr><td>Next.js, Express, Rails</td><td><code>vrok localhost:3000</code></td></tr>
+                <tr><td>Django</td><td><code>vrok localhost:8000</code></td></tr>
+                <tr><td>Angular</td><td><code>vrok localhost:4200</code></td></tr>
+                <tr><td>Anything else</td><td><code>vrok localhost:PORT</code></td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section>
+            <h2>Keep it private or short-lived</h2>
+            <ul>
+              <li><code>--password</code> asks visitors for a password, or press <code>p</code> while it runs.</li>
+              <li><code>--ttl 1h</code> closes the URL after an hour.</li>
+              <li><code>--local</code> keeps it on your network, with no public tunnel at all.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Questions</h2>
+            <div class="faq__list faq__list--single">
+              <details class="faq__item">
+                <summary>How do I expose localhost to the internet for free?</summary>
+                <p>Install vrok and run <code>vrok localhost:3000</code> (use your app's port). You get a public HTTPS URL through a free Cloudflare quick tunnel, with no account.</p>
+              </details>
+              <details class="faq__item">
+                <summary>Does hot reload work for the person I share with?</summary>
+                <p>Yes, on the default route. WebSocket upgrades are passed through, so the visitor's page updates when you save. With a self-hosted relay they need to refresh.</p>
+              </details>
+              <details class="faq__item">
+                <summary>Is it safe to share my localhost?</summary>
+                <p>Only the port you name is reachable, and only while vrok runs. Add <code>--password</code> or <code>--ttl</code> to limit who can open it and for how long.</p>
+              </details>
+              <details class="faq__item">
+                <summary>Do I need an account or a config file?</summary>
+                <p>No. vrok needs no signup, no auth token and no config file.</p>
+              </details>
+            </div>
+          </section>
+
+          <section class="landing__cta">
+            <h2>Install vrok</h2>
+            <p>One command on macOS and Linux. Free, MIT licensed, no account.</p>
+            <div class="cmd">
+              <code class="cmd__text">curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              Windows, Homebrew, Scoop, winget and Linux packages are on the
+              <a href="download.html">download page</a>. Every command and
+              flag is in <a href="guide.html">the guide</a>.
+            </p>
+          </section>
+
+          <nav class="landing__more" aria-label="More guides">
+            <h2>More</h2>
+            <ul>
+              <li><a href="share-localhost.html">Share your localhost with a public URL</a></li>
+              <li><a href="send-large-files.html">Send large files without uploading them</a></li>
+              <li><a href="ngrok-alternative.html">vrok vs ngrok and WeTransfer</a></li>
+            </ul>
+          </nav>
+        </article>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__inner">
+        <a class="foot__brand" href="./" aria-label="vrok home">
+          <img
+            class="foot__logo"
+            src="assets/mark.svg?v=b"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="foot__mark">vrok</span>
+        </a>
+        <p>
+          Free and open source. MIT licensed. Built by
+          <a href="https://github.com/AliJabbar034">Ali Jabbar</a>
+          ·
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >.
+        </p>
+        <nav aria-label="Footer">
+          <a href="share-localhost.html">Share localhost</a>
+          <a href="send-large-files.html">Send large files</a>
+          <a href="ngrok-alternative.html">ngrok alternative</a>
+          <a href="./">Home</a>
+          <a href="download.html">Downloads</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a href="guide.html#privacy">Privacy</a>
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >
+        </nav>
+      </div>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>

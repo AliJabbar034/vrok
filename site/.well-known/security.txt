@@ -1,0 +1,6 @@
+# Security contact for vrok (RFC 9116). Renew Expires every year.
+Contact: https://github.com/AliJabbar034/vrok/security/advisories/new
+Expires: 2027-10-03T00:00:00.000Z
+Preferred-Languages: en
+Policy: https://github.com/AliJabbar034/vrok/blob/main/SECURITY.md
+Canonical: https://alijabbar034.github.io/vrok/.well-known/security.txt

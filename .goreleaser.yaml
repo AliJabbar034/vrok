@@ -96,6 +96,12 @@ checksum:
   name_template: checksums.txt
   algorithm: sha256
 
+# A software bill of materials per archive, so anyone auditing a release can
+# see every module that went into it without building it themselves. Syft is
+# installed by the release workflow.
+sboms:
+  - artifacts: archive
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
@@ -293,3 +299,11 @@ release:
     ```sh
     shasum -a 256 -c checksums.txt --ignore-missing
     ```
+
+    Prove it was built by this repository's release workflow, from this tag:
+
+    ```sh
+    gh attestation verify vrok_*.tar.gz --repo AliJabbar034/vrok
+    ```
+
+    Each archive also ships an SPDX software bill of materials (`*.sbom.json`).

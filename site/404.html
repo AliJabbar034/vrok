@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- GitHub Pages serves this page at whatever path was missing, so
+         relative links need a base: the project path when published under
+         /vrok/, the site root when served locally. -->
+    <script>
+      document.write(
+        '<base href="' +
+          (location.pathname.startsWith("/vrok/") ? "/vrok/" : "/") +
+          '">'
+      );
+    </script>
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Not found — vrok</title>
+    <meta
+      name="description"
+      content="This page does not exist."
+    />
+    <meta name="theme-color" content="#0c3a3f" />
+    <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="fonts/archivo-var.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+
+  <body>
+    <a class="skip" href="#start">Skip to content</a>
+
+    <aside class="release" data-release hidden role="status">
+      <div class="release__inner">
+        <p>
+          <span class="release__new" data-release-fresh hidden>New</span>
+          <strong data-latest-tag></strong> is out. Run the install command
+          again to replace the binary.
+          <a href="download.html#update">How to update</a>
+        </p>
+        <button type="button" class="release__hide" data-release-dismiss>
+          Hide
+        </button>
+      </div>
+    </aside>
+
+    <header class="bar">
+      <a class="wordmark" href="./" aria-label="vrok home">
+        <img
+          class="wordmark__mark"
+          src="assets/mark.svg?v=b"
+          alt=""
+          width="32"
+          height="32"
+        />
+        <span class="wordmark__text">vrok</span>
+        <span class="wordmark__tag">straight from your machine</span>
+      </a>
+      <nav class="bar__nav" aria-label="Primary">
+        <button
+          class="bar__toggle"
+          type="button"
+          data-nav
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          Menu
+        </button>
+        <div class="bar__links" id="site-nav">
+          <a href="./#use">Use cases</a>
+          <a href="./#compare">Why vrok</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a class="bar__cta" href="download.html">Download</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="lost" id="start">
+      <div class="plate lost__plate" role="group" aria-labelledby="lost-h">
+        <span class="rivet rivet--tl" aria-hidden="true"></span>
+        <span class="rivet rivet--tr" aria-hidden="true"></span>
+        <span class="rivet rivet--bl" aria-hidden="true"></span>
+        <span class="rivet rivet--br" aria-hidden="true"></span>
+        <p class="lost__code">404</p>
+        <h1 class="plate__title" id="lost-h">Empty locker</h1>
+        <p class="plate__lede">
+          Nothing is stored at this address. If someone sent you a vrok share
+          link, it lives on their machine, not on this site: ask them for a
+          fresh one.
+        </p>
+        <p class="lost__links">
+          <a class="lost__home" href="./">Go to the homepage</a>
+          <a href="guide.html">How vrok works</a>
+        </p>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__inner">
+        <a class="foot__brand" href="./" aria-label="vrok home">
+          <img
+            class="foot__logo"
+            src="assets/mark.svg?v=b"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="foot__mark">vrok</span>
+        </a>
+        <p>
+          Free and open source. MIT licensed. Built by
+          <a href="https://github.com/AliJabbar034">Ali Jabbar</a>
+          ·
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >.
+        </p>
+        <nav aria-label="Footer">
+          <a href="share-localhost.html">Share localhost</a>
+          <a href="send-large-files.html">Send large files</a>
+          <a href="ngrok-alternative.html">ngrok alternative</a>
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a href="https://github.com/AliJabbar034/vrok/issues">Issues</a>
+          <a href="guide.html#privacy">Privacy</a>
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >
+        </nav>
+      </div>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>

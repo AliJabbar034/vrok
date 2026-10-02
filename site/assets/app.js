@@ -1,6 +1,6 @@
-/* Four jobs: copy a command, preselect the visitor's OS, point the archive
-   links at whatever the newest release actually is, and replay the CLI in
-   the "Watch it run" section. Everything
+/* Five jobs: copy a command, preselect the visitor's OS, point the archive
+   links at whatever the newest release actually is, replay the CLI in the
+   "Watch it run" section, and show the star count once it means something. Everything
    degrades to a working page with JavaScript off — the commands are in the
    markup and the archive links fall back to the release page. */
 
@@ -130,9 +130,10 @@ const FRESH_MS = 21 * 24 * 60 * 60 * 1000;
 
 async function wireRelease() {
   const needsTag = document.querySelectorAll("[data-latest-tag]");
+  const proofTag = document.querySelector("[data-proof-tag]");
   const assets = document.querySelectorAll("[data-asset]");
   const banner = document.querySelector("[data-release]");
-  if (!needsTag.length && !assets.length && !banner) return;
+  if (!needsTag.length && !assets.length && !banner && !proofTag) return;
 
   // Without a tag the asset links still have to go somewhere useful.
   for (const link of assets) link.href = `${RELEASES}/latest`;
@@ -156,6 +157,12 @@ async function wireRelease() {
   if (!tag) return;
 
   for (const el of needsTag) el.textContent = tag;
+  // The proof row's release tile is left hidden unless the tag is known: a
+  // fallback like "see releases" reads as broken inside a tile.
+  for (const el of document.querySelectorAll("[data-proof-tag]")) {
+    el.textContent = tag;
+    el.closest("[data-proof-release]")?.removeAttribute("hidden");
+  }
 
   const sums = document.getElementById("sumsLink");
   if (sums) sums.href = `${RELEASES}/download/${tag}/checksums.txt`;
@@ -194,6 +201,31 @@ async function wireRelease() {
         /* ignore */
       }
     });
+  }
+}
+
+/* ---------- proof ---------- */
+
+// A star count only helps once it is big enough to read as interest; "3
+// GitHub stars" argues against the project, so below this the row stays
+// hidden.
+const STARS_WORTH_SHOWING = 25;
+
+async function wireStars() {
+  const row = document.querySelector("[data-stars-row]");
+  const count = document.querySelector("[data-stars]");
+  if (!row || !count) return;
+  try {
+    const response = await fetch(`https://api.github.com/repos/${REPO}`, {
+      headers: { Accept: "application/vnd.github+json" }
+    });
+    if (!response.ok) return;
+    const stars = (await response.json()).stargazers_count;
+    if (!Number.isFinite(stars) || stars < STARS_WORTH_SHOWING) return;
+    count.textContent = stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars);
+    row.hidden = false;
+  } catch {
+    // Offline or rate-limited: the row simply stays hidden.
   }
 }
 
@@ -889,3 +921,4 @@ wireOS();
 wireRelease();
 wireNav();
 wireWatch();
+wireStars();
