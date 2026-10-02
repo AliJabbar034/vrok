@@ -109,18 +109,18 @@ vrok -i ./demo.mp4               # decide first, then prints the flags
 
 ### Options
 
-| Flag                   | Meaning                                                                                               |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- |
-| `-i`                   | Ask who can open it, how long it lasts, and the download limit. Then prints the equivalent flags.     |
-| `--ttl 30m`            | How long the share lives. Accepts `45s`, `30m`, `2h`, `1d`, `1w`. Default: until you stop it.          |
-| `--downloads 5`        | Stop sharing after five downloads.                                                                    |
-| `--password`           | Ask for a password that visitors must enter. Also reads `VROK_PASSWORD`.                              |
-| `--qr`                 | Print a QR code for the URL.                                                                          |
-| `--local`              | Serve on the local network only, with no public tunnel.                                               |
-| `--tunnel <name>`      | `auto` (default), `local`, `cloudflare` or `relay`.                                                   |
-| `--name client-report` | Display name for the share.                                                                           |
-| `--port 8080`          | Pick the local port instead of a free one.                                                            |
-| `-v`                   | Show request and tunnel diagnostics.                                                                  |
+| Flag                   | Meaning                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `-i`                   | Ask who can open it, how long it lasts, and the download limit. Then prints the equivalent flags. |
+| `--ttl 30m`            | How long the share lives. Accepts `45s`, `30m`, `2h`, `1d`, `1w`. Default: until you stop it.     |
+| `--downloads 5`        | Stop sharing after five downloads.                                                                |
+| `--password`           | Ask for a password that visitors must enter. Also reads `VROK_PASSWORD`.                          |
+| `--qr`                 | Print a QR code for the URL.                                                                      |
+| `--local`              | Serve on the local network only, with no public tunnel.                                           |
+| `--tunnel <name>`      | `auto` (default), `local`, `cloudflare` or `relay`.                                               |
+| `--name client-report` | Display name for the share.                                                                       |
+| `--port 8080`          | Pick the local port instead of a free one.                                                        |
+| `-v`                   | Show request and tunnel diagnostics.                                                              |
 
 While a share is running, `c` copies the URL, `q` prints a QR code, `p` adds a
 password, `e` changes the expiry, `1` makes it one-time, and `x` stops. Each

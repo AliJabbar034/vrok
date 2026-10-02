@@ -8,9 +8,9 @@ whoever has the link.
 Each folder has the SVG source and PNGs rendered from it at 1024, 512, 256,
 128, 64, 32 and 16 px, with transparent corners.
 
-| Folder | Mark |
-| ------ | ---- |
-| `b-open-locker/` | in use |
+| Folder            | Mark        |
+| ----------------- | ----------- |
+| `b-open-locker/`  | in use      |
 | `e-source-point/` | alternative |
 
 Colours: enamel `#0C3A3F`, deep enamel `#072A2E`, enamel chip `#2B7E85`,

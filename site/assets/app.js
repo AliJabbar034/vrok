@@ -246,7 +246,9 @@ function bytes(n) {
     unit = u;
     if (value < 1024) break;
   }
-  return value < 10 ? `${value.toFixed(1)} ${unit}` : `${Math.round(value)} ${unit}`;
+  return value < 10
+    ? `${value.toFixed(1)} ${unit}`
+    : `${Math.round(value)} ${unit}`;
 }
 
 // Mirrors humanize.Duration, used for countdowns and time left.
@@ -466,8 +468,16 @@ function makeBrowser(parts, instant, wait) {
 
 function vrokBar(...pills) {
   const brand = el("span", "mock__brand");
-  brand.innerHTML = '<img src="assets/mark.svg?v=b" alt="" width="24" height="24" /> vrok';
-  return el("div", "mock__bar", brand, pills.length ? el("span", "mock__pills", ...pills.map((p) => el("span", null, p))) : null);
+  brand.innerHTML =
+    '<img src="assets/mark.svg?v=b" alt="" width="24" height="24" /> vrok';
+  return el(
+    "div",
+    "mock__bar",
+    brand,
+    pills.length
+      ? el("span", "mock__pills", ...pills.map((p) => el("span", null, p)))
+      : null
+  );
 }
 
 function filePage() {
@@ -475,10 +485,17 @@ function filePage() {
     "div",
     "mock__title",
     el("span", "mock__icon", "▶"),
-    el("div", null, el("strong", null, "launch-cut.mov"), el("span", null, "4.0 GB"))
+    el(
+      "div",
+      null,
+      el("strong", null, "launch-cut.mov"),
+      el("span", null, "4.0 GB")
+    )
   );
   const sum = el("p", "browser__sum", el("b", null, "SHA-256"));
-  sum.append("3a7bd3e2360a3d29eea436fcfb7e44c735d117c42d1c1835420b6b9942dd4f1b");
+  sum.append(
+    "3a7bd3e2360a3d29eea436fcfb7e44c735d117c42d1c1835420b6b9942dd4f1b"
+  );
   return el(
     "div",
     null,
@@ -488,7 +505,12 @@ function filePage() {
     el(
       "div",
       "mock__stage",
-      el("div", "mock__player", el("span", "mock__play"), el("span", null, "Watch here, or download the original"))
+      el(
+        "div",
+        "mock__player",
+        el("span", "mock__play"),
+        el("span", null, "Watch here, or download the original")
+      )
     )
   );
 }
@@ -500,7 +522,9 @@ function listingPage() {
     ["▶ promo.mp4", "412 MB"],
     ["📄 deck.pdf", "18 MB"],
     ["🖼 logo.svg", "6.0 KB"]
-  ].map(([name, size]) => el("li", null, el("span", null, name), el("span", null, size)));
+  ].map(([name, size]) =>
+    el("li", null, el("span", null, name), el("span", null, size))
+  );
   return el(
     "div",
     null,
@@ -523,12 +547,27 @@ function appPage() {
   return el(
     "div",
     "browser__app",
-    el("div", "browser__app-bar", "acme · dashboard", el("span", null, "● live reload")),
+    el(
+      "div",
+      "browser__app-bar",
+      "acme · dashboard",
+      el("span", null, "● live reload")
+    ),
     el(
       "div",
       "browser__app-body",
-      el("div", "browser__app-card", el("b", null, "Hello from localhost:3000"), "Your app, served from your laptop."),
-      el("div", "browser__app-card", el("b", null, "Signups this week"), "1,284 · up 12%")
+      el(
+        "div",
+        "browser__app-card",
+        el("b", null, "Hello from localhost:3000"),
+        "Your app, served from your laptop."
+      ),
+      el(
+        "div",
+        "browser__app-card",
+        el("b", null, "Signups this week"),
+        "1,284 · up 12%"
+      )
     )
   );
 }
@@ -566,7 +605,13 @@ function urlFor(slug) {
 
 function banner(t, name, slug) {
   t.head("✓", "term__ok", "Sharing", name);
-  t.rows([["URL:", [urlFor(slug), el("span", "term__copied", "(copied to clipboard)")], "term__url"]]);
+  t.rows([
+    [
+      "URL:",
+      [urlFor(slug), el("span", "term__copied", "(copied to clipboard)")],
+      "term__url"
+    ]
+  ]);
   t.dim(`Expires when stopped · ${PUBLIC}`);
   t.dim(KEYS, "term__gap-s");
 }
@@ -583,9 +628,14 @@ async function transfer({ t, b, wait }, name, total, rate, known) {
     shown = shown ? 0.3 * sample + 0.7 * shown : sample;
     seconds += 1;
     const parts = known
-      ? [`↓ ${bytes(sent)} / ${bytes(total)}`, `${Math.floor((sent * 100) / total)}%`, `${bytes(shown)}/s`]
+      ? [
+          `↓ ${bytes(sent)} / ${bytes(total)}`,
+          `${Math.floor((sent * 100) / total)}%`,
+          `${bytes(shown)}/s`
+        ]
       : [`↓ ${bytes(sent)}`, `${bytes(shown)}/s`];
-    if (known && total > sent) parts.push(`${duration((total - sent) / shown)} left`);
+    if (known && total > sent)
+      parts.push(`${duration((total - sent) / shown)} left`);
     t.live(parts.join(" · "));
     b.download(name, sent, known ? total : 0, sent < total ? shown : 0);
     await wait(60);
@@ -593,7 +643,9 @@ async function transfer({ t, b, wait }, name, total, rate, known) {
   b.download(name, total, known ? total : 0, 0);
   await wait(500);
   t.endLive();
-  t.dim(`  ↓ Sent ${bytes(total)} in ${elapsed(seconds)} · ${bytes(total / seconds)}/s average`);
+  t.dim(
+    `  ↓ Sent ${bytes(total)} in ${elapsed(seconds)} · ${bytes(total / seconds)}/s average`
+  );
 }
 
 const SCENES = {
@@ -604,14 +656,20 @@ const SCENES = {
     await t.command("vrok ./launch-cut.mov");
     await wait(450);
     banner(t, "launch-cut.mov", slug);
-    say("The URL is already on your clipboard. You send it; they paste it into their browser.");
+    say(
+      "The URL is already on your clipboard. You send it; they paste it into their browser."
+    );
     await wait(1200);
     await b.open(filePage(), urlFor(slug).slice(8));
 
-    say("They see the file page: a preview, the size, a SHA-256 fingerprint to check against, and one Download button.");
+    say(
+      "They see the file page: a preview, the size, a SHA-256 fingerprint to check against, and one Download button."
+    );
     await wait(2400);
     await b.click(".mock__dl");
-    say("They click Download. Their browser and your terminal show the same transfer.");
+    say(
+      "They click Download. Their browser and your terminal show the same transfer."
+    );
     t.speed(true);
     await transfer(ctx, "launch-cut.mov", 4 * 1024 ** 3, 38 * 1024 ** 2, true);
     t.speed(false);
@@ -638,7 +696,9 @@ const SCENES = {
     await t.command("vrok localhost:3000");
     await wait(450);
     banner(t, "http://localhost:3000", slug);
-    say("They open the link and see your running app, live from your laptop. Hot reload reaches them too.");
+    say(
+      "They open the link and see your running app, live from your laptop. Hot reload reaches them too."
+    );
     await wait(900);
     await b.open(appPage(), urlFor(slug).slice(8));
     await wait(2400);
@@ -664,7 +724,9 @@ const SCENES = {
     b.hideCursor();
     await wait(1600);
 
-    say("You press e and give the link two hours. It closes itself after that.");
+    say(
+      "You press e and give the link two hours. It closes itself after that."
+    );
     await t.key("e");
     await t.answer("New lifetime (30m, 2h, 1d, 0): ", "2h");
     t.dim(`Expires in 2h · ${PUBLIC} · password required · same URL`);
@@ -683,7 +745,9 @@ const SCENES = {
     await b.open(listingPage(), urlFor(slug).slice(8));
     await wait(2000);
 
-    say("They click Download all. The zip is built while it is sent, so neither side knows its final size.");
+    say(
+      "They click Download all. The zip is built while it is sent, so neither side knows its final size."
+    );
     await b.click(".browser__zip");
     t.speed(true);
     await transfer(ctx, "assets.zip", 438 * 1024 ** 2, 41 * 1024 ** 2, false);
@@ -790,7 +854,9 @@ function wireWatch() {
   for (const [i, tab] of tabs.entries()) {
     tab.addEventListener("click", () => choose(tab.dataset.scene));
     tab.addEventListener("keydown", (event) => {
-      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[event.key];
+      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[
+        event.key
+      ];
       if (!step) return;
       event.preventDefault();
       const next = tabs[(i + step + tabs.length) % tabs.length];
