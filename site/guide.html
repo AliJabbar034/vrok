@@ -3,10 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>How to use vrok — files, folders, localhost</title>
+    <title>How to use vrok — commands, flags, privacy and security</title>
     <meta
       name="description"
-      content="Commands, flags, what visitors see, reach, and the security model. vrok shares files, folders and running servers without uploading them."
+      content="How to share a file, a folder or a localhost server with vrok: every command and flag, what visitors see, who can open the URL, privacy and security."
+    />
+    <link
+      rel="canonical"
+      href="https://alijabbar034.github.io/vrok/guide.html"
     />
     <meta name="theme-color" content="#0c3a3f" />
     <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
@@ -18,6 +22,68 @@
       crossorigin
     />
     <link rel="stylesheet" href="assets/style.css" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="vrok" />
+    <meta property="og:title" content="How to use vrok" />
+    <meta
+      property="og:description"
+      content="Commands, flags, what visitors see, reach, privacy and the security model."
+    />
+    <meta
+      property="og:url"
+      content="https://alijabbar034.github.io/vrok/guide.html"
+    />
+    <meta
+      property="og:image"
+      content="https://alijabbar034.github.io/vrok/assets/og-card.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="vrok: a URL for a file, a folder, or localhost, straight from your machine"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          "headline": "How to use vrok",
+          "description": "Commands, flags, what visitors see, who can open the URL, privacy and the security model.",
+          "url": "https://alijabbar034.github.io/vrok/guide.html",
+          "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
+          "author": {
+            "@type": "Person",
+            "name": "Ali Jabbar",
+            "url": "https://github.com/AliJabbar034"
+          },
+          "about": {
+            "@type": "SoftwareApplication",
+            "name": "vrok",
+            "url": "https://alijabbar034.github.io/vrok/"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "vrok",
+              "item": "https://alijabbar034.github.io/vrok/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Guide",
+              "item": "https://alijabbar034.github.io/vrok/guide.html"
+            }
+          ]
+        }
+      ]
+    </script>
   </head>
 
   <body>
@@ -60,7 +126,7 @@
           Menu
         </button>
         <div class="bar__links" id="site-nav">
-          <a href="./#share">What it shares</a>
+          <a href="./#use">Use cases</a>
           <a href="./#compare">Why vrok</a>
           <a href="guide.html">Guide</a>
           <a href="https://github.com/AliJabbar034/vrok">Source</a>
@@ -83,6 +149,9 @@
             <li><a href="#visitors">What visitors see</a></li>
             <li><a href="#reach">Who can open the URL</a></li>
             <li><a href="#security">Security and privacy</a></li>
+            <li><a href="#teams">For teams</a></li>
+            <li><a href="#responsible">Responsible use</a></li>
+            <li><a href="#privacy">Privacy</a></li>
           </ol>
         </nav>
 
@@ -341,7 +410,7 @@ vrok config set ttl 30m # store a default</code></pre>
               site — mark, countdown, one Download button. They can view what
               the browser can show and download the original. A mock of that
               page is on the
-              <a href="./#look">homepage</a>. The table below is presentation
+              <a href="./#watch">homepage</a>. The table below is presentation
               only. Any type can be shared.
             </p>
             <table class="guide-table">
@@ -497,6 +566,90 @@ vrok config set ttl 30m # store a default</code></pre>
               >, not a public issue.
             </p>
           </section>
+
+          <section id="teams">
+            <h2>For teams evaluating vrok</h2>
+            <p>
+              vrok is a program you run, not a service you sign up to. There is
+              no account, no vrok server and no stored copy of anything you
+              share, so there is no vendor holding your data and nothing to
+              certify. What matters is where the bytes travel:
+            </p>
+            <ul>
+              <li>
+                <strong>Default route.</strong> Through a Cloudflare quick
+                tunnel. Cloudflare terminates TLS, so it can see the traffic in
+                transit, and its terms apply.
+              </li>
+              <li>
+                <strong><code>--local</code></strong> keeps a share on your
+                network; <strong><code>--tunnel local</code></strong> keeps it
+                on your machine.
+              </li>
+              <li>
+                <strong>Your own relay</strong> keeps the whole path on
+                infrastructure you run.
+              </li>
+            </ul>
+            <p>
+              Releases carry SHA-256 checksums, a software bill of materials per
+              archive, and signed build provenance you can check with
+              <code>gh attestation verify</code>. Dependencies are scanned for
+              known vulnerabilities on every change and weekly. The full threat
+              model is in
+              <a
+                href="https://github.com/AliJabbar034/vrok/blob/main/docs/security.md"
+                >docs/security.md</a
+              >.
+            </p>
+          </section>
+
+          <section id="responsible">
+            <h2>Responsible use</h2>
+            <p>
+              You are responsible for what you share and who you send the link
+              to. Anyone with the URL can open it until it expires or you stop
+              it.
+            </p>
+            <ul>
+              <li>
+                On the default route your share passes through Cloudflare's free
+                quick tunnels, which are meant for testing and come with
+                <a href="https://www.cloudflare.com/website-terms/"
+                  >Cloudflare's terms</a
+                >. Do not use them to host phishing, malware or anything you
+                have no right to share.
+              </li>
+              <li>
+                For confidential, personal or regulated data, use
+                <code>--local</code>, your own relay, or a password and a short
+                <code>--ttl</code>.
+              </li>
+            </ul>
+          </section>
+
+          <section id="privacy">
+            <h2>Privacy</h2>
+            <p>
+              <strong>The CLI collects nothing.</strong> It sends no telemetry
+              and reports no usage. Download counts are kept in the running
+              process and printed in your terminal when the share ends. It
+              connects only to the tunnel or relay you use, and to GitHub once,
+              to fetch <code>cloudflared</code> if it is missing.
+            </p>
+            <p>
+              <strong>This site sets no cookies and runs no analytics.</strong>
+              Fonts are served from the site itself. Your browser asks GitHub's
+              public API for the latest release, and remembers in local storage
+              that you dismissed the release banner. That is all.
+            </p>
+            <p>
+              <strong>Share pages</strong> set only the cookies they need: one
+              after a correct password, and one that lets a resumed download
+              continue without counting again. Both are signed, HttpOnly session
+              cookies, and stop working the moment the share ends.
+            </p>
+          </section>
         </article>
       </div>
     </main>
@@ -522,9 +675,13 @@ vrok config set ttl 30m # store a default</code></pre>
           >.
         </p>
         <nav aria-label="Footer">
+          <a href="share-localhost.html">Share localhost</a>
+          <a href="send-large-files.html">Send large files</a>
+          <a href="ngrok-alternative.html">ngrok alternative</a>
           <a href="./">Home</a>
           <a href="download.html">Downloads</a>
           <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a href="#privacy">Privacy</a>
           <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
             >LinkedIn</a
           >

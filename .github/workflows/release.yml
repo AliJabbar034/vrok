@@ -26,7 +26,8 @@ on:
 permissions:
   contents: write # create the release and upload archives
   packages: write # push the relay image to ghcr.io
-  id-token: write # keyless signing
+  id-token: write # keyless signing of the build provenance
+  attestations: write # store the provenance attestations
 
 env:
   # The three triggers name the tag differently; everything below uses this.
@@ -72,6 +73,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # GoReleaser calls Syft to write the SBOMs.
+      - uses: anchore/sbom-action/download-syft@v0
+
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: "~> v2"
@@ -82,6 +86,14 @@ jobs:
           # bucket or winget repositories.
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
 
+      # Signed, publicly logged provenance for every file in checksums.txt:
+      # which workflow, commit and tag built it. Anyone can check a download
+      # with `gh attestation verify <file> --repo AliJabbar034/vrok`.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-checksums: dist/checksums.txt
+
   # The installers are the path most people take, so a release that breaks
   # them is worse than one that never shipped.
   smoke-installers:
@@ -89,7 +101,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-13, windows-latest]
+        # macos-latest is Apple silicon; macos-15-intel keeps an x86_64 Mac in
+        # the matrix. Never pin a retired label (macos-13 was): no runner ever
+        # picks the job up, so it waits in the queue instead of failing.
+        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

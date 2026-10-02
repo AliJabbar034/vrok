@@ -5,6 +5,9 @@
 # vrok
 
 Share local files, folders and development servers through temporary URLs.
+A free, open-source command-line tool for sending large files without
+uploading them and for exposing localhost with a public HTTPS link, with no
+account. **[alijabbar034.github.io/vrok](https://alijabbar034.github.io/vrok/)**
 
 ```console
 $ vrok ./video.mp4
@@ -309,6 +312,32 @@ See [docs/protocol.md](docs/protocol.md) for the wire format.
   a URL cannot be probed for which of those it is.
 
 [docs/security.md](docs/security.md) describes the model and its limits.
+
+**Verifying a release.** Every release ships `checksums.txt`, an SPDX
+software bill of materials per archive, and signed build provenance:
+
+```sh
+shasum -a 256 -c checksums.txt --ignore-missing
+gh attestation verify vrok_*.tar.gz --repo AliJabbar034/vrok
+```
+
+Dependencies are checked with `govulncheck` on every change and weekly.
+
+### Privacy
+
+vrok collects nothing. There is no telemetry and no usage reporting; download
+counts live in the running process and are printed in your terminal when the
+share ends. The CLI connects only to the tunnel or relay you use, and to GitHub
+once to fetch `cloudflared` if it is missing.
+
+### Responsible use
+
+You are responsible for what you share and who you send the link to. On the
+default route a share passes through Cloudflare's free quick tunnels, which are
+meant for testing and come with Cloudflare's terms: do not use them for
+phishing, malware or anything you have no right to share. For confidential or
+regulated data, use `--local`, your own relay, or a password with a short
+`--ttl`.
 
 ## Documentation
 

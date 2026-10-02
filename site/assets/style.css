@@ -503,18 +503,8 @@ h3 {
   display: grid;
   gap: 1.25rem;
 }
-/* 01 spans the plate because it carries the command; 02 and 03 are short
-   enough to sit side by side, which keeps the plate from towering over the
-   locker it is bolted next to. */
-@media (min-width: 70rem) {
-  .steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 1.75rem;
-  }
-  .step:first-child {
-    grid-column: 1 / -1;
-  }
-}
+/* The steps stack full width. Side by side, step 02's command box was
+   squeezed to "vrok ./quar" beside its Copy plate. */
 .step {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1776,26 +1766,6 @@ h3 {
   }
 }
 
-.look {
-  padding: clamp(2.4rem, 5vw, 4rem) var(--gut);
-  border-top: 1px solid var(--rule);
-}
-.look__inner {
-  max-width: 1280px;
-  margin: 0 auto;
-}
-.look__h {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  font-stretch: 76%;
-  text-transform: uppercase;
-  margin: 0 0 0.7rem;
-}
-.look__lede {
-  max-width: var(--measure);
-  margin: 0 0 1.6rem;
-  color: var(--ink-soft);
-  font-size: 1.05rem;
-}
 .look__points {
   list-style: none;
   margin: 1.6rem 0 0;
@@ -1817,41 +1787,11 @@ h3 {
   color: var(--ink);
 }
 
-.mock {
-  margin: 0;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--enamel-deep);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
-}
-.mock__chrome {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.75rem;
-  background: #082b2f;
-  border-bottom: 1px solid var(--rule);
-}
 .mock__dot {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
   background: var(--alu-dark);
-}
-.mock__url {
-  margin-left: 0.6rem;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.72rem;
-  color: var(--ink-faint);
-}
-.mock__page {
-  padding: 0;
 }
 .mock__bar {
   display: flex;
@@ -1962,63 +1902,19 @@ h3 {
   border-width: 0.45rem 0 0.45rem 0.7rem;
   border-color: transparent transparent transparent var(--signal-ink);
 }
-.mock figcaption {
-  padding: 0.85rem 1rem 1rem;
-  border-top: 1px solid var(--rule);
-  color: var(--ink-soft);
-  font-size: 0.86rem;
-}
 
 /* ---------- contact ---------- */
 
 .contact {
-  padding: clamp(2.4rem, 5vw, 4rem) var(--gut);
+  padding: 1.6rem var(--gut);
   border-top: 1px solid var(--rule);
 }
-.contact__inner {
+.contact__line {
   max-width: 1280px;
   margin: 0 auto;
-}
-.contact__h {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  font-stretch: 76%;
-  text-transform: uppercase;
-  margin: 0 0 0.7rem;
-}
-.contact__lede {
-  max-width: var(--measure);
-  margin: 0 0 1.6rem;
-  color: var(--ink-soft);
-  font-size: 1.05rem;
-}
-.contact__grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 1px;
-  background: var(--rule);
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  overflow: hidden;
-}
-@media (min-width: 52rem) {
-  .contact__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-.contact__grid li {
-  background: var(--enamel);
-  padding: 1.25rem 1.35rem;
-}
-.contact__grid h3 {
-  font-size: 1.05rem;
-  margin: 0 0 0.4rem;
-}
-.contact__grid p {
-  margin: 0 0 0.55rem;
-  color: var(--ink-soft);
   font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
 }
 
 .close {
@@ -2160,14 +2056,79 @@ h3 {
     linear-gradient(170deg, var(--enamel-lit) 0%, var(--enamel) 70%);
   padding: 1.25rem 1.35rem;
 }
+.why {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
 .why h3 {
-  font-size: 1.05rem;
-  font-stretch: 84%;
-  margin-bottom: 0.4rem;
+  font-size: 1.15rem;
+  font-stretch: 82%;
 }
 .why p {
   margin: 0;
-  font-size: 0.9rem;
+  flex: 1;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.why p code {
+  white-space: nowrap;
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.08em 0.35em;
+  border-radius: 2px;
+  color: var(--ink);
+}
+/* The command or output that delivers the benefit: proof, not a claim. */
+.why__proof {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  color: var(--signal);
+  background: var(--enamel-deep);
+  padding: 0.35rem 0.55rem;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) inset;
+}
+
+/* Four facts, read before the detail. */
+.stats {
+  list-style: none;
+  margin: clamp(1.5rem, 3vw, 2.2rem) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+@media (min-width: 48rem) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.stats li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  background: var(--enamel-deep);
+}
+.stats strong {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  line-height: 1;
+  color: var(--signal);
+  text-transform: uppercase;
+}
+.stats span {
+  font-size: 0.84rem;
+  line-height: 1.4;
   color: var(--ink-soft);
 }
 
@@ -2207,6 +2168,9 @@ h3 {
 }
 .compare-table .no {
   color: var(--ink-faint);
+}
+.compare-table .mid {
+  color: var(--ink-soft);
 }
 .compare__note {
   margin: 1rem 0 0;
@@ -2307,7 +2271,7 @@ h3 {
   margin: 0 0 1rem;
   padding-left: 1.2rem;
 }
-.guide__body code {
+.guide__body code:not(.cmd__text) {
   font-size: 0.86em;
   background: rgba(255, 255, 255, 0.07);
   padding: 0.1em 0.38em;
@@ -2406,5 +2370,295 @@ h3 {
   }
   .foot nav a:hover {
     color: var(--ink);
+  }
+}
+
+/* ---------- homepage additions ---------- */
+
+/* The hero's way down to the demo: secondary to the install command, so a
+   quiet link on the plate rather than a second yellow button. */
+.plate__watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  margin-top: 0.9rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--signal-ink);
+  text-decoration: none;
+}
+.plate__watch:hover {
+  color: var(--signal-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--signal-ink);
+}
+.plate__play {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--signal-ink);
+}
+.plate__play::after {
+  content: "";
+  margin-left: 0.18rem;
+  border-style: solid;
+  border-width: 0.36rem 0 0.36rem 0.58rem;
+  border-color: transparent transparent transparent var(--signal);
+}
+
+.compare__sub {
+  margin: clamp(2rem, 4vw, 2.75rem) 0 0;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  font-stretch: 80%;
+  text-transform: uppercase;
+}
+
+/* At a glance, under the closing install command. */
+.proof {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.proof li {
+  display: grid;
+  gap: 0.1rem;
+  flex: 1 1 9rem;
+  max-width: 15rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--enamel-deep);
+}
+.proof strong {
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.proof span {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+/* ---------- 404 ---------- */
+
+.lost {
+  display: grid;
+  place-items: center;
+  min-height: 70vh;
+  padding: clamp(2.5rem, 6vw, 5rem) var(--gut);
+}
+.lost__plate {
+  max-width: 36rem;
+}
+.lost__code {
+  margin: 0 0 0.4rem;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  color: #453613;
+}
+.lost__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin: 1.5rem 0 0;
+  font-weight: 700;
+}
+.lost__links a {
+  color: var(--signal-ink);
+}
+.lost__home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.2rem;
+  border-radius: 3px;
+  background: var(--signal-ink);
+  color: var(--signal) !important;
+  text-decoration: none;
+}
+
+/* ---------- faq ---------- */
+
+/* Real <details> so every answer is in the page for readers and search
+   engines alike, and opens without any script. */
+.faq {
+  padding: clamp(2.4rem, 5vw, 4rem) var(--gut);
+  border-top: 1px solid var(--rule);
+}
+.faq__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.faq__h {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-stretch: 76%;
+  text-transform: uppercase;
+  margin: 0 0 1.4rem;
+}
+.faq__list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+@media (min-width: 62rem) {
+  .faq__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2.5rem;
+  }
+}
+.faq__item {
+  border-bottom: 1px solid var(--rule);
+}
+.faq__item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 48px;
+  padding: 0.85rem 0;
+  font-weight: 700;
+  font-size: 1.02rem;
+  cursor: pointer;
+  list-style: none;
+}
+.faq__item summary::-webkit-details-marker {
+  display: none;
+}
+.faq__item summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.2rem;
+  color: var(--signal);
+}
+.faq__item[open] summary::after {
+  content: "−";
+}
+.faq__item p {
+  margin: 0 0 1.1rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.faq__item code {
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.1em 0.38em;
+  border-radius: 2px;
+  color: var(--ink);
+}
+
+/* ---------- landing pages ---------- */
+
+/* One column, no contents list: these pages answer one question each. */
+.guide__layout--single {
+  max-width: 52rem;
+}
+@media (min-width: 58rem) {
+  .guide__layout--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.crumbs-nav {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+.crumbs-nav a {
+  color: var(--ink-soft);
+}
+.faq__list--single {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.landing__cta .cmd {
+  margin: 0.4rem 0 1rem;
+}
+.landing__more ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.landing__more li {
+  border-bottom: 1px solid var(--rule);
+}
+.landing__more a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.landing__more a::after {
+  content: "→";
+  margin-left: auto;
+  color: var(--signal);
+}
+
+/* Command boxes inside an article keep their own padding and spacing. */
+.guide__body .cmd {
+  margin: 0.5rem 0 1rem;
+}
+/* A four-column comparison does not fit a phone: it scrolls in its box. */
+.table-scroll {
+  overflow-x: auto;
+  margin: 0 0 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--enamel-chip) transparent;
+}
+.guide-table--wide {
+  min-width: 34rem;
+  margin: 0;
+}
+
+/* On a phone the comparison becomes one card per question, every answer
+   labelled, so no column is hidden off to the side. */
+@media (max-width: 40rem) {
+  .compare-table {
+    min-width: 0;
+  }
+  .compare-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  .compare-table,
+  .compare-table tbody,
+  .compare-table tr,
+  .compare-table th,
+  .compare-table td {
+    display: block;
+  }
+  .compare-table tr {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .compare-table tbody th {
+    padding: 0 0 0.45rem;
+    border: 0;
+    color: var(--ink);
+  }
+  .compare-table td {
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    border: 0;
+  }
+  .compare-table td::before {
+    content: attr(data-label);
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--ink-faint);
   }
 }

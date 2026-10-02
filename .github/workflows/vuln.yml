@@ -1,0 +1,30 @@
+name: vulnerabilities
+
+# govulncheck reports known vulnerabilities in the Go standard library and in
+# dependencies, and only those the code actually reaches. It also runs weekly:
+# a new advisory can land against code that has not changed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - run: govulncheck ./...

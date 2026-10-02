@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Send large files without uploading them — free | vrok</title>
+    <meta
+      name="description"
+      content="Send a 4 GB video or a whole folder straight from your computer. No upload, no size limit, resumable downloads, SHA-256 checksum. Free."
+    />
+    <link
+      rel="canonical"
+      href="https://alijabbar034.github.io/vrok/send-large-files.html"
+    />
+    <meta name="theme-color" content="#0c3a3f" />
+    <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="fonts/archivo-var.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/style.css" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="vrok" />
+    <meta
+      property="og:title"
+      content="Send large files without uploading them — free | vrok"
+    />
+    <meta
+      property="og:description"
+      content="Send a 4 GB video or a whole folder straight from your computer. No upload, no size limit, resumable downloads, SHA-256 checksum. Free."
+    />
+    <meta
+      property="og:url"
+      content="https://alijabbar034.github.io/vrok/send-large-files.html"
+    />
+    <meta
+      property="og:image"
+      content="https://alijabbar034.github.io/vrok/assets/og-card.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="vrok: a URL for a file, a folder, or localhost, straight from your machine"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          "headline": "Send large files without uploading them",
+          "description": "Send a 4 GB video or a whole folder straight from your computer with a temporary link. No upload, no size limit, resumable downloads, SHA-256 checksum. Free and open source.",
+          "url": "https://alijabbar034.github.io/vrok/send-large-files.html",
+          "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
+          "author": {
+            "@type": "Person",
+            "name": "Ali Jabbar",
+            "url": "https://github.com/AliJabbar034"
+          },
+          "about": {
+            "@type": "SoftwareApplication",
+            "name": "vrok",
+            "url": "https://alijabbar034.github.io/vrok/"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "vrok",
+              "item": "https://alijabbar034.github.io/vrok/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Send large files",
+              "item": "https://alijabbar034.github.io/vrok/send-large-files.html"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How do I send a file that is too big for email?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Run vrok ./bigfile.zip and send the link it prints. The file is served from your computer, so there is no attachment limit and no upload."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is there a file size limit?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. vrok streams the file from disk, so a 50 GB file works the same as a 5 MB one. Transfer speed is set by your upload bandwidth."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What if the download is interrupted?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "It resumes. Browsers and download managers continue from where they stopped, and resuming does not use up a download from --downloads."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does my computer need to stay on?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, while they download. vrok keeps the machine from sleeping on its own during a transfer. If they need the file after you switch off, a file host is the better tool."
+              }
+            }
+          ]
+        }
+      ]
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#guide">Skip to content</a>
+
+    <aside class="release" data-release hidden role="status">
+      <div class="release__inner">
+        <p>
+          <span class="release__new" data-release-fresh hidden>New</span>
+          <strong data-latest-tag></strong> is out. Update with the same command
+          you used to install.
+          <a href="download.html#update">How to update</a>
+        </p>
+        <button type="button" class="release__hide" data-release-dismiss>
+          Hide
+        </button>
+      </div>
+    </aside>
+
+    <header class="bar">
+      <a class="wordmark" href="./" aria-label="vrok home">
+        <img
+          class="wordmark__mark"
+          src="assets/mark.svg?v=b"
+          alt=""
+          width="32"
+          height="32"
+        />
+        <span class="wordmark__text">vrok</span>
+        <span class="wordmark__tag">straight from your machine</span>
+      </a>
+      <nav class="bar__nav" aria-label="Primary">
+        <button
+          class="bar__toggle"
+          type="button"
+          data-nav
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          Menu
+        </button>
+        <div class="bar__links" id="site-nav">
+          <a href="./#use">Use cases</a>
+          <a href="./#compare">Why vrok</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a class="bar__cta" href="download.html">Download</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="guide" id="guide">
+      <div class="guide__layout guide__layout--single">
+        <article class="guide__body">
+          <nav class="crumbs-nav" aria-label="Breadcrumb">
+            <a href="./">vrok</a> <span aria-hidden="true">/</span>
+            <span aria-current="page">Send large files</span>
+          </nav>
+          <header>
+            <h1>Send large files without uploading them</h1>
+            <p class="guide__lede">
+              Uploading a big file to a transfer service means waiting for the
+              upload, then waiting again while they download. vrok skips the
+              upload: the other person downloads straight from your machine.
+            </p>
+          </header>
+          <section>
+            <h2>In one command</h2>
+            <p>Point vrok at the file, or at a whole folder:</p>
+            <div class="cmd">
+              <code class="cmd__text">vrok ./launch-cut.mov</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              The link is ready at once and copied to your clipboard. They can
+              watch a video in the browser with seeking, or download the
+              original bytes.
+            </p>
+          </section>
+          <section>
+            <h2>Built for big transfers</h2>
+            <ul>
+              <li>
+                <strong>No size limit.</strong> Nothing is uploaded, so there is
+                no quota. The limit is your disk.
+              </li>
+              <li>
+                <strong>Resumable.</strong> A dropped download continues where
+                it stopped.
+              </li>
+              <li>
+                <strong>Live progress.</strong> Your terminal shows how far they
+                have got, the speed and the time left.
+              </li>
+              <li>
+                <strong>Your computer stays awake</strong> while someone is
+                downloading.
+              </li>
+              <li>
+                <strong>A SHA-256 fingerprint</strong> on the download page, so
+                they can check the copy is intact.
+              </li>
+              <li>
+                <strong>Whole folders</strong> download as one zip, built while
+                it is sent.
+              </li>
+            </ul>
+          </section>
+          <section>
+            <h2>Control who gets it</h2>
+            <ul>
+              <li><code>--downloads 1</code> makes it a one-time link.</li>
+              <li><code>--password</code> asks for a password first.</li>
+              <li>
+                <code>--ttl 1d</code> closes the link after a day. Otherwise it
+                lasts until you stop it.
+              </li>
+            </ul>
+            <p>
+              Speed depends on your upload bandwidth, since every byte comes
+              from your machine. Keep vrok running until they have finished.
+            </p>
+          </section>
+
+          <section>
+            <h2>Questions</h2>
+            <div class="faq__list faq__list--single">
+              <details class="faq__item">
+                <summary>
+                  How do I send a file that is too big for email?
+                </summary>
+                <p>
+                  Run <code>vrok ./bigfile.zip</code> and send the link it
+                  prints. The file is served from your computer, so there is no
+                  attachment limit and no upload.
+                </p>
+              </details>
+              <details class="faq__item">
+                <summary>Is there a file size limit?</summary>
+                <p>
+                  No. vrok streams the file from disk, so a 50 GB file works the
+                  same as a 5 MB one. Transfer speed is set by your upload
+                  bandwidth.
+                </p>
+              </details>
+              <details class="faq__item">
+                <summary>What if the download is interrupted?</summary>
+                <p>
+                  It resumes. Browsers and download managers continue from where
+                  they stopped, and resuming does not use up a download from
+                  <code>--downloads</code>.
+                </p>
+              </details>
+              <details class="faq__item">
+                <summary>Does my computer need to stay on?</summary>
+                <p>
+                  Yes, while they download. vrok keeps the machine from sleeping
+                  on its own during a transfer. If they need the file after you
+                  switch off, a file host is the better tool.
+                </p>
+              </details>
+            </div>
+          </section>
+
+          <section class="landing__cta">
+            <h2>Install vrok</h2>
+            <p>
+              One command on macOS and Linux. Free, MIT licensed, no account.
+            </p>
+            <div class="cmd">
+              <code class="cmd__text"
+                >curl -fsSL
+                https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh
+                | sh</code
+              >
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              Windows, Homebrew, Scoop, winget and Linux packages are on the
+              <a href="download.html">download page</a>. Every command and flag
+              is in <a href="guide.html">the guide</a>.
+            </p>
+          </section>
+
+          <nav class="landing__more" aria-label="More guides">
+            <h2>More</h2>
+            <ul>
+              <li>
+                <a href="share-localhost.html"
+                  >Share your localhost with a public URL</a
+                >
+              </li>
+              <li>
+                <a href="send-large-files.html"
+                  >Send large files without uploading them</a
+                >
+              </li>
+              <li>
+                <a href="ngrok-alternative.html"
+                  >vrok vs ngrok and WeTransfer</a
+                >
+              </li>
+            </ul>
+          </nav>
+        </article>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__inner">
+        <a class="foot__brand" href="./" aria-label="vrok home">
+          <img
+            class="foot__logo"
+            src="assets/mark.svg?v=b"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="foot__mark">vrok</span>
+        </a>
+        <p>
+          Free and open source. MIT licensed. Built by
+          <a href="https://github.com/AliJabbar034">Ali Jabbar</a>
+          ·
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >.
+        </p>
+        <nav aria-label="Footer">
+          <a href="share-localhost.html">Share localhost</a>
+          <a href="send-large-files.html">Send large files</a>
+          <a href="ngrok-alternative.html">ngrok alternative</a>
+          <a href="./">Home</a>
+          <a href="download.html">Downloads</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a href="guide.html#privacy">Privacy</a>
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >
+        </nav>
+      </div>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>
