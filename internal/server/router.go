@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -19,13 +20,14 @@ import (
 // and the only place that decides a request is allowed to proceed. Handlers
 // downstream can assume the share exists, is available, and is unlocked.
 type dispatcher struct {
-	resolver sharing.Resolver
-	guards   sharing.Guard
-	clock    sharing.Clock
-	gate     *Gate
-	pages    *pages
-	logger   *slog.Logger
-	handlers map[sharing.Kind]ShareHandler
+	resolver  sharing.Resolver
+	guards    sharing.Guard
+	downloads downloadSessions
+	clock     sharing.Clock
+	gate      *Gate
+	pages     *pages
+	logger    *slog.Logger
+	handlers  map[sharing.Kind]ShareHandler
 }
 
 // ServeHTTP handles every /s/{token} request.
@@ -67,14 +69,14 @@ func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest
 
 	now := d.clock.Now()
 	snap := share.Snapshot()
-	if err := d.guards.Check(snap, now); err != nil {
-		d.pages.gone(w, r, err)
-		return nil, false
-	}
-
 	rel, err := relativePath(rest)
 	if err != nil {
 		d.pages.gone(w, r, nil)
+		return nil, false
+	}
+
+	if err := d.guards.Check(snap, now); err != nil && !d.continuesDownload(r, err, snap.Spec, rel) {
+		d.pages.gone(w, r, err)
 		return nil, false
 	}
 
@@ -87,6 +89,17 @@ func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest
 		Links:    NewLinks(snap.Token),
 		Now:      now,
 	}, true
+}
+
+// continuesDownload reports whether a request refused only because the
+// download allowance is spent is in fact the continuation of a download that
+// allowance already paid for: a video seek or a resumed transfer. Those keep
+// working; new downloads, previews and listings do not.
+func (d *dispatcher) continuesDownload(r *http.Request, err error, spec sharing.Spec, rel string) bool {
+	if !errors.Is(err, sharing.ErrDownloadLimit) || parseDelivery(r) == deliverPage {
+		return false
+	}
+	return d.downloads.Holds(r, spec, rel)
 }
 
 // strays proxies requests that arrive outside any share prefix but were

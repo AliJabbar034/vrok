@@ -95,20 +95,24 @@ func New(opts Options) (*Server, error) {
 	}
 
 	pageRenderer := &pages{render: opts.Viewer, logger: opts.Logger}
+	downloads := downloadSessions{signer: opts.Signer}
 	assets := &assetServer{
-		detector: opts.Detector,
-		previews: opts.Previews,
-		pages:    pageRenderer,
+		detector:  opts.Detector,
+		previews:  opts.Previews,
+		pages:     pageRenderer,
+		downloads: downloads,
+		clock:     opts.Clock,
 	}
 	roots := newRootCache()
 
 	d := &dispatcher{
-		resolver: opts.Resolver,
-		guards:   opts.Guards,
-		clock:    opts.Clock,
-		gate:     NewGate(opts.Hasher, opts.Signer, pageRenderer, opts.Logger),
-		pages:    pageRenderer,
-		logger:   opts.Logger,
+		resolver:  opts.Resolver,
+		guards:    opts.Guards,
+		downloads: downloads,
+		clock:     opts.Clock,
+		gate:      NewGate(opts.Hasher, opts.Signer, pageRenderer, opts.Logger),
+		pages:     pageRenderer,
+		logger:    opts.Logger,
 		handlers: map[sharing.Kind]ShareHandler{
 			sharing.KindFile:      SingleFileHandler{assets},
 			sharing.KindFiles:     FileSetHandler{assets},

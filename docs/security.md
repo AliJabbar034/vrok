@@ -133,8 +133,39 @@ A successful unlock is remembered with a cookie containing
   cannot use it. `Secure` when the visitor is on HTTPS. No expiry, so closing
   the browser forgets it.
 
+The cookie is scoped to the share's path, `/s/<token>/`. A protected HTTP share
+is the exception and uses `/`, because the app behind it may load absolute
+paths like `/assets/app.js` that only reach the share through the Referer
+fallback. That widens where the cookie is sent, not what it unlocks, and the
+reverse proxy strips every `vrok_` cookie before a request reaches the app.
+
 Comparisons are constant time. A failed attempt sleeps 400 ms, which combined
-with the unguessable token makes online guessing pointless.
+with the unguessable token makes online guessing pointless. At most two
+verifications run at once and the rest queue: each one allocates 64 MiB, so a
+burst of guesses must not be a way to exhaust the sharer's memory.
+
+## Download limits
+
+`--downloads N` is a hard limit on how many visitors receive the file. The
+allowance is claimed before the file is opened, under one lock, so concurrent
+requests cannot slip past it.
+
+The hard part is ranged requests. A video player seeks with many of them, and
+counting each would spend the allowance before one video finished. But a
+`Range` header is whatever the client sends — `bytes=-N` returns the whole file
+— so it cannot decide whether a request is free. Instead, the request that is
+counted also gets a signed, `HttpOnly` cookie scoped to that one file. Later
+requests for the same file that present it are free, including after the limit
+is reached. Every other request is a new download, whatever its range.
+
+A 304 or 416 delivers nothing, so it neither spends the allowance nor earns the
+cookie. A client that hangs up after receiving the cookie has spent its
+download, because the cookie is what lets it resume.
+
+Reaching the limit stops new downloads at once. The share stays registered
+until its last transfer finishes and has been quiet for 30 seconds, so the final
+permitted download is never cut off and a paused video can resume. An expired
+TTL ends transfers immediately.
 
 The locked page shows no filename: a visitor without the password learns
 nothing about what is behind it.
@@ -185,6 +216,11 @@ The viewer page treats a shared file as hostile input:
   `Content-Type` from vrok's own table, so the file's first bytes cannot change
   how a browser treats it.
 
+The raw URL of a single-file or multi-file share can be opened directly, outside
+the preview's sandboxed frame. HTML, SVG and XML served that way carry
+`Content-Security-Policy: sandbox`, so they render in a unique origin with
+scripts disabled.
+
 Directory shares do serve HTML with scripts enabled, because serving a test
 report or a built site is a primary use case and those artefacts need their own
 scripts. The exposure is bounded: a script in a shared page is already inside
@@ -193,9 +229,9 @@ would require its 128-bit token.
 
 ## Network exposure
 
-The HTTP server always binds `127.0.0.1`. Reaching it from anywhere else is a
-tunnel's job, never the listener's, so there is no configuration in which vrok
-is accidentally listening on a public interface.
+The HTTP server binds `127.0.0.1` unless `--local` or `--listen` explicitly
+asks for something else. Reaching it from anywhere else is a tunnel's job, not
+the listener's, so a default share never listens on a public interface.
 
 | Invocation                        | Reachable from                                     |
 | --------------------------------- | -------------------------------------------------- |
@@ -224,6 +260,9 @@ precise about:
   "latest", so the binary is the one this release was tested against.
 - It is fetched over HTTPS from Cloudflare's GitHub releases, authenticated by
   TLS to that host.
+- Its SHA-256 is pinned per platform in the same file. TLS proves where the
+  bytes came from, not that they are the bytes this release was tested with; a
+  download that does not match is discarded and never executed.
 - It is written to a temporary file and renamed into place, so an interrupted
   download cannot leave a partial binary that a later run would execute.
 - Only a regular file named `cloudflared` is taken from the archive, so an

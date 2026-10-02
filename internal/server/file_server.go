@@ -41,9 +41,11 @@ type target struct {
 // file-backed share kinds differ only in how they resolve a request to a
 // target, so everything after that point is shared here.
 type assetServer struct {
-	detector preview.Detector
-	previews *preview.Registry
-	pages    *pages
+	detector  preview.Detector
+	previews  *preview.Registry
+	pages     *pages
+	downloads downloadSessions
+	clock     sharing.Clock
 }
 
 // serve delivers a resolved target according to the request's delivery mode.
@@ -96,9 +98,11 @@ func (a *assetServer) page(w http.ResponseWriter, r *http.Request, sr *shareRequ
 // semantics in the standard library. That is what gives video seeking and
 // resumable downloads for free.
 func (a *assetServer) stream(w http.ResponseWriter, r *http.Request, sr *shareRequest, t target) {
-	// The allowance is claimed before the file is opened: refusing early is
-	// what makes --downloads a hard cap even under concurrent requests.
-	counted := isInitialFetch(r)
+	// A request counts as a download unless it is a HEAD or continues one
+	// already counted (see downloadSessions). The allowance is claimed before
+	// the file is opened: refusing early is what makes --downloads a hard cap
+	// even under concurrent requests.
+	counted := r.Method != http.MethodHead && !a.downloads.Holds(r, sr.Spec, t.Rel)
 	if counted {
 		if _, err := sr.Share.ClaimDownload(sr.Now); err != nil {
 			a.pages.gone(w, r, err)
@@ -134,19 +138,40 @@ func (a *assetServer) stream(w http.ResponseWriter, r *http.Request, sr *shareRe
 	h.Set("Content-Type", descriptor.ContentType)
 	h.Set("Content-Disposition", disposition(sr.Delivery, descriptor, t.Name))
 	h.Set("X-Content-Type-Options", "nosniff")
+	if sr.Spec.Kind != sharing.KindDirectory && scriptable(descriptor.ContentType) {
+		// The preview page frames this file in a sandbox, but the raw URL
+		// can also be opened directly. Without the header, a shared .html or
+		// .svg opened that way would run script in vrok's own origin.
+		// Directory shares are exempt by design: a built site or test report
+		// needs its scripts (see docs/security.md).
+		h.Set("Content-Security-Policy", "sandbox")
+	}
 	h.Set("ETag", etag(info))
 	// Shares are short-lived but their contents are immutable for that window;
 	// a private cache makes repeated video seeks cheap without risking the
 	// file outliving the share in a shared cache.
 	h.Set("Cache-Control", "private, max-age=0, must-revalidate")
 
-	cw := &countingWriter{ResponseWriter: w}
+	// Registered as in flight so the reaper does not stop the process while
+	// the last permitted download is still being delivered.
+	sr.Share.BeginTransfer()
+	defer func() { sr.Share.EndTransfer(a.clock.Now()) }()
+
+	out := w
+	var session *sessionWriter
+	if counted {
+		session = &sessionWriter{ResponseWriter: w, cookie: a.downloads.cookie(r, sr, t.Rel)}
+		out = session
+	}
+	cw := &countingWriter{ResponseWriter: out}
 	http.ServeContent(cw, r, t.Name, info.ModTime(), f)
 
 	sr.Share.AddBytes(cw.n)
-	// A request that delivered nothing (a 304, or a client that disconnected
-	// before the first byte) must not consume the visitor's allowance.
-	if counted && cw.n == 0 {
+	// A response that delivered nothing (a 304, a 416) must not consume the
+	// visitor's allowance. Once a session has been issued it stays spent,
+	// even if the client hangs up at once: the session is what lets it
+	// resume, so releasing it too would turn hanging up into a free download.
+	if counted && !session.issued {
 		sr.Share.ReleaseDownload()
 	}
 }
@@ -213,6 +238,18 @@ func disposition(d delivery, desc preview.Descriptor, name string) string {
 		kind = "inline"
 	}
 	return mime.FormatMediaType(kind, map[string]string{"filename": name})
+}
+
+// scriptable reports whether a browser opening contentType at the top level
+// would execute script embedded in it.
+func scriptable(contentType string) bool {
+	mediaType, _, _ := mime.ParseMediaType(contentType)
+	switch mediaType {
+	case "text/html", "application/xhtml+xml", "image/svg+xml", "text/xml", "application/xml":
+		return true
+	default:
+		return false
+	}
 }
 
 // etag derives a strong validator from size and modification time.

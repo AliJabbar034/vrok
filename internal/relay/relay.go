@@ -134,6 +134,11 @@ func (r *Relay) ListenAndServe(ctx context.Context) error {
 		slog.String("addr", listener.Addr().String()),
 		slog.String("domain", r.opts.Domain),
 		slog.Bool("tls", r.opts.servesTLS()))
+	if r.opts.AuthToken == "" {
+		// Anyone who can reach an open relay can publish content under its
+		// domain. That is a legitimate choice, but never a silent one.
+		r.logger.Warn("relay is open: any agent may register a hostname; set -token to restrict it")
+	}
 
 	errs := make(chan error, 1)
 	go func() {

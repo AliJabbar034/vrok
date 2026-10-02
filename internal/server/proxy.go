@@ -102,6 +102,7 @@ func (h *ProxyHandler) build(target *url.URL, links Links) *httputil.ReverseProx
 			// they are configured for rather than the share's hostname.
 			pr.Out.Host = target.Host
 			pr.SetXForwarded()
+			stripVrokCookies(pr.Out.Header)
 		},
 
 		ModifyResponse: func(resp *http.Response) error {
@@ -113,6 +114,31 @@ func (h *ProxyHandler) build(target *url.URL, links Links) *httputil.ReverseProx
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 			h.upstreamUnavailable(w, r, target, err)
 		},
+	}
+}
+
+// stripVrokCookies removes vrok's own cookies from a request bound for the
+// upstream app. The unlock proof belongs to vrok; the shared app has no use for
+// it and should not be handed it. The header is filtered as text rather than
+// parsed and re-encoded, so the app's own cookies arrive byte for byte.
+func stripVrokCookies(h http.Header) {
+	lines := h.Values("Cookie")
+	if len(lines) == 0 {
+		return
+	}
+	h.Del("Cookie")
+	for _, line := range lines {
+		kept := make([]string, 0, strings.Count(line, ";")+1)
+		for _, pair := range strings.Split(line, ";") {
+			pair = strings.TrimSpace(pair)
+			if pair == "" || strings.HasPrefix(pair, cookiePrefix) {
+				continue
+			}
+			kept = append(kept, pair)
+		}
+		if len(kept) > 0 {
+			h.Add("Cookie", strings.Join(kept, "; "))
+		}
 	}
 }
 

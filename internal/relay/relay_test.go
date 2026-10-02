@@ -2,10 +2,15 @@ package relay
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/AliJabbar034/vrok/internal/protocol"
+	"github.com/gorilla/websocket"
 )
 
 func TestHostLabelExtraction(t *testing.T) {
@@ -250,5 +255,41 @@ func TestTLSIsOptional(t *testing.T) {
 	}
 	if r.opts.servesTLS() {
 		t.Error("a relay with no certificate should not claim to terminate TLS")
+	}
+}
+
+// One oversized message must cost the relay a dropped connection, not its
+// memory: a relay with no auth token accepts agents from anyone.
+func TestOversizedAgentMessagesAreRefused(t *testing.T) {
+	r, err := New(Options{Domain: "vrok.example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(r.Handler())
+	defer server.Close()
+
+	ws, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(server.URL, "http")+protocol.AgentPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ws.Close()
+
+	huge := make([]byte, protocol.MaxMessageSize+1)
+	// The relay may close mid-write; either outcome of the write is fine.
+	_ = ws.WriteMessage(websocket.TextMessage, huge)
+
+	ws.SetReadDeadline(time.Now().Add(5 * time.Second))
+	for {
+		if _, _, err := ws.ReadMessage(); err != nil {
+			var closeErr *websocket.CloseError
+			if errors.As(err, &closeErr) && closeErr.Code != websocket.CloseMessageTooBig {
+				t.Errorf("relay closed with %d, want %d", closeErr.Code, websocket.CloseMessageTooBig)
+			}
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() {
+				t.Fatal("relay kept reading an oversized message instead of dropping the agent")
+			}
+			return
+		}
 	}
 }

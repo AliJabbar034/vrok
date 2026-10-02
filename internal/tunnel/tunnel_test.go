@@ -215,3 +215,33 @@ func TestFirstRangeStartParsing(t *testing.T) {
 		}
 	}
 }
+
+// The request URI comes from the relay. However it is spelled, the agent must
+// only ever talk to its own local server: a relay that could steer it
+// elsewhere could read the sharer's LAN or cloud metadata service.
+func TestRelayRequestsCannotLeaveTheLocalServer(t *testing.T) {
+	target, _ := url.Parse("http://127.0.0.1:52000")
+
+	for _, uri := range []string{
+		"@169.254.169.254/latest/meta-data/",
+		"//evil.example/x",
+		".evil.example/x",
+		"http://evil.example/x",
+		"",
+	} {
+		if got, err := localURL(target, uri); err == nil {
+			t.Errorf("localURL(%q) = %q, want it refused", uri, got)
+		}
+	}
+
+	for uri, want := range map[string]string{
+		"/":                       "http://127.0.0.1:52000/",
+		"/s/tok/a%20b.txt?raw=1":  "http://127.0.0.1:52000/s/tok/a%20b.txt?raw=1",
+		"/s/tok/@169.254.169.254": "http://127.0.0.1:52000/s/tok/@169.254.169.254",
+	} {
+		got, err := localURL(target, uri)
+		if err != nil || got != want {
+			t.Errorf("localURL(%q) = %q, %v; want %q", uri, got, err, want)
+		}
+	}
+}

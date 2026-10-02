@@ -568,8 +568,14 @@ func TestUnavailableSharesReportTheSameWay(t *testing.T) {
 		if resp := f.get("?dl=1"); resp.StatusCode != http.StatusOK {
 			t.Fatalf("the first download returned %d", resp.StatusCode)
 		}
-		if resp := f.get("?dl=1"); resp.StatusCode != http.StatusNotFound {
-			t.Errorf("the second download returned %d, want 404", resp.StatusCode)
+		// A second visitor, with no session for the first download.
+		other, err := http.Get(f.url("?dl=1"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		other.Body.Close()
+		if other.StatusCode != http.StatusNotFound {
+			t.Errorf("the second download returned %d, want 404", other.StatusCode)
 		}
 		// Browsing must stop too, not just downloading.
 		if resp := f.get(""); resp.StatusCode != http.StatusNotFound {

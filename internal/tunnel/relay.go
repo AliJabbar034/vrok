@@ -240,7 +240,12 @@ func (t *RelayTunnel) serve(ctx context.Context, msg protocol.Request) {
 	target := t.target
 	t.mu.Unlock()
 
-	request, err := http.NewRequestWithContext(ctx, msg.Method, target.String()+msg.URI, body)
+	local, err := localURL(target, msg.URI)
+	if err != nil {
+		t.reportStreamError(conn, msg.Stream, err)
+		return
+	}
+	request, err := http.NewRequestWithContext(ctx, msg.Method, local, body)
 	if err != nil {
 		t.reportStreamError(conn, msg.Stream, err)
 		return
@@ -274,6 +279,27 @@ func (t *RelayTunnel) serve(ctx context.Context, msg protocol.Request) {
 	if err := conn.Copy(msg.Stream, response.Body); err != nil && !protocol.IsExpectedClose(err) {
 		t.logger.Debug("response stream ended early", slog.String("error", err.Error()))
 	}
+}
+
+// localURL places a relay-supplied request URI onto the local share server.
+//
+// The URI comes off the network, so it is parsed rather than concatenated:
+// joined as a string, "@169.254.169.254/" would turn the local origin into
+// userinfo and send the agent to a host of the relay's choosing. Only
+// origin-form paths are accepted, and only the path and query are taken from
+// them; the scheme and host are always the local server's.
+func localURL(target *url.URL, uri string) (string, error) {
+	if !strings.HasPrefix(uri, "/") || strings.HasPrefix(uri, "//") {
+		return "", fmt.Errorf("tunnel: refusing request URI %q: not an origin-form path", uri)
+	}
+	parsed, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return "", fmt.Errorf("tunnel: refusing request URI %q: %w", uri, err)
+	}
+	local := *target
+	local.Path, local.RawPath, local.RawQuery = parsed.Path, parsed.RawPath, parsed.RawQuery
+	local.User, local.Fragment = nil, ""
+	return local.String(), nil
 }
 
 func (t *RelayTunnel) reportStreamError(conn *protocol.Conn, stream uint64, err error) {

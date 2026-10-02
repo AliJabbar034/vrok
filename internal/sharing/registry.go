@@ -149,12 +149,10 @@ func (r *Registry) RemoveAll() []*Share {
 // PurgeExpired removes shares that are no longer available at now, returning
 // them so the caller can report what went away.
 func (r *Registry) PurgeExpired(now time.Time) []*Share {
-	guards := Guards{NotExpired(), UnderDownloadLimit()}
-
 	r.mu.Lock()
 	var expired []*Share
 	for id, s := range r.byID {
-		if guards.Check(s.Snapshot(), now) == nil {
+		if !spent(s.Snapshot(), now) {
 			continue
 		}
 		expired = append(expired, s)
@@ -167,4 +165,29 @@ func (r *Registry) PurgeExpired(now time.Time) []*Share {
 		s.Revoke()
 	}
 	return expired
+}
+
+// DownloadLimitGrace is how long a share that has used its download allowance
+// stays registered after its last transfer goes quiet. A browser playing a
+// video pauses its fetch once it has buffered enough and resumes with a new
+// ranged request later; without a grace period, that resume would find the
+// share gone and the video would stop partway through.
+const DownloadLimitGrace = 30 * time.Second
+
+// spent reports whether the reaper should drop a share.
+//
+// An expired share goes at once: its TTL is a promise to the sharer, and
+// in-flight transfers end with it. A share that has used its download
+// allowance is different. New downloads are already refused at claim time, so
+// keeping it registered only lets the transfers it granted finish. It goes
+// once none are running and the last one has been quiet for
+// DownloadLimitGrace.
+func spent(s Snapshot, now time.Time) bool {
+	if NotExpired().Check(s, now) != nil {
+		return true
+	}
+	if UnderDownloadLimit().Check(s, now) == nil {
+		return false
+	}
+	return s.ActiveTransfers == 0 && now.Sub(s.LastAccess) >= DownloadLimitGrace
 }

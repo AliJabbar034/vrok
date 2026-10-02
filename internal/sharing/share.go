@@ -90,6 +90,10 @@ type Snapshot struct {
 	BytesTransferred int64     `json:"bytes_transferred"`
 	LastAccess       time.Time `json:"last_access"`
 	Revoked          bool      `json:"revoked"`
+	// ActiveTransfers counts file bodies being streamed right now. A share
+	// that has used its download allowance is kept until this reaches zero,
+	// so the last permitted download is never cut off mid-transfer.
+	ActiveTransfers int `json:"active_transfers"`
 }
 
 // Share is a live share: an immutable Spec plus mutable access counters.
@@ -105,6 +109,7 @@ type Share struct {
 	bytes      int64
 	lastAccess time.Time
 	revoked    bool
+	active     int
 }
 
 // New returns a live share for spec.
@@ -129,6 +134,7 @@ func (s *Share) Snapshot() Snapshot {
 		BytesTransferred: s.bytes,
 		LastAccess:       s.lastAccess,
 		Revoked:          s.revoked,
+		ActiveTransfers:  s.active,
 	}
 }
 
@@ -176,6 +182,28 @@ func (s *Share) ReleaseDownload() {
 	s.mu.Lock()
 	if s.downloads > 0 {
 		s.downloads--
+	}
+	s.mu.Unlock()
+}
+
+// BeginTransfer records that a file body has started streaming. Every call
+// must be paired with EndTransfer.
+func (s *Share) BeginTransfer() {
+	s.mu.Lock()
+	s.active++
+	s.mu.Unlock()
+}
+
+// EndTransfer records that a transfer finished, successfully or not. The end
+// of a long download is the share's most recent activity, so it also counts
+// as an access.
+func (s *Share) EndTransfer(now time.Time) {
+	s.mu.Lock()
+	if s.active > 0 {
+		s.active--
+	}
+	if now.After(s.lastAccess) {
+		s.lastAccess = now
 	}
 	s.mu.Unlock()
 }
