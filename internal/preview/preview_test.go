@@ -147,7 +147,7 @@ func TestRenderersProduceTheExpectedMarkup(t *testing.T) {
 		{"page.html", "<p>hi</p>", []string{"<iframe", "sandbox"}},
 		{"notes.md", "# Heading\n\n- item\n", []string{"<h1", "Heading", "<li>"}},
 		{"notes.txt", "plain text", []string{"<pre", "plain text"}},
-		{"firmware.bin", "\x00\x01", []string{"Download", "?dl=1"}},
+		{"firmware.bin", "\x00\x01", []string{"cannot be previewed", "Download"}},
 	}
 
 	for _, tc := range cases {

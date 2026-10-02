@@ -5,6 +5,7 @@ package sharing
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 )
@@ -48,8 +49,11 @@ type Entry struct {
 	Size int64  `json:"size"`
 }
 
-// Spec is the immutable description of a share. Once a Share exists its Spec
-// never changes, so it can be copied and read without synchronisation.
+// Spec is the description of a share. Identity fields (ID, Token, Kind, Root,
+// Entries, Target) are fixed at creation so the URL never rotates. Lifetime
+// fields (ExpiresAt, MaxDownloads, PasswordHash) may be updated in place
+// under the share lock, which is how a running share grows a password or
+// becomes one-time without minting a new link.
 type Spec struct {
 	// ID is the short public handle used for management commands and, with a
 	// relay, as the hostname label.
@@ -94,9 +98,20 @@ type Snapshot struct {
 	// that has used its download allowance is kept until this reaches zero,
 	// so the last permitted download is never cut off mid-transfer.
 	ActiveTransfers int `json:"active_transfers"`
+	// Transfers is the progress of each body being streamed, oldest first.
+	Transfers []TransferProgress `json:"transfers,omitempty"`
 }
 
-// Share is a live share: an immutable Spec plus mutable access counters.
+// TransferProgress is how far one in-flight transfer has got.
+type TransferProgress struct {
+	// Sent is the payload bytes delivered so far.
+	Sent int64 `json:"sent"`
+	// Total is the expected body size, or -1 when it is not known up front,
+	// as with a folder streamed as a zip.
+	Total int64 `json:"total"`
+}
+
+// Share is a live share: a Spec plus mutable access counters.
 //
 // Every mutable field is guarded by mu. Counters are deliberately not atomics:
 // the download limit has to be read and incremented as one step, otherwise two
@@ -109,20 +124,70 @@ type Share struct {
 	bytes      int64
 	lastAccess time.Time
 	revoked    bool
-	active     int
+	// transfers holds the bodies streaming right now, keyed by Transfer.id.
+	transfers map[uint64]*TransferProgress
+	nextID    uint64
 }
 
 // New returns a live share for spec.
 func New(spec Spec) *Share { return &Share{spec: spec} }
 
-// Spec returns the share's immutable description.
-func (s *Share) Spec() Spec { return s.spec }
+// Spec returns a copy of the share's description.
+func (s *Share) Spec() Spec {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.spec
+}
 
 // ID returns the public handle.
-func (s *Share) ID() string { return s.spec.ID }
+func (s *Share) ID() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.spec.ID
+}
 
 // Token returns the URL secret.
-func (s *Share) Token() string { return s.spec.Token }
+func (s *Share) Token() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.spec.Token
+}
+
+// SetExpiresAt updates when the share stops answering. The zero time means
+// the share lives until the process exits. The URL does not change.
+func (s *Share) SetExpiresAt(t time.Time) {
+	s.mu.Lock()
+	s.spec.ExpiresAt = t
+	s.mu.Unlock()
+}
+
+// SetMaxDownloads updates the download cap. Zero means unlimited. Setting 1
+// turns the share into a one-time link without minting a new URL.
+func (s *Share) SetMaxDownloads(n int) {
+	if n < 0 {
+		n = 0
+	}
+	s.mu.Lock()
+	s.spec.MaxDownloads = n
+	s.mu.Unlock()
+}
+
+// AllowOneMore caps the share at one further download, counting from now,
+// which is what makes a running share a one-time link. Downloads already
+// served do not use up the new allowance.
+func (s *Share) AllowOneMore() {
+	s.mu.Lock()
+	s.spec.MaxDownloads = s.downloads + 1
+	s.mu.Unlock()
+}
+
+// SetPasswordHash stores a new Argon2id digest. An empty hash removes the
+// password. The plaintext never enters the share.
+func (s *Share) SetPasswordHash(hash string) {
+	s.mu.Lock()
+	s.spec.PasswordHash = hash
+	s.mu.Unlock()
+}
 
 // Snapshot returns a consistent view of the share.
 func (s *Share) Snapshot() Snapshot {
@@ -134,8 +199,27 @@ func (s *Share) Snapshot() Snapshot {
 		BytesTransferred: s.bytes,
 		LastAccess:       s.lastAccess,
 		Revoked:          s.revoked,
-		ActiveTransfers:  s.active,
+		ActiveTransfers:  len(s.transfers),
+		Transfers:        s.transferProgress(),
 	}
+}
+
+// transferProgress copies the in-flight transfers in the order they began.
+// The caller holds mu.
+func (s *Share) transferProgress() []TransferProgress {
+	if len(s.transfers) == 0 {
+		return nil
+	}
+	ids := make([]uint64, 0, len(s.transfers))
+	for id := range s.transfers {
+		ids = append(ids, id)
+	}
+	slices.Sort(ids)
+	out := make([]TransferProgress, len(ids))
+	for i, id := range ids {
+		out[i] = *s.transfers[id]
+	}
+	return out
 }
 
 // Touch records that a visitor interacted with the share.
@@ -186,22 +270,57 @@ func (s *Share) ReleaseDownload() {
 	s.mu.Unlock()
 }
 
-// BeginTransfer records that a file body has started streaming. Every call
-// must be paired with EndTransfer.
-func (s *Share) BeginTransfer() {
-	s.mu.Lock()
-	s.active++
-	s.mu.Unlock()
+// Transfer is one file body being streamed. Bytes are reported as they are
+// written, so the owner sees a multi-gigabyte download progress live rather
+// than only once it ends.
+type Transfer struct {
+	share *Share
+	id    uint64
 }
 
-// EndTransfer records that a transfer finished, successfully or not. The end
-// of a long download is the share's most recent activity, so it also counts
-// as an access.
-func (s *Share) EndTransfer(now time.Time) {
+// BeginTransfer records that a file body has started streaming. Every call
+// must be paired with End on the returned Transfer.
+func (s *Share) BeginTransfer() *Transfer {
 	s.mu.Lock()
-	if s.active > 0 {
-		s.active--
+	defer s.mu.Unlock()
+	if s.transfers == nil {
+		s.transfers = make(map[uint64]*TransferProgress)
 	}
+	s.nextID++
+	s.transfers[s.nextID] = &TransferProgress{Total: -1}
+	return &Transfer{share: s, id: s.nextID}
+}
+
+// SetTotal records the expected body size once the response headers say it.
+func (t *Transfer) SetTotal(n int64) {
+	t.share.mu.Lock()
+	if p, ok := t.share.transfers[t.id]; ok {
+		p.Total = n
+	}
+	t.share.mu.Unlock()
+}
+
+// Add counts n payload bytes as delivered, both for this transfer and for
+// the share's running total.
+func (t *Transfer) Add(n int64) {
+	if n <= 0 {
+		return
+	}
+	t.share.mu.Lock()
+	t.share.bytes += n
+	if p, ok := t.share.transfers[t.id]; ok {
+		p.Sent += n
+	}
+	t.share.mu.Unlock()
+}
+
+// End records that the transfer finished, successfully or not. The end of a
+// long download is the share's most recent activity, so it also counts as an
+// access.
+func (t *Transfer) End(now time.Time) {
+	s := t.share
+	s.mu.Lock()
+	delete(s.transfers, t.id)
 	if now.After(s.lastAccess) {
 		s.lastAccess = now
 	}
@@ -217,17 +336,18 @@ func (s *Share) Revoke() {
 
 // Describe renders the share's source in a form suitable for the terminal.
 func (s *Share) Describe() string {
-	switch s.spec.Kind {
+	spec := s.Spec()
+	switch spec.Kind {
 	case KindHTTP:
-		return s.spec.Target
+		return spec.Target
 	case KindDirectory:
-		return s.spec.Root
+		return spec.Root
 	case KindFile:
-		if len(s.spec.Entries) == 1 {
-			return s.spec.Entries[0].Path
+		if len(spec.Entries) == 1 {
+			return spec.Entries[0].Path
 		}
 	case KindFiles:
-		return fmt.Sprintf("%d files", len(s.spec.Entries))
+		return fmt.Sprintf("%d files", len(spec.Entries))
 	}
-	return s.spec.Name
+	return spec.Name
 }

@@ -15,6 +15,19 @@
     </div>
   </div>
 
+  {{if .SHA256}}
+  <details class="checksum">
+    <summary><span class="checksum__label">SHA-256</span> <code class="checksum__value">{{.SHA256}}</code></summary>
+    <p class="checksum__help">
+      To check your copy arrived intact, compare this with the output of
+      <code>shasum -a 256 "{{.Name}}"</code> on macOS or Linux, or
+      <code>certutil -hashfile "{{.Name}}" SHA256</code> on Windows.
+    </p>
+  </details>
+  {{else if .ChecksumPending}}
+  <p class="checksum checksum--pending"><span class="checksum__label">SHA-256</span> calculating&hellip; reload in a moment to see it</p>
+  {{end}}
+
   {{.Preview}}
 </section>
 {{end}}

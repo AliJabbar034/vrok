@@ -8,12 +8,13 @@
   <meta name="referrer" content="no-referrer">
   <title>{{.Title}}</title>
   <link rel="stylesheet" href="{{.StaticBase}}/viewer.css">
-  <link rel="icon" href="{{.StaticBase}}/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="{{.StaticBase}}/favicon.svg?v=b" type="image/svg+xml">
 </head>
 <body>
   <header class="top">
     <a class="brand" href="{{.HomeURL}}" title="Shared with vrok">
-      <span class="brand__mark">▲</span><span class="brand__name">vrok</span>
+      <img class="brand__mark" src="{{.StaticBase}}/mark.svg?v=b" alt="" width="28" height="28">
+      <span class="brand__name">vrok</span>
     </a>
     <div class="top__meta">
       {{if .Expires}}<span class="pill pill--clock" title="Time remaining">⏱ {{.Expires}}</span>{{end}}

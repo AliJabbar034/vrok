@@ -61,7 +61,7 @@
 }
 .dl__note code,
 .dl__alt code,
-.after dd code {
+.after dd code:not(.cmd__text) {
   color: var(--ink);
   font-size: 0.86em;
   background: rgba(255, 255, 255, 0.07);

@@ -9,7 +9,7 @@
       content="Commands, flags, what visitors see, reach, and the security model. vrok shares files, folders and running servers without uploading them."
     />
     <meta name="theme-color" content="#0c3a3f" />
-    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
     <link
       rel="preload"
       href="fonts/archivo-var.ttf"
@@ -23,17 +23,31 @@
   <body>
     <a class="skip" href="#guide">Skip to guide</a>
 
+    <aside class="release" data-release hidden role="status">
+      <div class="release__inner">
+        <p>
+          <span class="release__new" data-release-fresh hidden>New</span>
+          <strong data-latest-tag></strong> is out. Update with the same command
+          you used to install.
+          <a href="download.html#update">How to update</a>
+        </p>
+        <button type="button" class="release__hide" data-release-dismiss>
+          Hide
+        </button>
+      </div>
+    </aside>
+
     <header class="bar">
       <a class="wordmark" href="./" aria-label="vrok home">
         <img
           class="wordmark__mark"
-          src="assets/mark.svg"
+          src="assets/mark.svg?v=b"
           alt=""
           width="32"
           height="32"
         />
         <span class="wordmark__text">vrok</span>
-        <span class="wordmark__tag">share locally</span>
+        <span class="wordmark__tag">straight from your machine</span>
       </a>
       <nav class="bar__nav" aria-label="Primary">
         <button
@@ -61,8 +75,10 @@
           <h2>On this page</h2>
           <ol>
             <li><a href="#what">What it is</a></li>
+            <li><a href="#update">Updating</a></li>
             <li><a href="#commands">Commands</a></li>
             <li><a href="#flags">Flags</a></li>
+            <li><a href="#large">Large files</a></li>
             <li><a href="#manage">Managing shares</a></li>
             <li><a href="#visitors">What visitors see</a></li>
             <li><a href="#reach">Who can open the URL</a></li>
@@ -113,6 +129,23 @@
             </p>
           </section>
 
+          <section id="update">
+            <h2>Updating</h2>
+            <p>
+              There is no separate updater. The install command installs
+              whatever GitHub currently calls latest, and overwrites the
+              previous binary.
+            </p>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh
+irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex
+go install github.com/AliJabbar034/vrok/cmd/vrok@latest
+brew upgrade --cask AliJabbar034/tap/vrok</code></pre>
+            <p>
+              Then <code>vrok --version</code>. The site banner shows the tag
+              that is current.
+            </p>
+          </section>
+
           <section id="commands">
             <h2>Commands</h2>
             <pre><code>vrok ./cut-03.mp4                 # one file
@@ -135,6 +168,12 @@ vrok share ./x                    # same as vrok ./x</code></pre>
               <code>index.html</code>, that file is served at the root — which
               is why <code>vrok ./dist</code> looks like the real site. Add
               <code>?list=1</code> to any directory URL to force the listing.
+            </p>
+            <p>
+              Every listing has a <strong>Download all (.zip)</strong> button,
+              and any subfolder can be zipped on its own. The zip is built while
+              it is sent, so nothing is written to disk first. One zip counts as
+              one download against <code>--downloads</code>.
             </p>
 
             <h3>A localhost app</h3>
@@ -162,12 +201,18 @@ vrok share ./x                    # same as vrok ./x</code></pre>
               </thead>
               <tbody>
                 <tr>
+                  <td><code>-i</code></td>
+                  <td>
+                    Three questions first: who can open it, how long it lasts,
+                    and the download limit. Then prints the equivalent flags.
+                  </td>
+                </tr>
+                <tr>
                   <td><code>--ttl 30m</code></td>
                   <td>
                     How long the share lives. <code>45s</code>,
                     <code>30m</code>, <code>2h</code>, <code>1d</code>,
-                    <code>1w</code>, or <code>0</code> for no expiry. Default
-                    <code>2h</code>.
+                    <code>1w</code>. Default: until you stop it.
                   </td>
                 </tr>
                 <tr>
@@ -226,6 +271,53 @@ vrok share ./x                    # same as vrok ./x</code></pre>
                 </tr>
               </tbody>
             </table>
+            <p>
+              While a share is running,
+              <code>c</code> copies the URL, <code>q</code> prints a QR code,
+              <code>p</code> adds a password, <code>e</code> changes the expiry,
+              <code>1</code> makes it one-time, and <code>x</code> stops. Each
+              change keeps the same URL. Scripts and CI never see the hotkey
+              bar.
+            </p>
+          </section>
+
+          <section id="large">
+            <h2>Large files</h2>
+            <p>
+              While someone downloads, one line under the banner shows how it
+              is going. When they finish, a summary stays behind:
+            </p>
+            <pre><code>↓ 1.2 GB / 4.0 GB · 30% · 38 MB/s · 1m left
+  ↓ Sent 4.0 GB in 1m 48s · 38 MB/s average</code></pre>
+            <ul>
+              <li>
+                <strong>Resumable.</strong> A dropped download picks up where it
+                stopped, and resuming does not spend one of your
+                <code>--downloads</code>.
+              </li>
+              <li>
+                <strong>Your computer stays awake.</strong> While a transfer is
+                running, vrok keeps the machine from going to sleep on its own,
+                and lets it sleep again 30 seconds after the last one ends.
+                Closing the lid still sleeps.
+              </li>
+              <li>
+                <strong>Whole folders in one go.</strong> See
+                <a href="#commands">A folder</a> above.
+              </li>
+              <li>
+                <strong>A fingerprint to check against.</strong> The file page
+                shows the file’s SHA-256, worked out in the background after the
+                share starts. The recipient compares it with
+                <code>shasum -a 256 file</code> on macOS or Linux, or
+                <code>certutil -hashfile file SHA256</code> on Windows.
+              </li>
+            </ul>
+            <p>
+              Speed is set by your upload bandwidth and the tunnel, not by vrok:
+              every byte comes from your machine.
+              <a href="./#watch">Watch a transfer on the homepage</a>.
+            </p>
           </section>
 
           <section id="manage">
@@ -244,7 +336,14 @@ vrok config set ttl 30m # store a default</code></pre>
 
           <section id="visitors">
             <h2>What visitors see</h2>
-            <p>The table decides presentation only. Any type can be shared.</p>
+            <p>
+              The link opens a vrok page in the same enamel locker theme as this
+              site — mark, countdown, one Download button. They can view what
+              the browser can show and download the original. A mock of that
+              page is on the
+              <a href="./#look">homepage</a>. The table below is presentation
+              only. Any type can be shared.
+            </p>
             <table class="guide-table">
               <thead>
                 <tr>
@@ -407,7 +506,7 @@ vrok config set ttl 30m # store a default</code></pre>
         <a class="foot__brand" href="./" aria-label="vrok home">
           <img
             class="foot__logo"
-            src="assets/mark.svg"
+            src="assets/mark.svg?v=b"
             alt=""
             width="28"
             height="28"

@@ -133,6 +133,52 @@ func TestReleaseDownloadReturnsTheAllowance(t *testing.T) {
 	}
 }
 
+// A live share can grow a password, shrink its TTL or become one-time
+// without rotating the token: that is the contract the hotkey bar relies on.
+func TestLiveMutatorsChangeAccessWithoutRotatingTheToken(t *testing.T) {
+	now := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
+	share := sharing.New(sharing.Spec{
+		ID:        "id",
+		Token:     "tok",
+		Name:      "a.txt",
+		ExpiresAt: now.Add(time.Hour),
+	})
+	token := share.Token()
+
+	share.SetExpiresAt(now.Add(30 * time.Minute))
+	share.SetMaxDownloads(1)
+	share.SetPasswordHash("hashed:x")
+
+	if share.Token() != token {
+		t.Fatal("mutating the share rotated the URL token")
+	}
+	snap := share.Snapshot()
+	if snap.Token != token {
+		t.Errorf("snapshot token = %q, want the original", snap.Token)
+	}
+	if !snap.Protected() {
+		t.Error("setting a password hash did not mark the share protected")
+	}
+	if snap.MaxDownloads != 1 {
+		t.Errorf("MaxDownloads = %d, want 1", snap.MaxDownloads)
+	}
+	if !snap.ExpiresAt.Equal(now.Add(30 * time.Minute)) {
+		t.Errorf("ExpiresAt = %v, want now+30m", snap.ExpiresAt)
+	}
+
+	if _, err := share.ClaimDownload(now); err != nil {
+		t.Fatalf("first claim after becoming one-time: %v", err)
+	}
+	if _, err := share.ClaimDownload(now); !errors.Is(err, sharing.ErrDownloadLimit) {
+		t.Fatalf("second claim returned %v, want ErrDownloadLimit", err)
+	}
+
+	share.SetExpiresAt(now.Add(-time.Second))
+	if err := sharing.DefaultGuards().Check(share.Snapshot(), now); !errors.Is(err, sharing.ErrExpired) {
+		t.Fatalf("guards after shrinking TTL: %v, want ErrExpired", err)
+	}
+}
+
 func TestRegistryLookupAndRemoval(t *testing.T) {
 	reg := sharing.NewRegistry()
 	share := sharing.New(sharing.Spec{ID: "abc123", Token: "secret-token"})
@@ -330,6 +376,28 @@ func TestClassifyPrefersTheFilesystem(t *testing.T) {
 			t.Error("mixing a directory into a multi-file share was accepted")
 		}
 	})
+
+	t.Run("unquoted spaces join back into one file", func(t *testing.T) {
+		spaced := filepath.Join(dir, "Wuthering Heights 2026.mkv")
+		if err := os.WriteFile(spaced, []byte("data"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		src, err := sharing.Classify([]string{"Wuthering", "Heights", "2026.mkv"})
+		if err == nil {
+			t.Fatal("relative tokens without the directory should not resolve")
+		}
+		src, err = sharing.Classify([]string{
+			filepath.Join(dir, "Wuthering"),
+			"Heights",
+			"2026.mkv",
+		})
+		if err != nil || src.Kind != sharing.KindFile {
+			t.Fatalf("joined path: kind %v, err %v", src.Kind, err)
+		}
+		if src.Name != "Wuthering Heights 2026.mkv" {
+			t.Errorf("Name = %q", src.Name)
+		}
+	})
 }
 
 func TestReaperStopsWhenTheLastShareExpires(t *testing.T) {
@@ -379,14 +447,14 @@ func TestDownloadLimitedShareOutlivesItsLastTransfer(t *testing.T) {
 	if _, err := share.ClaimDownload(now); err != nil {
 		t.Fatal(err)
 	}
-	share.BeginTransfer()
+	transfer := share.BeginTransfer()
 
 	if purged := reg.PurgeExpired(now.Add(time.Hour)); len(purged) != 0 {
 		t.Fatal("a share was purged while its last permitted download was in flight")
 	}
 
 	finished := now.Add(time.Hour)
-	share.EndTransfer(finished)
+	transfer.End(finished)
 	if purged := reg.PurgeExpired(finished.Add(sharing.DownloadLimitGrace / 2)); len(purged) != 0 {
 		t.Fatal("a share was purged inside the grace period, which would break a paused video")
 	}

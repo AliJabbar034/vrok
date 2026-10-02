@@ -30,3 +30,5 @@ completions/
 
 # Formatting tooling only; vrok itself does not need node to build.
 node_modules/
+
+.playwright-mcp/

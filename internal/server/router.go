@@ -96,7 +96,11 @@ func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest
 // allowance already paid for: a video seek or a resumed transfer. Those keep
 // working; new downloads, previews and listings do not.
 func (d *dispatcher) continuesDownload(r *http.Request, err error, spec sharing.Spec, rel string) bool {
-	if !errors.Is(err, sharing.ErrDownloadLimit) || parseDelivery(r) == deliverPage {
+	if !errors.Is(err, sharing.ErrDownloadLimit) {
+		return false
+	}
+	// An archive cannot be resumed, so there is nothing for it to continue.
+	if d := parseDelivery(r); d == deliverPage || d == deliverArchive {
 		return false
 	}
 	return d.downloads.Holds(r, spec, rel)

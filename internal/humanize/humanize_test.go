@@ -27,6 +27,20 @@ func TestBytes(t *testing.T) {
 	}
 }
 
+func TestElapsed(t *testing.T) {
+	cases := map[time.Duration]string{
+		0:                 "0s",
+		12 * time.Second:  "12s",
+		108 * time.Second: "1m 48s",
+		2*time.Hour + 5*time.Minute + 9*time.Second: "2h 5m",
+	}
+	for input, want := range cases {
+		if got := humanize.Elapsed(input); got != want {
+			t.Errorf("Elapsed(%v) = %q, want %q", input, got, want)
+		}
+	}
+}
+
 func TestDuration(t *testing.T) {
 	cases := map[time.Duration]string{
 		0:                 "expired",

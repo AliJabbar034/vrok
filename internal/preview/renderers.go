@@ -72,9 +72,8 @@ var fragments = template.Must(template.New("fragments").Funcs(template.FuncMap{
     <span class="card__icon">{{.Icon}}</span>
     <div class="card__meta">
       <span class="card__name">{{.Name}}</span>
-      <span class="card__size">{{bytes .Size}}</span>
+      <span class="card__size">{{bytes .Size}} · cannot be previewed. Use Download above.</span>
     </div>
-    <a class="button" href="{{.DownloadURL}}" download>Download</a>
   </div>
 </div>
 {{end}}

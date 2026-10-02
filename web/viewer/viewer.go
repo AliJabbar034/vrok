@@ -55,6 +55,11 @@ type FilePage struct {
 	SizeText    string
 	DownloadURL string
 	Breadcrumbs []Crumb
+	// SHA256 is the file's fingerprint as hex, once it has been worked out.
+	SHA256 string
+	// ChecksumPending is true while the fingerprint is still being worked
+	// out in the background.
+	ChecksumPending bool
 	// Preview is a trusted fragment produced by internal/preview.
 	Preview template.HTML
 }
@@ -82,6 +87,9 @@ type IndexPage struct {
 	// rather than left to assume the folder is smaller than it is.
 	Total     int
 	Truncated bool
+	// ArchiveURL downloads everything listed, and everything under it, as
+	// one zip. Empty when there is nothing to download.
+	ArchiveURL string
 }
 
 // PasswordPage presents the unlock form.

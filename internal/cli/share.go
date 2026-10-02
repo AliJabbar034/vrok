@@ -32,18 +32,19 @@ const shutdownGrace = 2 * time.Second
 
 // shareOptions are the flags of the share command.
 type shareOptions struct {
-	ttl        string
-	downloads  int
-	password   bool
-	name       string
-	qr         bool
-	local      bool
-	port       int
-	tunnelName string
-	relayURL   string
-	relayToken string
-	domain     string
-	listenAddr string
+	ttl         string
+	downloads   int
+	password    bool
+	name        string
+	qr          bool
+	local       bool
+	port        int
+	tunnelName  string
+	relayURL    string
+	relayToken  string
+	domain      string
+	listenAddr  string
+	interactive bool
 }
 
 // sharer runs one sharing session: it owns the registry, the HTTP server and
@@ -84,7 +85,8 @@ reached, or you press Ctrl+C.`,
   vrok share localhost:3000
   vrok share ./video.mp4 --ttl 30m --downloads 5 --password
   vrok share ./build --local --qr
-  vrok share ./report.pdf --tunnel cloudflare`,
+  vrok share ./report.pdf --tunnel cloudflare
+  vrok share -i ./demo.mp4`,
 		Args:          cobra.ArbitraryArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -105,7 +107,7 @@ reached, or you press Ctrl+C.`,
 // `vrok ./file.mp4` accepts exactly the same flags as the long form.
 func bindShareFlags(cmd *cobra.Command, opts *shareOptions) {
 	f := cmd.Flags()
-	f.StringVar(&opts.ttl, "ttl", "", "how long the share lives, e.g. 30m, 2h, 1d (default 2h, 0 for no expiry)")
+	f.StringVar(&opts.ttl, "ttl", "", "how long the share lives, e.g. 30m, 2h, 1d (default: until stopped)")
 	f.IntVar(&opts.downloads, "downloads", 0, "stop sharing after this many downloads (0 for unlimited)")
 	f.BoolVar(&opts.password, "password", false, "ask for a password that visitors must enter")
 	f.StringVar(&opts.name, "name", "", "display name for the share")
@@ -117,6 +119,7 @@ func bindShareFlags(cmd *cobra.Command, opts *shareOptions) {
 	f.StringVar(&opts.relayToken, "relay-token", "", "credential for a private relay")
 	f.StringVar(&opts.domain, "domain", "", "custom domain to request, where the provider supports it")
 	f.StringVar(&opts.listenAddr, "listen", "", "explicit listen address, e.g. 127.0.0.1:9000")
+	f.BoolVarP(&opts.interactive, "interactive", "i", false, "ask who can open it, how long it lasts, and the download limit")
 }
 
 func joinProviders() string { return strings.Join(tunnel.Available(), ", ") }
@@ -124,6 +127,12 @@ func joinProviders() string { return strings.Join(tunnel.Available(), ", ") }
 // run is the whole sharing flow: build the share, serve it, publish it, and
 // wait until it is stopped or expires.
 func (s *sharer) run(parent context.Context, args []string) error {
+	if s.opts.interactive {
+		if err := s.promptInteractive(args); err != nil {
+			return err
+		}
+	}
+
 	ttl, err := s.resolveTTL()
 	if err != nil {
 		return err
@@ -192,8 +201,28 @@ func (s *sharer) run(parent context.Context, args []string) error {
 
 	s.announce(share, publicURL)
 	s.watchExpiry(ctx, share)
+	s.server.Warm(share.Spec())
+
+	raw := newRawTerminal()
+	// Live progress needs the terminal to itself; with --verbose the request
+	// log is already writing to it.
+	var line *liveLine
+	if hasTerminal() && !s.app.verbose {
+		line = &liveLine{out: s.app.printer.Out(), printer: s.app.printer}
+	}
+	watched := make(chan struct{})
+	go func() {
+		defer close(watched)
+		s.watchTransfers(ctx, share, line)
+	}()
+	go s.serveKeys(ctx, raw, line, share, hasher, publicURL)
 
 	<-ctx.Done()
+	// The progress line goes first and the terminal comes back out of raw
+	// mode before anything else is printed. The key loop is not waited for:
+	// it may be parked in a prompt.
+	<-watched
+	raw.close()
 	s.reportStats(share)
 	return nil
 }
@@ -370,23 +399,34 @@ func firstHostedProvider() string {
 	return "cloudflare"
 }
 
-func (s *sharer) announce(share *sharing.Share, publicURL string) {
+func (s *sharer) shareView(share *sharing.Share, publicURL string) ui.ShareView {
 	spec := share.Spec()
 	view := ui.ShareView{
 		Name:         spec.Name,
 		URL:          publicURL,
-		TTL:          time.Until(spec.ExpiresAt),
 		MaxDownloads: spec.MaxDownloads,
+		Downloads:    share.Snapshot().Downloads,
 		Protected:    spec.Protected(),
 		Tunnel:       s.tunnelKind,
 	}
-	if spec.ExpiresAt.IsZero() {
-		view.TTL = 0
+	if !spec.ExpiresAt.IsZero() {
+		view.TTL = time.Until(spec.ExpiresAt)
 	}
-	if s.tunnelKind != "local" {
+	if s.server != nil && s.tunnelKind != "local" {
 		view.LocalURL = "http://" + s.server.Addr() + server.SharePath(spec.Token)
 	}
 	view.Reach, view.Hint = s.reach(publicURL)
+	return view
+}
+
+func (s *sharer) announce(share *sharing.Share, publicURL string) {
+	view := s.shareView(share, publicURL)
+	view.Interactive = hasTerminal()
+	if view.Interactive {
+		if err := ui.Copy(publicURL); err == nil {
+			view.Copied = true
+		}
+	}
 
 	s.app.printer.Started(view)
 	if s.opts.qr || s.app.config.QR {

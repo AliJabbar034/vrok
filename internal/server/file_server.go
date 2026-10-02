@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AliJabbar034/vrok/internal/checksum"
 	"github.com/AliJabbar034/vrok/internal/humanize"
 	"github.com/AliJabbar034/vrok/internal/preview"
 	"github.com/AliJabbar034/vrok/internal/security"
@@ -46,6 +47,7 @@ type assetServer struct {
 	pages     *pages
 	downloads downloadSessions
 	clock     sharing.Clock
+	checksums *checksum.Cache
 }
 
 // serve delivers a resolved target according to the request's delivery mode.
@@ -80,6 +82,12 @@ func (a *assetServer) page(w http.ResponseWriter, r *http.Request, sr *shareRequ
 		SizeText:    humanize.Bytes(t.Info.Size()),
 		DownloadURL: asset.DownloadURL,
 		Preview:     a.previews.Render(asset),
+	}
+	switch sum, state := a.checksums.Lookup(t.Path, t.Root, t.Info); state {
+	case checksum.Ready:
+		data.SHA256 = sum
+	case checksum.Pending:
+		data.ChecksumPending = true
 	}
 	if t.Rel != "" {
 		data.Breadcrumbs = crumbs(sr.Links.Breadcrumbs(rootLabel(sr.Spec), t.Rel))
@@ -154,8 +162,8 @@ func (a *assetServer) stream(w http.ResponseWriter, r *http.Request, sr *shareRe
 
 	// Registered as in flight so the reaper does not stop the process while
 	// the last permitted download is still being delivered.
-	sr.Share.BeginTransfer()
-	defer func() { sr.Share.EndTransfer(a.clock.Now()) }()
+	transfer := sr.Share.BeginTransfer()
+	defer func() { transfer.End(a.clock.Now()) }()
 
 	out := w
 	var session *sessionWriter
@@ -163,10 +171,9 @@ func (a *assetServer) stream(w http.ResponseWriter, r *http.Request, sr *shareRe
 		session = &sessionWriter{ResponseWriter: w, cookie: a.downloads.cookie(r, sr, t.Rel)}
 		out = session
 	}
-	cw := &countingWriter{ResponseWriter: out}
+	cw := &countingWriter{ResponseWriter: out, transfer: transfer}
 	http.ServeContent(cw, r, t.Name, info.ModTime(), f)
 
-	sr.Share.AddBytes(cw.n)
 	// A response that delivered nothing (a 304, a 416) must not consume the
 	// visitor's allowance. Once a session has been issued it stays spent,
 	// even if the client hangs up at once: the session is what lets it
@@ -208,7 +215,7 @@ func (a *assetServer) notFoundOrError(w http.ResponseWriter, r *http.Request, er
 // filesystem happened to return.
 const maxListingEntries = 2000
 
-func (a *assetServer) listing(w http.ResponseWriter, r *http.Request, sr *shareRequest, heading string, entries []viewer.IndexEntry, bread []Crumb, current string) {
+func (a *assetServer) listing(w http.ResponseWriter, r *http.Request, sr *shareRequest, heading string, entries []viewer.IndexEntry, bread []Crumb, current, archiveURL string) {
 	total := len(entries)
 	truncated := total > maxListingEntries
 	if truncated {
@@ -223,6 +230,9 @@ func (a *assetServer) listing(w http.ResponseWriter, r *http.Request, sr *shareR
 		Entries:     entries,
 		Total:       total,
 		Truncated:   truncated,
+	}
+	if total > 0 {
+		data.ArchiveURL = archiveURL
 	}
 	noStore(w)
 	if err := a.pages.render.Index(w, http.StatusOK, data); err != nil {
@@ -295,6 +305,10 @@ type FileSetHandler struct{ *assetServer }
 // ServeShare implements ShareHandler.
 func (h FileSetHandler) ServeShare(w http.ResponseWriter, r *http.Request, sr *shareRequest) {
 	if sr.Rel == "" {
+		if sr.Delivery == deliverArchive {
+			h.streamZip(w, r, sr, sr.Spec.Name+".zip", entryMembers(sr.Spec.Entries))
+			return
+		}
 		h.index(w, r, sr)
 		return
 	}
@@ -333,7 +347,7 @@ func (h FileSetHandler) index(w http.ResponseWriter, r *http.Request, sr *shareR
 			Modified:    modified,
 		})
 	}
-	h.listing(w, r, sr, "Shared files", entries, nil, "")
+	h.listing(w, r, sr, "Shared files", entries, nil, "", sr.Links.Archive(""))
 }
 
 // DirectoryHandler serves a directory tree, confined to its root.
@@ -382,10 +396,29 @@ func (h DirectoryHandler) ServeShare(w http.ResponseWriter, r *http.Request, sr 
 	}
 
 	if info.IsDir() {
+		if sr.Delivery == deliverArchive {
+			h.archive(w, r, sr, resolver.Root(), abs)
+			return
+		}
 		h.directory(w, r, sr, resolver.Root(), abs)
 		return
 	}
 	h.serve(w, r, sr, target{Name: path.Base(sr.Rel), Rel: sr.Rel, Path: abs, Root: resolver.Root(), Info: info})
+}
+
+// archive streams a directory of the share, and everything under it, as one
+// zip named after that directory.
+func (h DirectoryHandler) archive(w http.ResponseWriter, r *http.Request, sr *shareRequest, root, abs string) {
+	contained, err := security.Contained(abs, root)
+	if err != nil {
+		h.pages.rejected(w, r, err)
+		return
+	}
+	name := rootLabel(sr.Spec)
+	if sr.Rel != "" {
+		name = path.Base(sr.Rel)
+	}
+	h.streamZip(w, r, sr, name+".zip", directoryMembers(contained, root, name))
 }
 
 // listParam forces the file listing for a directory that has an index.html.
@@ -479,5 +512,5 @@ func (h DirectoryHandler) directory(w http.ResponseWriter, r *http.Request, sr *
 		// Current, so the path can be passed through unchanged.
 		bread = sr.Links.Breadcrumbs(label, sr.Rel)
 	}
-	h.listing(w, r, sr, heading, entries, bread, current)
+	h.listing(w, r, sr, heading, entries, bread, current, sr.Links.Archive(sr.Rel))
 }

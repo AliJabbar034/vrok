@@ -7,7 +7,10 @@
   </nav>
   {{end}}
 
-  <h1 class="listing-page__title">{{.Heading}}</h1>
+  <div class="listing-page__head">
+    <h1 class="listing-page__title">{{.Heading}}</h1>
+    {{if .ArchiveURL}}<a class="button" href="{{.ArchiveURL}}" download>Download all (.zip)</a>{{end}}
+  </div>
 
   {{if .Entries}}
   <table class="listing">

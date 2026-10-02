@@ -9,7 +9,7 @@
       content="Install vrok with one command, a package manager, or a signed archive for macOS, Linux and Windows."
     />
     <meta name="theme-color" content="#0c3a3f" />
-    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
     <link
       rel="preload"
       href="fonts/archivo-var.ttf"
@@ -24,17 +24,31 @@
   <body>
     <a class="skip" href="#quick">Skip to install</a>
 
+    <aside class="release" data-release hidden role="status">
+      <div class="release__inner">
+        <p>
+          <span class="release__new" data-release-fresh hidden>New</span>
+          <strong data-latest-tag></strong> is out. Run the install command
+          again to replace the binary.
+          <a href="#update">How to update</a>
+        </p>
+        <button type="button" class="release__hide" data-release-dismiss>
+          Hide
+        </button>
+      </div>
+    </aside>
+
     <header class="bar">
       <a class="wordmark" href="./" aria-label="vrok home">
         <img
           class="wordmark__mark"
-          src="assets/mark.svg"
+          src="assets/mark.svg?v=b"
           alt=""
           width="32"
           height="32"
         />
         <span class="wordmark__text">vrok</span>
-        <span class="wordmark__tag">share locally</span>
+        <span class="wordmark__tag">straight from your machine</span>
       </a>
       <nav class="bar__nav" aria-label="Primary">
         <button
@@ -117,7 +131,7 @@
           <div id="qp-mac" role="tabpanel" aria-labelledby="qt-mac">
             <div class="cmd">
               <!-- prettier-ignore -->
-              <code class="cmd__text">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+              <code class="cmd__text">curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh</code>
               <button class="copy" type="button" data-copy>
                 <span class="copy__label">Copy</span>
               </button>
@@ -136,7 +150,7 @@
           <div id="qp-linux" role="tabpanel" aria-labelledby="qt-linux" hidden>
             <div class="cmd">
               <!-- prettier-ignore -->
-              <code class="cmd__text">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+              <code class="cmd__text">curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh</code>
               <button class="copy" type="button" data-copy>
                 <span class="copy__label">Copy</span>
               </button>
@@ -162,7 +176,7 @@
           <div id="qp-win" role="tabpanel" aria-labelledby="qt-win" hidden>
             <div class="cmd">
               <!-- prettier-ignore -->
-              <code class="cmd__text">irm https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.ps1 | iex</code>
+              <code class="cmd__text">irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex</code>
               <button class="copy" type="button" data-copy>
                 <span class="copy__label">Copy</span>
               </button>
@@ -298,15 +312,25 @@
         <section class="after" aria-labelledby="after-h">
           <h2 class="dl__sh" id="after-h">Then what</h2>
           <dl class="tariff__list">
+            <div class="tariff__row" id="update">
+              <dt>Update</dt>
+              <dd>
+                Run the install command again. It overwrites the binary with
+                the newest release. Homebrew:
+                <code>brew upgrade --cask AliJabbar034/tap/vrok</code>. From
+                source: <code>go install …/cmd/vrok@latest</code>. Then
+                <code>vrok --version</code>.
+              </dd>
+            </div>
             <div class="tariff__row">
               <dt>Check it</dt>
-              <dd><code>vrok version</code></dd>
+              <dd><code>vrok --version</code></dd>
             </div>
             <div class="tariff__row">
               <dt>Share something</dt>
               <dd>
                 <code>vrok ./quarterly.pdf</code> — prints a public URL that
-                expires in two hours.
+                works until you stop it.
               </dd>
             </div>
             <div class="tariff__row">
@@ -318,9 +342,14 @@
             <div class="tariff__row">
               <dt>Build from source</dt>
               <dd>
-                <code
-                  >go install github.com/AliJabbar034/vrok/cmd/vrok@latest</code
-                >
+                <div class="cmd">
+                  <code class="cmd__text"
+                    >go install github.com/AliJabbar034/vrok/cmd/vrok@latest</code
+                  >
+                  <button class="copy" type="button" data-copy>
+                    <span class="copy__label">Copy</span>
+                  </button>
+                </div>
               </dd>
             </div>
           </dl>
@@ -333,7 +362,7 @@
         <a class="foot__brand" href="./" aria-label="vrok home">
           <img
             class="foot__logo"
-            src="assets/mark.svg"
+            src="assets/mark.svg?v=b"
             alt=""
             width="28"
             height="28"

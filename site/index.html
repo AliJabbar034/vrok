@@ -9,7 +9,7 @@
       content="Free and open source. One command turns a file, folder or localhost server into a public URL. Nothing is uploaded. The link expires."
     />
     <meta name="theme-color" content="#0c3a3f" />
-    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
     <link
       rel="preload"
       href="fonts/archivo-var.ttf"
@@ -50,17 +50,31 @@
 
     <a class="skip" href="#start">Skip to install</a>
 
+    <aside class="release" data-release hidden role="status">
+      <div class="release__inner">
+        <p>
+          <span class="release__new" data-release-fresh hidden>New</span>
+          <strong data-latest-tag></strong> is out. Update with the same command
+          you used to install.
+          <a href="download.html#update">How to update</a>
+        </p>
+        <button type="button" class="release__hide" data-release-dismiss>
+          Hide
+        </button>
+      </div>
+    </aside>
+
     <header class="bar">
       <a class="wordmark" href="./" aria-label="vrok home">
         <img
           class="wordmark__mark"
-          src="assets/mark.svg"
+          src="assets/mark.svg?v=b"
           alt=""
           width="32"
           height="32"
         />
         <span class="wordmark__text">vrok</span>
-        <span class="wordmark__tag">share locally</span>
+        <span class="wordmark__tag">straight from your machine</span>
       </a>
       <nav class="bar__nav" aria-label="Primary">
         <button
@@ -74,8 +88,11 @@
         </button>
         <div class="bar__links" id="site-nav">
           <a href="#share">What it shares</a>
+          <a href="#watch">Watch it run</a>
+          <a href="#look">What they see</a>
           <a href="#compare">Why vrok</a>
           <a href="guide.html">Guide</a>
+          <a href="#contact">Contact</a>
           <a href="https://github.com/AliJabbar034/vrok">Source</a>
           <a class="bar__cta" href="download.html">Download</a>
         </div>
@@ -139,7 +156,7 @@
                   <div id="panel-mac" role="tabpanel" aria-labelledby="tab-mac">
                     <div class="cmd">
                       <!-- prettier-ignore -->
-                      <code class="cmd__text">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+                      <code class="cmd__text">curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh</code>
                       <button class="copy" type="button" data-copy>
                         <span class="copy__label">Copy</span>
                       </button>
@@ -163,7 +180,7 @@
                   >
                     <div class="cmd">
                       <!-- prettier-ignore -->
-                      <code class="cmd__text">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+                      <code class="cmd__text">curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh</code>
                       <button class="copy" type="button" data-copy>
                         <span class="copy__label">Copy</span>
                       </button>
@@ -178,7 +195,7 @@
                   >
                     <div class="cmd">
                       <!-- prettier-ignore -->
-                      <code class="cmd__text">irm https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.ps1 | iex</code>
+                      <code class="cmd__text">irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex</code>
                       <button class="copy" type="button" data-copy>
                         <span class="copy__label">Copy</span>
                       </button>
@@ -217,8 +234,8 @@
                 <div class="step__body">
                   <h2 class="step__h">Hand over the key</h2>
                   <p class="step__aside step__aside--lead">
-                    Send the URL. It stops working in two hours, or after the
-                    downloads you allowed, or when you press Ctrl+C.
+                    Send the URL. It works until you press Ctrl+C, or until the
+                    expiry or download limit you set.
                   </p>
                 </div>
               </li>
@@ -250,16 +267,15 @@
                   <dt>URL:</dt>
                   <dd class="term__url">
                     https://avi-downtown-justin-postings.trycloudflare.com/s/8kLmP3qR7wXz2vN4bYtJcA/
+                    <span class="term__copied">(copied to clipboard)</span>
                   </dd>
-                  <dt>Reachable:</dt>
-                  <dd>anyone with the link</dd>
-                  <dt>Expires:</dt>
-                  <dd>2h</dd>
-                  <dt>Tunnel:</dt>
-                  <dd>cloudflare</dd>
                 </dl>
 
-                <p class="term__dim">Press Ctrl+C to stop</p>
+                <p class="term__dim">Expires when stopped · anyone with the link</p>
+                <p class="term__dim">
+                  c copy · q QR code · p add password · e change expiry · 1
+                  one-time link · x stop
+                </p>
 
                 <p class="term__gap term__head">
                   <span class="term__stop">■</span> Stopped sharing
@@ -292,8 +308,8 @@
             <div class="tariff__row">
               <dt>Expiry</dt>
               <dd>
-                Two hours by default. <code>--ttl 30m</code>, <code>2h</code>,
-                <code>1d</code>, or <code>0</code> to keep it open.
+                Until you stop it. <code>--ttl 30m</code>, <code>2h</code>, or
+                <code>1d</code> if you want it to close itself.
               </dd>
             </div>
             <div class="tariff__row">
@@ -381,6 +397,244 @@
         </div>
       </section>
 
+      <section class="watch" id="watch" aria-labelledby="watch-h">
+        <div class="watch__inner">
+          <div class="watch__intro">
+            <div>
+              <h2 class="watch__h" id="watch-h">Watch it run</h2>
+              <p class="watch__lede">
+                The whole round trip, replayed from vrok's real output: you run
+                one command, they open the link, they download, and your
+                terminal shows it happening.
+              </p>
+            </div>
+
+            <div class="watch__tabs" role="tablist" aria-label="Choose a demo">
+              <button
+                role="tab"
+                type="button"
+                id="scene-tab-file"
+                aria-selected="true"
+                aria-controls="watch-stage"
+                data-scene="file"
+              >
+                <span class="watch__tab-n">A</span> A 4 GB file
+              </button>
+              <button
+                role="tab"
+                type="button"
+                id="scene-tab-app"
+                aria-selected="false"
+                aria-controls="watch-stage"
+                data-scene="app"
+                tabindex="-1"
+              >
+                <span class="watch__tab-n">B</span> localhost:3000
+              </button>
+              <button
+                role="tab"
+                type="button"
+                id="scene-tab-folder"
+                aria-selected="false"
+                aria-controls="watch-stage"
+                data-scene="folder"
+                tabindex="-1"
+              >
+                <span class="watch__tab-n">C</span> A whole folder
+              </button>
+            </div>
+          </div>
+
+          <p class="watch__narration" data-narration>
+            They downloaded a 4 GB video. Your terminal kept the summary.
+          </p>
+
+          <div class="watch__stage" id="watch-stage" role="tabpanel">
+            <figure class="console">
+              <div class="console__chrome">
+                <span class="mock__dot" aria-hidden="true"></span>
+                <span class="mock__dot" aria-hidden="true"></span>
+                <span class="mock__dot" aria-hidden="true"></span>
+                <span class="console__title">You · terminal</span>
+                <span class="console__badge" data-speed hidden>sped up</span>
+                <span class="console__key" data-key hidden aria-hidden="true"></span>
+                <button class="console__replay" type="button" data-replay hidden>
+                  Replay
+                </button>
+              </div>
+
+              <!-- The finished transcript of the first demo. With JavaScript
+                   it is replaced by the animation; without, it is what you
+                   see. -->
+              <div class="console__screen term" data-screen>
+                <p class="term__cmd">
+                  <span class="term__prompt">$</span> vrok ./launch-cut.mov
+                </p>
+                <p class="term__head">
+                  <span class="term__ok">✓</span> Sharing
+                  <strong>launch-cut.mov</strong>
+                </p>
+                <dl class="term__rows">
+                  <dt>URL:</dt>
+                  <dd class="term__url">
+                    https://quiet-harbor-lamps-tuesday.trycloudflare.com/s/Xr4kQ9mT2vLp8sWnBcYd7A/
+                    <span class="term__copied">(copied to clipboard)</span>
+                  </dd>
+                </dl>
+                <p class="term__dim">Expires when stopped · anyone with the link</p>
+                <p class="term__dim term__gap-s">
+                  c copy · q QR code · p add password · e change expiry · 1
+                  one-time link · x stop
+                </p>
+                <p class="term__dim">↓ Sent 4.0 GB in 1m 48s · 38 MB/s average</p>
+              </div>
+            </figure>
+
+            <figure class="browser" aria-label="The other person’s browser">
+              <div class="browser__chrome">
+                <span class="mock__dot" aria-hidden="true"></span>
+                <span class="mock__dot" aria-hidden="true"></span>
+                <span class="mock__dot" aria-hidden="true"></span>
+                <span class="browser__who">Them</span>
+                <span class="browser__address" data-address
+                  >quiet-harbor-lamps-tuesday.trycloudflare.com/s/Xr4kQ9mT2vLp8sWnBcYd7A/</span
+                >
+                <span class="browser__loading" data-loading hidden></span>
+              </div>
+              <div class="browser__view" data-view>
+                <div class="mock__bar">
+                  <span class="mock__brand">
+                    <img src="assets/mark.svg?v=b" alt="" width="24" height="24" />
+                    vrok
+                  </span>
+                </div>
+                <div class="mock__file">
+                  <div class="mock__title">
+                    <span class="mock__icon" aria-hidden="true">▶</span>
+                    <div>
+                      <strong>launch-cut.mov</strong>
+                      <span>4.0 GB</span>
+                    </div>
+                  </div>
+                  <span class="mock__dl">Download</span>
+                </div>
+                <p class="browser__sum">
+                  <b>SHA-256</b> 3a7bd3e2360a3d29eea436fcfb7e44c735d117c42d1c1835420b6b9942dd4f1b
+                </p>
+                <div class="mock__stage">
+                  <div class="mock__player">
+                    <span class="mock__play" aria-hidden="true"></span>
+                    <span>Watch here, or download the original</span>
+                  </div>
+                </div>
+              </div>
+              <div class="browser__shelf" data-shelf>
+                <span class="browser__shelf-icon" aria-hidden="true">⬇</span>
+                <span class="browser__shelf-text">
+                  <b data-shelf-name>launch-cut.mov</b>
+                  <span data-shelf-status>4.0 GB · Done</span>
+                </span>
+                <span class="browser__shelf-bar" aria-hidden="true"
+                  ><span data-shelf-bar style="width: 100%"></span
+                ></span>
+              </div>
+              <span class="browser__cursor" data-cursor hidden aria-hidden="true"></span>
+            </figure>
+          </div>
+
+          <p class="watch__note">
+            Replayed from vrok's real output. Downloads are shown faster than
+            they ran; the numbers are what the terminal printed.
+          </p>
+        </div>
+      </section>
+
+      <section class="look" id="look" aria-labelledby="look-h">
+        <div class="look__inner">
+          <h2 class="look__h" id="look-h">What the other person opens</h2>
+          <p class="look__lede">
+            The link is a page, not a raw file dump. They can
+            <strong>view</strong> what the browser can show — video with
+            seeking, images, PDFs, code, a folder listing — and
+            <strong>download</strong> the original bytes. Nothing else on your
+            machine is on that page.
+          </p>
+
+          <figure class="mock" aria-label="A visitor’s file page">
+            <div class="mock__chrome">
+              <span class="mock__dot" aria-hidden="true"></span>
+              <span class="mock__dot" aria-hidden="true"></span>
+              <span class="mock__dot" aria-hidden="true"></span>
+              <span class="mock__url"
+                >https://…trycloudflare.com/s/8kLmP3qR7wXz2vN4bYtJcA/</span
+              >
+            </div>
+            <div class="mock__page">
+              <div class="mock__bar">
+                <span class="mock__brand">
+                  <img src="assets/mark.svg?v=b" alt="" width="24" height="24" />
+                  vrok
+                </span>
+                <span class="mock__pills">
+                  <span>2h left</span>
+                  <span>3 downloads</span>
+                </span>
+              </div>
+              <div class="mock__file">
+                <div class="mock__title">
+                  <span class="mock__icon" aria-hidden="true">▶</span>
+                  <div>
+                    <strong>cut-03.mp4</strong>
+                    <span>186 MB · they can watch it here</span>
+                  </div>
+                </div>
+                <span class="mock__dl">Download</span>
+              </div>
+              <div class="mock__stage">
+                <div class="mock__player">
+                  <span class="mock__play" aria-hidden="true"></span>
+                  <span
+                    >Inline player · seek and pause without downloading</span
+                  >
+                </div>
+              </div>
+            </div>
+            <figcaption>
+              One Download button. The preview is the view. A
+              <code>.dump</code> or other binary says it cannot be previewed and
+              still uses that same button — not a second one.
+            </figcaption>
+          </figure>
+
+          <ul class="look__points">
+            <li>
+              <strong>View.</strong> Video, audio, images, PDF, HTML, Markdown,
+              JSON, text, and zip listings render in the page.
+            </li>
+            <li>
+              <strong>Download.</strong> The original file, with Range support
+              so a video can resume.
+            </li>
+            <li>
+              <strong>Browse.</strong> A folder share is a listing. Click a name
+              to view it; the arrow downloads that file only.
+            </li>
+            <li>
+              <strong>Locked.</strong> A password share shows a locker form.
+              Nothing about the file is visible until it unlocks.
+            </li>
+            <li>
+              <strong>All at once.</strong> A folder page has a Download all
+              (.zip) button, built while it downloads.
+            </li>
+            <li>
+              <strong>Checked.</strong> The file page shows its SHA-256, so the
+              other person can confirm their copy is intact.
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <section class="compare" id="compare" aria-labelledby="compare-h">
         <div class="compare__inner">
           <h2 class="compare__h" id="compare-h">
@@ -412,9 +666,9 @@
             <article class="why">
               <h3>The URL is supposed to die</h3>
               <p>
-                Two hours by default, or N downloads, or Ctrl+C. That is the
-                product. A forgotten ngrok tunnel and a WeTransfer link from
-                last month are the opposite idea.
+                Until you stop it, or sooner if you set a TTL or a download
+                cap. A forgotten ngrok tunnel and a WeTransfer link from last
+                month are the opposite idea.
               </p>
             </article>
             <article class="why">
@@ -493,12 +747,60 @@
         </div>
       </section>
 
+      <section class="contact" id="contact" aria-labelledby="contact-h">
+        <div class="contact__inner">
+          <h2 class="contact__h" id="contact-h">
+            Talk to the person who built it
+          </h2>
+          <p class="contact__lede">
+            vrok is a one-person, MIT-licensed project. If you are evaluating it
+            for a team, a client handoff, or a security review, these are the
+            doors that are actually staffed.
+          </p>
+          <ul class="contact__grid">
+            <li>
+              <h3>Ali Jabbar</h3>
+              <p>Author. Product, CLI, and this site.</p>
+              <a href="https://github.com/AliJabbar034">GitHub</a>
+              ·
+              <a
+                href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+                >LinkedIn</a
+              >
+            </li>
+            <li>
+              <h3>Use it, then ask</h3>
+              <p>
+                Bugs and “does this share type work” belong on
+                <a href="https://github.com/AliJabbar034/vrok/issues">Issues</a
+                >. A private security finding goes to
+                <a
+                  href="https://github.com/AliJabbar034/vrok/security/advisories/new"
+                  >a private advisory</a
+                >, not a public ticket.
+              </p>
+            </li>
+            <li>
+              <h3>Source of truth</h3>
+              <p>
+                <a href="https://github.com/AliJabbar034/vrok"
+                  >AliJabbar034/vrok</a
+                >
+                is the repo.
+                <a href="guide.html">The guide</a> is how a visitor, a flag, and
+                a revoke actually behave.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <section class="close" aria-labelledby="close-h">
         <div class="close__inner">
           <h2 class="close__h" id="close-h">Take one command and go</h2>
           <div class="cmd cmd--close">
             <!-- prettier-ignore -->
-            <code class="cmd__text" id="closeCmd">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+            <code class="cmd__text" id="closeCmd">curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh</code>
             <button class="copy" type="button" data-copy>
               <span class="copy__label">Copy</span>
             </button>
@@ -517,7 +819,7 @@
         <a class="foot__brand" href="./" aria-label="vrok home">
           <img
             class="foot__logo"
-            src="assets/mark.svg"
+            src="assets/mark.svg?v=b"
             alt=""
             width="28"
             height="28"
@@ -534,8 +836,11 @@
         </p>
         <nav aria-label="Footer">
           <a href="#share">What it shares</a>
+          <a href="#watch">Watch it run</a>
+          <a href="#look">What they see</a>
           <a href="#compare">Why vrok</a>
           <a href="guide.html">Guide</a>
+          <a href="#contact">Contact</a>
           <a href="download.html">Downloads</a>
           <a href="https://github.com/AliJabbar034/vrok">Source</a>
           <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"

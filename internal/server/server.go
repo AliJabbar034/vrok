@@ -11,8 +11,10 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/AliJabbar034/vrok/internal/checksum"
 	"github.com/AliJabbar034/vrok/internal/preview"
 	"github.com/AliJabbar034/vrok/internal/security"
 	"github.com/AliJabbar034/vrok/internal/sharing"
@@ -44,6 +46,9 @@ type Options struct {
 	Viewer *viewer.Renderer
 	// Logger receives request and error logs.
 	Logger *slog.Logger
+	// Checksums works out the SHA-256 shown on file pages. Defaults to a
+	// new cache.
+	Checksums *checksum.Cache
 }
 
 // Server owns the listener and the HTTP handler for a set of shares.
@@ -53,6 +58,7 @@ type Server struct {
 	listener net.Listener
 	addr     string
 	roots    *rootCache
+	sums     *checksum.Cache
 	logger   *slog.Logger
 }
 
@@ -86,6 +92,9 @@ func New(opts Options) (*Server, error) {
 		}
 		opts.Signer = security.NewHMACSigner(key)
 	}
+	if opts.Checksums == nil {
+		opts.Checksums = checksum.New()
+	}
 	if opts.Viewer == nil {
 		rendered, err := viewer.New()
 		if err != nil {
@@ -102,6 +111,7 @@ func New(opts Options) (*Server, error) {
 		pages:     pageRenderer,
 		downloads: downloads,
 		clock:     opts.Clock,
+		checksums: opts.Checksums,
 	}
 	roots := newRootCache()
 
@@ -146,6 +156,7 @@ func New(opts Options) (*Server, error) {
 		},
 		addr:   addr,
 		roots:  roots,
+		sums:   opts.Checksums,
 		logger: opts.Logger,
 	}, nil
 }
@@ -196,6 +207,21 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		return s.http.Close()
 	}
 	return err
+}
+
+// Warm starts working out the checksums of a share's files in the
+// background, so a single large file has its fingerprint ready by the time a
+// visitor opens the page. Directory shares are hashed per file on first view
+// instead: hashing a whole tree up front could read gigabytes nobody asks for.
+func (s *Server) Warm(spec sharing.Spec) {
+	if spec.Kind != sharing.KindFile && spec.Kind != sharing.KindFiles {
+		return
+	}
+	for _, e := range spec.Entries {
+		if info, err := os.Stat(e.Path); err == nil && info.Mode().IsRegular() {
+			s.sums.Lookup(e.Path, "", info)
+		}
+	}
 }
 
 // Forget releases cached per-share state. Call it when a share is revoked.

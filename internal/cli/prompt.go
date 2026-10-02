@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -24,17 +25,8 @@ func readPassword(printer *ui.Printer) (string, error) {
 		return value, nil
 	}
 
-	fd := int(os.Stdin.Fd())
-	if term.IsTerminal(fd) {
-		fmt.Fprint(printer.Out(), "Password: ")
-		entered, err := term.ReadPassword(fd)
-		// ReadPassword leaves the cursor on the prompt line because it
-		// swallowed the newline the user typed.
-		fmt.Fprintln(printer.Out())
-		if err != nil {
-			return "", fmt.Errorf("read password: %w", err)
-		}
-		return strings.TrimSpace(string(entered)), nil
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		return promptPassword(printer)
 	}
 
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -42,4 +34,40 @@ func readPassword(printer *ui.Printer) (string, error) {
 		return "", fmt.Errorf("read password from stdin: %w", err)
 	}
 	return strings.TrimSpace(line), nil
+}
+
+// promptPassword asks for a password on the terminal without echoing it.
+func promptPassword(printer *ui.Printer) (string, error) {
+	fmt.Fprint(printer.Out(), "Password: ")
+	entered, err := term.ReadPassword(int(os.Stdin.Fd()))
+	// ReadPassword leaves the cursor on the prompt line because it
+	// swallowed the newline the user typed.
+	fmt.Fprintln(printer.Out())
+	if err != nil {
+		return "", fmt.Errorf("read password: %w", err)
+	}
+	return strings.TrimSpace(string(entered)), nil
+}
+
+// readLine reads one line a byte at a time. It deliberately does not buffer:
+// anything typed after the newline belongs to the live hotkeys.
+func readLine(r io.Reader) (string, error) {
+	var line []byte
+	buf := make([]byte, 1)
+	for {
+		n, err := r.Read(buf)
+		if n == 1 {
+			if buf[0] == '\n' {
+				break
+			}
+			line = append(line, buf[0])
+		}
+		if err != nil {
+			if len(line) == 0 {
+				return "", err
+			}
+			break
+		}
+	}
+	return strings.TrimSpace(string(line)), nil
 }
