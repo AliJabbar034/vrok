@@ -30,6 +30,7 @@ temporary URLs.
 	vrok ./video.mp4
 	vrok ./playwright-report
 	vrok localhost:3000
+	vrok -i ./video.mp4
 
 Nothing is uploaded and nothing is stored: requests are served from this
 machine while the command runs. Stop the process and the URL stops working.`,

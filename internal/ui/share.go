@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/AliJabbar034/vrok/internal/humanize"
@@ -20,6 +21,8 @@ type ShareView struct {
 	TTL time.Duration
 	// MaxDownloads is the download cap; zero means unlimited.
 	MaxDownloads int
+	// Downloads is how many have completed so far.
+	Downloads int
 	// Protected reports whether a password is required.
 	Protected bool
 	// Tunnel is the provider name.
@@ -31,33 +34,33 @@ type ShareView struct {
 	// the banner is the only moment the owner is paying attention.
 	Reach string
 	Hint  string
+	// Copied is true when the URL was written to the clipboard.
+	Copied bool
+	// Interactive is true when the process is attached to a terminal, so the
+	// hotkey bar is worth printing. Scripts and CI see "Press Ctrl+C" instead.
+	Interactive bool
 }
 
-// Started prints the share banner.
+// HotkeyBar is the live command strip shown under a share, in the same
+// compact style as Vite and Expo.
+const HotkeyBar = "c copy · q QR code · p add password · e change expiry · 1 one-time link · x stop"
+
+// Started prints the share banner: URL first, then who can open it, then
+// the hotkeys (or Ctrl+C when there is no terminal).
 func (p *Printer) Started(v ShareView) {
 	p.Success("Sharing %s", p.Bold(v.Name))
 	p.Blank()
-	p.Detail("URL", p.Link(v.URL))
+
+	copied := ""
+	if v.Copied {
+		copied = "   " + p.Dim("(copied to clipboard)")
+	}
+	fmt.Fprintf(p.out, "  %s %s%s\n", p.Dim("URL:  "), p.Link(v.URL), copied)
+
+	p.Info("  %s", p.Dim(StatusLine(v)))
 
 	if v.LocalURL != "" && v.LocalURL != v.URL {
 		p.Detail("Local", p.Dim(v.LocalURL))
-	}
-	if v.Reach != "" {
-		p.Detail("Reachable", v.Reach)
-	}
-	if v.TTL > 0 {
-		p.Detail("Expires", humanize.Duration(v.TTL))
-	} else {
-		p.Detail("Expires", "when stopped")
-	}
-	if v.MaxDownloads > 0 {
-		p.Detail("Downloads", fmt.Sprintf("%d max", v.MaxDownloads))
-	}
-	if v.Protected {
-		p.Detail("Password", "required")
-	}
-	if v.Tunnel != "" && v.Tunnel != "local" {
-		p.Detail("Tunnel", v.Tunnel)
 	}
 
 	p.Blank()
@@ -65,7 +68,40 @@ func (p *Printer) Started(v ShareView) {
 		p.Info("  %s", p.Dim(v.Hint))
 		p.Blank()
 	}
-	p.Info("  %s", p.Dim("Press Ctrl+C to stop"))
+	if v.Interactive {
+		p.Keys()
+	} else {
+		p.Info("  %s", p.Dim("Press Ctrl+C to stop"))
+	}
+}
+
+// Keys prints the live hotkey bar.
+func (p *Printer) Keys() {
+	p.Info("  %s", p.Dim(HotkeyBar))
+}
+
+// StatusLine is the compact "Expires in 1h 59m · anyone with the link" row.
+func StatusLine(v ShareView) string {
+	var parts []string
+	if v.TTL > 0 {
+		parts = append(parts, "Expires in "+humanize.Duration(v.TTL))
+	} else {
+		parts = append(parts, "Expires when stopped")
+	}
+	if v.Reach != "" {
+		parts = append(parts, v.Reach)
+	}
+	if v.MaxDownloads == 1 {
+		parts = append(parts, "one-time link")
+	} else if v.MaxDownloads > 0 && v.MaxDownloads-v.Downloads == 1 {
+		parts = append(parts, "one download left")
+	} else if v.MaxDownloads > 0 {
+		parts = append(parts, fmt.Sprintf("%d downloads max", v.MaxDownloads))
+	}
+	if v.Protected {
+		parts = append(parts, "password required")
+	}
+	return strings.Join(parts, " · ")
 }
 
 // Stats is the local usage summary shown when a share ends. vrok reports no

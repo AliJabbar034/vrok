@@ -64,6 +64,27 @@ func Duration(d time.Duration) string {
 	}
 }
 
+// Elapsed renders how long something took, keeping the next unit down:
+// "45s", "1m 48s", "2h 5m". Duration rounds to one unit, which suits a
+// countdown but would report a 1m 48s transfer as "1m".
+func Elapsed(d time.Duration) string {
+	d = d.Round(time.Second)
+	if d < time.Second {
+		return "0s"
+	}
+	hours := int(d.Hours())
+	minutes := int(d.Minutes()) % 60
+	seconds := int(d.Seconds()) % 60
+	switch {
+	case hours > 0:
+		return fmt.Sprintf("%dh %dm", hours, minutes)
+	case minutes > 0:
+		return fmt.Sprintf("%dm %ds", minutes, seconds)
+	default:
+		return fmt.Sprintf("%ds", seconds)
+	}
+}
+
 // ClockTime renders a local wall-clock time, or "never" for the zero value.
 // vrok uses it for "last access", where the time of day is what people look
 // for rather than an elapsed duration.

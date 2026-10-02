@@ -15,10 +15,9 @@ import (
 
 // Defaults that apply when nothing is configured.
 const (
-	// DefaultTTL is how long a share lives when no --ttl is given. Two hours
-	// is long enough to send a link and have it opened, short enough that a
-	// forgotten share closes itself.
-	DefaultTTL = 2 * time.Hour
+	// DefaultTTL is how long a share lives when no --ttl is given. Zero means
+	// no expiry: the URL works until the process is stopped.
+	DefaultTTL time.Duration = 0
 	// DefaultAddr binds to loopback on a free port. Loopback is the safe
 	// default: `--local` is what opens the share to the network.
 	DefaultAddr = "127.0.0.1:0"

@@ -72,6 +72,16 @@ func classifyOne(arg string) (Source, error) {
 }
 
 func classifyMany(args []string) (Source, error) {
+	// An unquoted name with spaces arrives as several arguments. If the first
+	// token is not a file, try the words joined back together before failing.
+	if _, err := os.Stat(args[0]); errors.Is(err, os.ErrNotExist) {
+		joined := strings.Join(args, " ")
+		if _, err := os.Stat(joined); err == nil {
+			return classifyOne(joined)
+		}
+		return Source{}, fmt.Errorf("sharing: %q does not exist. If the name has spaces, quote it: vrok %q", args[0], joined)
+	}
+
 	entries := make([]Entry, 0, len(args))
 	seen := make(map[string]int, len(args))
 

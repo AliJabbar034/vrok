@@ -10,12 +10,10 @@ Share local files, folders and development servers through temporary URLs.
 $ vrok ./video.mp4
 ✓ Sharing video.mp4
 
-  URL:         https://avi-downtown-justin-postings.trycloudflare.com/s/8kLmP3qR7wXz2vN4bYtJcA/
-  Reachable:   anyone with the link
-  Expires:     2h
-  Tunnel:      cloudflare
+  URL:   https://avi-downtown-justin-postings.trycloudflare.com/s/8kLmP3qR7wXz2vN4bYtJcA/   (copied to clipboard)
+  Expires when stopped · anyone with the link
 
-  Press Ctrl+C to stop
+  c copy · q QR code · p add password · e change expiry · 1 one-time link · x stop
 ```
 
 No account, no configuration, no separate install. The URL works from anywhere
@@ -48,7 +46,8 @@ irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex
 ```
 
 Both scripts detect your platform, verify the download against `checksums.txt`,
-and install without administrator rights.
+and install without administrator rights. **To update, run the same command
+again.** It replaces the binary with the newest GitHub release.
 
 **Package managers**
 
@@ -103,23 +102,54 @@ vrok ./demo.mp4                  # one file, with a video player and seeking
 vrok ./playwright-report         # a whole directory, browsable
 vrok report.pdf shot.png a.mp4   # several files behind one index page
 vrok localhost:3000              # a local HTTP server, reverse-proxied
+vrok -i ./demo.mp4               # decide first, then prints the flags
 ```
 
 `vrok share ./x` and `vrok ./x` are the same command.
 
 ### Options
 
-| Flag                   | Meaning                                                                                               |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- |
-| `--ttl 30m`            | How long the share lives. Accepts `45s`, `30m`, `2h`, `1d`, `1w`, or `0` for no expiry. Default `2h`. |
-| `--downloads 5`        | Stop sharing after five downloads.                                                                    |
-| `--password`           | Ask for a password that visitors must enter. Also reads `VROK_PASSWORD`.                              |
-| `--qr`                 | Print a QR code for the URL.                                                                          |
-| `--local`              | Serve on the local network only, with no public tunnel.                                               |
-| `--tunnel <name>`      | `auto` (default), `local`, `cloudflare` or `relay`.                                                   |
-| `--name client-report` | Display name for the share.                                                                           |
-| `--port 8080`          | Pick the local port instead of a free one.                                                            |
-| `-v`                   | Show request and tunnel diagnostics.                                                                  |
+| Flag                   | Meaning                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `-i`                   | Ask who can open it, how long it lasts, and the download limit. Then prints the equivalent flags. |
+| `--ttl 30m`            | How long the share lives. Accepts `45s`, `30m`, `2h`, `1d`, `1w`. Default: until you stop it.     |
+| `--downloads 5`        | Stop sharing after five downloads.                                                                |
+| `--password`           | Ask for a password that visitors must enter. Also reads `VROK_PASSWORD`.                          |
+| `--qr`                 | Print a QR code for the URL.                                                                      |
+| `--local`              | Serve on the local network only, with no public tunnel.                                           |
+| `--tunnel <name>`      | `auto` (default), `local`, `cloudflare` or `relay`.                                               |
+| `--name client-report` | Display name for the share.                                                                       |
+| `--port 8080`          | Pick the local port instead of a free one.                                                        |
+| `-v`                   | Show request and tunnel diagnostics.                                                              |
+
+While a share is running, `c` copies the URL, `q` prints a QR code, `p` adds a
+password, `e` changes the expiry, `1` makes it one-time, and `x` stops. Each
+change keeps the same URL. Scripts and CI never see the hotkey bar.
+
+### Large files
+
+While someone downloads, one line under the banner shows how it is going, and
+a summary is left behind when it finishes:
+
+```console
+↓ 1.2 GB / 4.0 GB · 30% · 38 MB/s · 1m left
+  ↓ Sent 4.0 GB in 1m 48s · 38 MB/s average
+```
+
+- **Resumable.** A dropped download picks up where it stopped, and resuming
+  does not spend one of your `--downloads`.
+- **Your computer stays awake.** While a transfer is running, vrok stops the
+  machine from going to sleep on its own, and lets it sleep again 30 seconds
+  after the last one ends. Closing the lid still sleeps.
+- **Whole folders in one go.** Every folder page has a **Download all (.zip)**
+  button. The zip is built while it is sent, so nothing is written to disk
+  first, however big the folder is.
+- **A fingerprint to check against.** The file page shows the file's SHA-256.
+  The recipient can compare it with `shasum -a 256 <file>` (or
+  `certutil -hashfile <file> SHA256` on Windows) to know the copy is intact.
+
+Speed is set by your upload bandwidth and the tunnel, not by vrok: every byte
+comes from your machine.
 
 ### Managing shares
 
@@ -160,6 +190,14 @@ everything else gets a download card. There is no allowed-type list.
 Range requests are answered end to end, including through a tunnel, so video
 seeking works and an interrupted download of a large file resumes rather than
 restarting.
+
+Every file page shows the file's SHA-256 fingerprint, worked out in the
+background after the share starts, so a visitor can confirm their copy is
+intact.
+
+A folder share is a listing with a **Download all (.zip)** button; any
+subfolder can be zipped on its own with `?zip=1`. One zip counts as one
+download against `--downloads`.
 
 A directory containing `index.html` serves that file at its root, which is what
 makes `vrok ./playwright-report` or `vrok ./dist` behave like the real thing.

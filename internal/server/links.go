@@ -19,6 +19,7 @@ const (
 const (
 	rawParam      = "raw"
 	downloadParam = "dl"
+	archiveParam  = "zip"
 )
 
 // SharePath returns the path a share is served under, for callers that need
@@ -47,6 +48,10 @@ func (l Links) Raw(rel string) string { return l.join(rel, rawParam) }
 
 // Download returns the URL that streams the bytes as an attachment.
 func (l Links) Download(rel string) string { return l.join(rel, downloadParam) }
+
+// Archive returns the URL that streams a folder, or a whole multi-file
+// share, as one zip.
+func (l Links) Archive(rel string) string { return l.join(rel, archiveParam) }
 
 // Static is the URL prefix for the viewer's own assets.
 func (l Links) Static() string { return staticPrefix }

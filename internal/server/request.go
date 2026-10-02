@@ -17,6 +17,8 @@ const (
 	deliverInline
 	// deliverAttachment streams the bytes as a download.
 	deliverAttachment
+	// deliverArchive streams a folder or file set as one zip.
+	deliverArchive
 )
 
 // shareRequest is everything a share handler needs: the share, where inside it
@@ -36,10 +38,12 @@ type shareRequest struct {
 	Now      time.Time
 }
 
-// parseDelivery reads the ?raw / ?dl flags.
+// parseDelivery reads the ?raw / ?dl / ?zip flags.
 func parseDelivery(r *http.Request) delivery {
 	q := r.URL.Query()
 	switch {
+	case q.Has(archiveParam):
+		return deliverArchive
 	case q.Has(downloadParam):
 		return deliverAttachment
 	case q.Has(rawParam):

@@ -180,6 +180,59 @@ h3 {
   border: 0;
 }
 
+/* ---------- release ribbon ---------- */
+
+.release {
+  background: var(--signal);
+  color: var(--signal-ink);
+  border-bottom: 1px solid var(--signal-deep);
+}
+.release__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.55rem var(--gut);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+.release__inner p {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.release__new {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 2px;
+  background: var(--signal-ink);
+  color: var(--signal);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.release a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.release__hide {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--signal-ink);
+  background: transparent;
+  border: 1px solid rgba(26, 20, 3, 0.28);
+  border-radius: 2px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+}
+
 /* ---------- bar ---------- */
 
 .bar {
@@ -229,9 +282,11 @@ h3 {
   text-transform: uppercase;
   color: var(--signal);
 }
-@media (min-width: 48rem) {
+/* Only where the full nav still fits beside it on one line. */
+@media (min-width: 72rem) {
   .wordmark__tag {
     display: inline;
+    white-space: nowrap;
   }
 }
 
@@ -247,17 +302,18 @@ h3 {
   font-stretch: 85%;
   font-size: 0.9rem;
 }
-.bar__links a {
+.bar__links a:not(.bar__cta) {
+  white-space: nowrap;
   text-decoration: none;
   color: var(--ink-soft);
   padding: 0.35rem 0;
   border-bottom: 2px solid transparent;
 }
-.bar__links a:hover {
+.bar__links a:not(.bar__cta):hover {
   color: var(--ink);
   text-decoration: none;
 }
-.bar__links a[aria-current="page"] {
+.bar__links a:not(.bar__cta)[aria-current="page"] {
   color: var(--signal);
   border-bottom-color: var(--signal);
 }
@@ -301,7 +357,9 @@ h3 {
   cursor: pointer;
 }
 
-@media (max-width: 52rem) {
+/* Eight links stop fitting on one line below this, and a link broken across
+   two lines reads as two links, so the bar folds into the menu instead. */
+@media (max-width: 64rem) {
   .bar__toggle {
     display: inline-flex;
   }
@@ -321,7 +379,7 @@ h3 {
   .bar[data-open="true"] .bar__links {
     display: flex;
   }
-  .bar__links a {
+  .bar__links a:not(.bar__cta) {
     padding: 0.7rem 0;
     border-bottom: 1px solid var(--rule);
   }
@@ -553,8 +611,10 @@ h3 {
   color: var(--signal);
 }
 
-/* The command sits in a routed recess. Long lines scroll sideways so the
-   Copy button stays the same yellow plate as the first install command. */
+/* The command sits in a routed recess. Long lines stay on one line and
+   scroll sideways, so a command reads as one command and the Copy button
+   stays the same yellow plate everywhere. Never put <wbr> in a command:
+   browsers break at it even under nowrap. */
 .cmd {
   display: flex;
   align-items: stretch;
@@ -577,8 +637,23 @@ h3 {
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--enamel-chip) transparent;
+  /* Edge shadows that appear only while there is more command to scroll
+     to. Touch screens hide the scrollbar, so this is the only cue there.
+     The covers scroll with the text (local) and hide the shadows (scroll)
+     once an end is reached. */
+  background:
+    linear-gradient(90deg, var(--enamel-deep) 40%, rgba(7, 42, 46, 0)) left
+      center / 1.6rem 100% no-repeat local,
+    linear-gradient(270deg, var(--enamel-deep) 40%, rgba(7, 42, 46, 0)) right
+      center / 1.6rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.55), transparent)
+      left center / 0.7rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.55), transparent)
+      right center / 0.7rem 100% no-repeat scroll,
+    var(--enamel-deep);
 }
 .cmd__text::-webkit-scrollbar {
   height: 6px;
@@ -857,12 +932,30 @@ h3 {
 .term__rows dd.term__url {
   color: var(--signal);
 }
+.term__copied {
+  color: var(--ink-faint);
+  margin-left: 0.8ch;
+}
 
 /* On a phone the label column eats the width the URL needs, so the rows
    stack — which is also what a narrow terminal does to this banner. */
 @media (max-width: 34rem) {
+  /* A full-size door would project ~150px and cover half the banner on a
+     phone. A narrower door swung further open projects ~48px (cos 72deg,
+     plus a little perspective), so the bay keeps the width. */
   .locker {
-    grid-template-columns: 62px minmax(0, 1fr);
+    --door: 140px;
+    --swing: 72deg;
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+  .locker__bay {
+    padding: 0.9rem 0.85rem;
+  }
+  .locker__lock {
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    margin-top: -12px;
   }
   .locker__num {
     font-size: 1.3rem;
@@ -918,7 +1011,9 @@ h3 {
 }
 .tariff__row {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, …) rather than 1fr: a command in a row must scroll, not
+     widen the row past the screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.25rem 2rem;
   padding: 1.1rem 0;
   border-top: 1px solid var(--rule);
@@ -946,7 +1041,7 @@ h3 {
   max-width: var(--measure);
   color: var(--ink-soft);
 }
-.tariff__row dd code {
+.tariff__row dd code:not(.cmd__text) {
   color: var(--ink);
   font-size: 0.86em;
   background: rgba(255, 255, 255, 0.06);
@@ -1077,6 +1172,9 @@ h3 {
   flex: 1 1 auto;
 }
 .unit code {
+  /* Block, so it can scroll: an inline element ignores overflow. */
+  display: block;
+  max-width: 100%;
   font-size: 0.78rem;
   color: var(--ink);
   background: var(--enamel-deep);
@@ -1084,10 +1182,844 @@ h3 {
   border-radius: 2px;
   overflow-x: auto;
   white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--enamel-chip) transparent;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) inset;
 }
 
-/* ---------- close ---------- */
+/* ---------- visitor mock ---------- */
+
+/* ---------- watch it run ---------- */
+
+/* The whole round trip, replayed: your terminal on one side, the other
+   person's browser on the other. Both screens are the same recessed enamel
+   as the locker bay, not a black pane with a neon cursor: it is the same
+   machine, seen while it works. */
+.watch {
+  padding: clamp(2.4rem, 5vw, 4rem) var(--gut);
+  border-top: 1px solid var(--rule);
+}
+.watch__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  /* An auto track would grow to the widest line of the terminal and push
+     the page sideways on a phone. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.1rem;
+}
+.watch__intro {
+  display: grid;
+  gap: 1.2rem;
+  align-items: end;
+}
+@media (min-width: 62rem) {
+  .watch__intro {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 2.5rem;
+  }
+}
+.watch__h {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-stretch: 76%;
+  text-transform: uppercase;
+  margin: 0 0 0.7rem;
+}
+.watch__lede {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+}
+
+/* The scene switch reads as a row of numbered locker keys. */
+.watch__tabs {
+  display: grid;
+  gap: 0.5rem;
+}
+@media (min-width: 40rem) {
+  .watch__tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.watch__tabs button {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.55rem 0.8rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink-soft);
+  background: var(--enamel-deep);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+.watch__tabs button:hover {
+  color: var(--ink);
+  border-color: var(--enamel-chip);
+}
+.watch__tabs button[aria-selected="true"] {
+  color: var(--signal-ink);
+  background:
+    var(--plate-grain),
+    linear-gradient(177deg, var(--signal) 0%, var(--signal-deep) 100%);
+  border-color: var(--signal-deep);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.2) inset;
+}
+.watch__tab-n {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+}
+.watch__tabs button[aria-selected="true"] .watch__tab-n {
+  color: var(--signal-ink);
+  border-color: rgba(26, 20, 3, 0.35);
+}
+.watch__narration {
+  min-height: 3.1em;
+  margin: 0.4rem 0 0;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--signal);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.watch__note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.watch__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+@media (min-width: 64rem) {
+  .watch__stage {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  }
+}
+
+/* Shared window frame for the terminal and the browser. */
+.console,
+.browser {
+  margin: 0;
+  min-width: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+.console {
+  background: linear-gradient(105deg, #061f23 0%, var(--enamel-deep) 40%);
+}
+.console__chrome,
+.browser__chrome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.75rem;
+  background: #082b2f;
+  border-bottom: 1px solid var(--rule);
+}
+.console__title {
+  margin-left: 0.6rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.console__badge {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--signal);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 0.05rem 0.4rem;
+}
+/* The key being "pressed", shown as a keycap so a hotkey reads as something
+   the person did, not something the terminal printed. */
+.console__key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.4rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--signal-ink);
+  background: linear-gradient(180deg, #fff 0%, var(--alu) 100%);
+  border-radius: 4px;
+  box-shadow:
+    0 2px 0 var(--alu-dark),
+    0 3px 6px rgba(0, 0, 0, 0.4);
+  animation: keypress 0.9s var(--ease) both;
+}
+@keyframes keypress {
+  0% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+  25% {
+    transform: translateY(1px);
+    box-shadow:
+      0 0 0 var(--alu-dark),
+      0 1px 2px rgba(0, 0, 0, 0.4);
+    opacity: 1;
+  }
+  45%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+.console__replay {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  min-height: 32px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+}
+.console__replay:hover {
+  border-color: var(--signal);
+}
+
+/* Fixed heights keep the page from jumping as lines and pages appear, which
+   is also what real windows do. */
+.console__screen {
+  height: 27rem;
+  overflow: hidden;
+  padding: clamp(1rem, 2vw, 1.3rem);
+}
+
+/* ---------- the other person's browser ---------- */
+
+.browser {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(27rem + 2.75rem + 2px);
+  background: var(--enamel);
+}
+.browser__who,
+.console__title {
+  flex: 0 0 auto;
+}
+.browser__who {
+  margin-left: 0.6rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.browser__address {
+  flex: 1;
+  min-width: 0;
+  margin-left: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  background: var(--enamel-deep);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+.browser__address:empty::before {
+  content: "Search or type a URL";
+  color: var(--ink-faint);
+}
+.browser__loading {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: var(--signal);
+  transform-origin: left;
+  animation: loading 0.7s var(--ease) both;
+}
+@keyframes loading {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.browser__view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.browser__blank,
+.browser__error {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.4rem;
+  height: 100%;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+}
+.browser__error strong {
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+.browser__sum {
+  margin: 0 1rem 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+}
+.browser__sum b {
+  margin-right: 0.6ch;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+/* The visitor's folder listing, trimmed from the real viewer page. */
+.browser__listing {
+  padding: 0.9rem 1rem;
+}
+.browser__listing-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+.browser__listing-head strong {
+  font-size: 1.05rem;
+}
+.browser__listing ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.82rem;
+}
+.browser__listing li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--rule);
+}
+.browser__listing li span:last-child {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The password page, as the real viewer draws it. */
+.browser__gate {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 17rem;
+  margin: 1.6rem auto 0;
+  padding: 1.2rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--enamel-deep);
+  text-align: center;
+}
+.browser__gate strong {
+  font-size: 1.05rem;
+}
+.browser__gate p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.browser__input {
+  min-height: 2.3rem;
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+  letter-spacing: 0.2em;
+  background: var(--enamel);
+  border: 1px solid var(--enamel-chip);
+  border-radius: 3px;
+}
+.browser__gate .mock__dl {
+  justify-content: center;
+}
+
+/* The person's own app, proxied. Deliberately not vrok-styled: it is
+   whatever is running on localhost:3000. */
+.browser__app {
+  height: 100%;
+  background: #f4f1ea;
+  color: #1d2326;
+  font-size: 0.85rem;
+}
+.browser__app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #e3ddd0;
+  font-weight: 700;
+}
+.browser__app-bar span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #2f7d55;
+}
+.browser__app-body {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+}
+.browser__app-card {
+  padding: 0.9rem;
+  background: #fff;
+  border: 1px solid #e3ddd0;
+  border-radius: 6px;
+}
+.browser__app-card b {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.browser__shelf {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.9rem;
+  border-top: 1px solid var(--rule);
+  background: #082b2f;
+  font-size: 0.78rem;
+  animation: shelf 0.4s var(--ease) both;
+}
+@keyframes shelf {
+  from {
+    transform: translateY(100%);
+  }
+}
+.browser__shelf-icon {
+  color: var(--signal);
+}
+.browser__shelf-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.browser__shelf-text b,
+.browser__shelf-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.browser__shelf-text span {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.browser__shelf-bar {
+  flex: 0 0 28%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.browser__shelf-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+}
+/* A zip has no size up front, so its bar sweeps instead of filling. */
+.browser__shelf-bar[data-unknown] > span {
+  width: 35% !important;
+  animation: sweep 1.1s linear infinite;
+}
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(290%);
+  }
+}
+
+/* The visitor's pointer, travelling to what they click. */
+.browser__cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 20px;
+  height: 26px;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 26'%3E%3Cpath d='M2 2v19l5-4.5 3.4 7.3 3.2-1.5-3.3-7.1H17z' fill='%23fff' stroke='%23072a2e' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  transition: transform 0.85s var(--ease);
+}
+.browser__cursor::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--signal);
+  opacity: 0;
+}
+.browser__cursor[data-click]::after {
+  animation: ripple 0.5s ease-out;
+}
+@keyframes ripple {
+  from {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+.is-pressed {
+  transform: translateY(1px);
+  filter: brightness(0.9);
+}
+
+/* On a phone the two windows stack. Shorter panes keep both on screen at
+   once, so the transfer can be seen on each side; the terminal scrolls to
+   its newest line as a real one does. */
+@media (max-width: 34rem) {
+  .console__screen {
+    height: 16rem;
+  }
+  .browser {
+    height: 20rem;
+  }
+}
+
+.term__gap-s {
+  margin-top: 1.2em !important;
+}
+.term__live {
+  color: var(--ink-soft);
+}
+.term__typed {
+  color: var(--ink);
+}
+.term__cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  margin-left: 1px;
+  vertical-align: -0.2em;
+  background: var(--signal);
+  animation: cursor 1s steps(1) infinite;
+}
+@keyframes cursor {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .term__cursor,
+  .console__key,
+  .browser__loading,
+  .browser__shelf,
+  .browser__shelf-bar[data-unknown] > span {
+    animation: none;
+  }
+  .browser__cursor {
+    transition: none;
+  }
+}
+
+.look {
+  padding: clamp(2.4rem, 5vw, 4rem) var(--gut);
+  border-top: 1px solid var(--rule);
+}
+.look__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.look__h {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-stretch: 76%;
+  text-transform: uppercase;
+  margin: 0 0 0.7rem;
+}
+.look__lede {
+  max-width: var(--measure);
+  margin: 0 0 1.6rem;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+}
+.look__points {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+@media (min-width: 48rem) {
+  .look__points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+  }
+}
+.look__points li {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.look__points strong {
+  color: var(--ink);
+}
+
+.mock {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--enamel-deep);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+.mock__chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  background: #082b2f;
+  border-bottom: 1px solid var(--rule);
+}
+.mock__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--alu-dark);
+}
+.mock__url {
+  margin-left: 0.6rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.mock__page {
+  padding: 0;
+}
+.mock__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+.mock__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-stretch: 70%;
+}
+.mock__brand img {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 5px;
+}
+.mock__pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.mock__pills span {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+.mock__file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1rem 0.85rem;
+}
+.mock__title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.mock__title strong {
+  display: block;
+  font-size: 1.05rem;
+}
+.mock__title span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.mock__icon {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: #082b2f;
+  color: var(--signal);
+  font-size: 0.75rem;
+}
+.mock__dl {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  background: var(--signal);
+  color: var(--signal-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 3px;
+}
+.mock__stage {
+  padding: 0 1rem 1rem;
+}
+.mock__player {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 9rem;
+  padding: 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #082b2f;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+.mock__play {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+.mock__play::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0.7rem 0 0 0.9rem;
+  border-style: solid;
+  border-width: 0.45rem 0 0.45rem 0.7rem;
+  border-color: transparent transparent transparent var(--signal-ink);
+}
+.mock figcaption {
+  padding: 0.85rem 1rem 1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+
+/* ---------- contact ---------- */
+
+.contact {
+  padding: clamp(2.4rem, 5vw, 4rem) var(--gut);
+  border-top: 1px solid var(--rule);
+}
+.contact__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.contact__h {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-stretch: 76%;
+  text-transform: uppercase;
+  margin: 0 0 0.7rem;
+}
+.contact__lede {
+  max-width: var(--measure);
+  margin: 0 0 1.6rem;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+}
+.contact__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+@media (min-width: 52rem) {
+  .contact__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.contact__grid li {
+  background: var(--enamel);
+  padding: 1.25rem 1.35rem;
+}
+.contact__grid h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
+}
+.contact__grid p {
+  margin: 0 0 0.55rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
 
 .close {
   padding: clamp(3rem, 7vw, 6rem) var(--gut);
@@ -1292,6 +2224,9 @@ h3 {
   max-width: 72rem;
   margin: 0 auto;
   display: grid;
+  /* Code blocks scroll inside their box; an auto track would let the
+     longest one widen the whole page on a phone. */
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(2rem, 4vw, 3.5rem);
 }
 @media (min-width: 58rem) {
@@ -1300,9 +2235,13 @@ h3 {
     align-items: start;
   }
 }
-.guide__toc {
-  position: sticky;
-  top: 4.6rem;
+/* Sticky only beside the article. Stacked above it on a phone, a sticky
+   contents list would ride down over the text. */
+@media (min-width: 58rem) {
+  .guide__toc {
+    position: sticky;
+    top: 4.6rem;
+  }
 }
 .guide__toc h2 {
   font-size: 0.75rem;
@@ -1382,6 +2321,9 @@ h3 {
   border: 1px solid var(--rule);
   border-radius: 3px;
   overflow-x: auto;
+  white-space: pre;
+  scrollbar-width: thin;
+  scrollbar-color: var(--enamel-chip) transparent;
   color: var(--ink);
   font-size: 0.84rem;
   line-height: 1.55;
@@ -1408,4 +2350,61 @@ h3 {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink-faint);
+}
+
+/* ---------- small screens ---------- */
+
+/* A phone has no width to spare, so the frame gives some back: tighter page
+   gutters, a thinner plate border, step numbers above their heading instead
+   of in a column of their own, and narrower Copy plates. */
+@media (max-width: 34rem) {
+  :root {
+    --gut: 0.9rem;
+  }
+  .plate {
+    padding: 1.4rem 1rem 1.25rem;
+  }
+  .step {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+    padding-top: 1rem;
+  }
+  .copy {
+    min-width: 4.6rem;
+    padding: 0.75rem 0.8rem;
+  }
+  .cmd__text {
+    padding: 0.75rem 0.8rem;
+  }
+}
+
+/* The footer on a phone: the links become a two-column list of full-height
+   rows. Wrapped inline they formed a ragged block of small targets. */
+@media (max-width: 34rem) {
+  .foot {
+    padding-top: 1.6rem;
+    padding-bottom: 1.4rem;
+  }
+  .foot__inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.9rem;
+  }
+  .foot nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+  .foot nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+  .foot nav a:hover {
+    color: var(--ink);
+  }
 }
