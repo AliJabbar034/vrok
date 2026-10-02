@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AliJabbar034/vrok/internal/security"
+	"github.com/AliJabbar034/vrok/internal/sharing"
 	"github.com/AliJabbar034/vrok/web/viewer"
 )
 
@@ -23,6 +24,12 @@ const (
 	// strong password, but combined with the unguessable share token it makes
 	// online brute force pointless.
 	failureDelay = 400 * time.Millisecond
+
+	// maxConcurrentVerifies bounds password checks in flight. One Argon2id
+	// verification allocates 64 MiB, so without a bound anyone holding the
+	// URL could POST a few hundred guesses at once and push the sharer's
+	// machine into swap. Excess attempts queue, which also slows guessing.
+	maxConcurrentVerifies = 2
 )
 
 // Gate enforces the optional share password.
@@ -36,11 +43,19 @@ type Gate struct {
 	signer security.Signer
 	pages  *pages
 	logger *slog.Logger
+	// verifySlots is a semaphore of maxConcurrentVerifies tokens.
+	verifySlots chan struct{}
 }
 
 // NewGate returns a Gate.
 func NewGate(hasher security.Hasher, signer security.Signer, p *pages, logger *slog.Logger) *Gate {
-	return &Gate{hasher: hasher, signer: signer, pages: p, logger: logger}
+	return &Gate{
+		hasher:      hasher,
+		signer:      signer,
+		pages:       p,
+		logger:      logger,
+		verifySlots: make(chan struct{}, maxConcurrentVerifies),
+	}
 }
 
 // Allow reports whether the request may proceed to the share content.
@@ -91,7 +106,10 @@ func (g *Gate) attempt(w http.ResponseWriter, r *http.Request, sr *shareRequest)
 		return
 	}
 
-	if err := g.hasher.Verify(password, sr.Spec.PasswordHash); err != nil {
+	if err := g.verify(r, password, sr.Spec.PasswordHash); err != nil {
+		if ctxErr := r.Context().Err(); ctxErr != nil && errors.Is(err, ctxErr) {
+			return // the visitor gave up while queued; there is no one to answer
+		}
 		if !errors.Is(err, security.ErrPasswordMismatch) {
 			g.pages.serverError(w, r, err)
 			return
@@ -108,13 +126,33 @@ func (g *Gate) attempt(w http.ResponseWriter, r *http.Request, sr *shareRequest)
 	http.Redirect(w, r, sr.Links.Page(sr.Rel), http.StatusSeeOther)
 }
 
+// verify checks a password while holding one of the verification slots.
+func (g *Gate) verify(r *http.Request, password, encoded string) error {
+	select {
+	case g.verifySlots <- struct{}{}:
+	case <-r.Context().Done():
+		return r.Context().Err()
+	}
+	defer func() { <-g.verifySlots }()
+	return g.hasher.Verify(password, encoded)
+}
+
 // cookie mints the unlock proof.
 func (g *Gate) cookie(r *http.Request, sr *shareRequest) *http.Cookie {
+	// Scoped to this share's path. An HTTP share is the exception: the app
+	// behind it may load "/assets/app.js", which the router attributes to the
+	// share by Referer, and a cookie limited to /s/<token>/ would never reach
+	// it. Widening the path does not widen access: the name carries the share
+	// id, the value signs this share's token, and the proxy strips vrok's
+	// cookies before anything reaches the upstream app.
+	path := sr.Links.Root()
+	if sr.Spec.Kind == sharing.KindHTTP {
+		path = "/"
+	}
 	return &http.Cookie{
-		Name:  cookieName(sr.Spec.ID),
-		Value: g.signer.Sign(sr.Spec.Token),
-		// Scoped to this share only.
-		Path:     sr.Links.Root(),
+		Name:     cookieName(sr.Spec.ID),
+		Value:    g.signer.Sign(sr.Spec.Token),
+		Path:     path,
 		HttpOnly: true,
 		// Lax keeps the cookie on a normal link click while blocking
 		// cross-site POSTs back to the share.

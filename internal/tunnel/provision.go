@@ -4,6 +4,8 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -25,6 +27,35 @@ const cloudflaredRelease = "2025.8.1"
 // downloadBase is where release assets come from. It is a variable so tests
 // can point it at a local server instead of the internet.
 var downloadBase = "https://github.com/cloudflare/cloudflared/releases/download"
+
+// assetDigests pins the SHA-256 of every asset vrok may fetch for
+// cloudflaredRelease. A download that does not match is discarded before it
+// is written anywhere executable: HTTPS proves the bytes came from GitHub, not
+// that they are the bytes this version of vrok was tested with.
+//
+// The values are GitHub's recorded asset digests. For the macOS archives they
+// differ from the release notes, because Cloudflare re-uploaded notarised
+// builds after publishing them. Bumping cloudflaredRelease means regenerating
+// this table:
+//
+//	gh api repos/cloudflare/cloudflared/releases/tags/<version> \
+//	  -q '.assets[] | "\(.name) \(.digest)"'
+//
+// It is a variable so tests can serve fake assets.
+var assetDigests = map[string]string{
+	"cloudflared-darwin-amd64.tgz":  "f64ad6bddc99053e2c69ff8ec40232bed7826ed495ecbd93be20632b7894b0a1",
+	"cloudflared-darwin-arm64.tgz":  "2802da687e731e35bbf0edc86645ae6618135f0334c488dd7e0366c7f59ab1ed",
+	"cloudflared-linux-386":         "5b40e1be2507185233108b9187fcff3b5edae44a8ba41249529b68c9d545e89c",
+	"cloudflared-linux-amd64":       "a66353004197ee4c1fcb68549203824882bba62378ad4d00d234bdb8251f1114",
+	"cloudflared-linux-arm":         "6ce1177f7f0384cf328a865cbcb1db4ad4353d4c64a60713fc7475965c16f9a8",
+	"cloudflared-linux-arm64":       "9e2088063c8b8f71ce4b15d65e6f4b1ef345f90c9c15e762cfd2bc8fc63cf22a",
+	"cloudflared-windows-386.exe":   "a1d3690cbda3ec76ca460bf23d3a85e59f4cc625e47da8bcd49cbb34863d717d",
+	"cloudflared-windows-amd64.exe": "b5d598b00cc3a28cabc5812d9f762819334614bae452db4e7f23eefe7b081556",
+}
+
+// ErrChecksumMismatch reports a downloaded provider that is not the pinned
+// build. Nothing from such a download is ever executed.
+var ErrChecksumMismatch = errors.New("tunnel: downloaded cloudflared does not match its pinned checksum")
 
 // maxDownloadSize caps what will be written to disk. cloudflared is around
 // 40 MB; the cap exists so a redirect to something unexpected cannot fill the
@@ -132,10 +163,16 @@ func (p *provisioner) announce(format string, args ...any) {
 	}
 }
 
-// fetch downloads the asset and writes the executable to target atomically,
-// so an interrupted download cannot leave a half-written binary that a later
-// run would happily execute.
+// fetch downloads the asset, verifies it against its pinned digest and only
+// then installs the executable at target. The download lands in a temporary
+// file first, so an interrupted or tampered transfer never leaves anything a
+// later run would find cached and execute.
 func (p *provisioner) fetch(ctx context.Context, asset string, tarred bool, target string) error {
+	want, ok := assetDigests[asset]
+	if !ok {
+		return fmt.Errorf("tunnel: no pinned checksum for %s", asset)
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, downloadTimeout)
 	defer cancel()
 
@@ -156,11 +193,28 @@ func (p *provisioner) fetch(ctx context.Context, asset string, tarred bool, targ
 		return fmt.Errorf("tunnel: download cloudflared: %s returned %s", source, resp.Status)
 	}
 
-	body := io.LimitReader(resp.Body, maxDownloadSize)
-	if tarred {
-		return p.extract(body, target)
+	download, err := os.CreateTemp(filepath.Dir(target), ".cloudflared-download-*")
+	if err != nil {
+		return fmt.Errorf("tunnel: create temporary file: %w", err)
 	}
-	return writeExecutable(target, body)
+	defer os.Remove(download.Name())
+	defer download.Close()
+
+	digest := sha256.New()
+	if _, err := io.Copy(io.MultiWriter(download, digest), io.LimitReader(resp.Body, maxDownloadSize)); err != nil {
+		return fmt.Errorf("tunnel: download cloudflared: %w", err)
+	}
+	if got := hex.EncodeToString(digest.Sum(nil)); got != want {
+		return fmt.Errorf("%w (%s: got %s, want %s)", ErrChecksumMismatch, asset, got, want)
+	}
+	if _, err := download.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
+	if tarred {
+		return p.extract(download, target)
+	}
+	return writeExecutable(target, download)
 }
 
 // isCachedBinary reports whether info is a previously fetched provider we can

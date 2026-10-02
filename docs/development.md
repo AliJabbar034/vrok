@@ -54,6 +54,8 @@ loudly:
 | `internal/security` path tests                        | No URL reaches outside a share, including via symlinks      |
 | `TestClaimDownloadIsAHardLimitUnderConcurrency`       | `--downloads` holds under simultaneous requests             |
 | `TestRangedMediaRequestsDoNotExhaustTheDownloadLimit` | Video seeking does not spend the allowance                  |
+| `TestRangeTricksCannotBypassTheDownloadLimit`         | No `Range` spelling makes a new download free               |
+| `TestDownloadLimitedShareOutlivesItsLastTransfer`     | The last permitted download is not cut off                  |
 | `TestUnavailableSharesReportTheSameWay`               | Expired, revoked, used-up and unknown are indistinguishable |
 | `TestPasswordGate`                                    | Content is withheld, and the cookie carries no password     |
 | `TestPreviewsEscapeFileContent`                       | A shared file cannot inject markup                          |

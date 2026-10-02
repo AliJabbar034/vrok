@@ -178,10 +178,20 @@ func (a *Agent) Forward(w http.ResponseWriter, r *http.Request) {
 	if hasBody {
 		// Upload in the background so the response can start flowing before
 		// the request body has finished arriving.
+		uploaded := make(chan struct{})
 		go func() {
+			defer close(uploaded)
 			if err := a.conn.Copy(s.id, r.Body); err != nil {
 				a.logger.Debug("request body upload failed", slog.String("error", err.Error()))
 			}
+		}()
+		// net/http forbids reading a request body once the handler has
+		// returned. When the response finishes first (an early 401, a
+		// timeout), expiring the read deadline unblocks the upload so it can
+		// be waited for instead of racing the server's own cleanup.
+		defer func() {
+			_ = http.NewResponseController(w).SetReadDeadline(time.Now())
+			<-uploaded
 		}()
 	}
 

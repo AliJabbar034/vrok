@@ -273,8 +273,8 @@ h3 {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none !important;
-  padding: 0.7rem 1.25rem;
-  min-height: 2.6rem;
+  padding: 12px 24px;
+  min-height: 44px;
   border-radius: 3px;
   border-bottom: 0 !important;
   box-shadow:

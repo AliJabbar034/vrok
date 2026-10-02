@@ -161,8 +161,12 @@ be short enough to read aloud without weakening the token.
 The one piece of mutable per-share state that needs care is the download
 counter. `ClaimDownload` reads and increments under a single lock before the
 file is opened, so `--downloads 5` is a hard limit even when five requests
-arrive simultaneously. If the transfer then delivers nothing — a 304, or a
-client that disappeared — `ReleaseDownload` puts the allowance back.
+arrive simultaneously. If the response delivers nothing — a 304 or a 416 —
+`ReleaseDownload` puts the allowance back. Ranged follow-ups are tied to the
+download that paid for them by a signed per-file cookie (`server/downloads.go`;
+see docs/security.md), and `BeginTransfer`/`EndTransfer` let the reaper wait for
+the last permitted download to finish instead of stopping the process under
+it.
 
 ## Cross-process management
 

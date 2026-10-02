@@ -365,3 +365,39 @@ func TestReaperStopsWhenTheLastShareExpires(t *testing.T) {
 		t.Fatal("the reaper never reported the registry as empty")
 	}
 }
+
+// Reaching --downloads stops new downloads at once, but the reaper must not
+// stop the process while the last permitted one is still being delivered:
+// `vrok big.iso --downloads 1` would otherwise cut off the only download it
+// allows. An expired TTL is different and ends transfers immediately.
+func TestDownloadLimitedShareOutlivesItsLastTransfer(t *testing.T) {
+	now := time.Now()
+	reg := sharing.NewRegistry()
+	share := sharing.New(sharing.Spec{ID: "lim", Token: "t-lim", MaxDownloads: 1})
+	reg.Add(share)
+
+	if _, err := share.ClaimDownload(now); err != nil {
+		t.Fatal(err)
+	}
+	share.BeginTransfer()
+
+	if purged := reg.PurgeExpired(now.Add(time.Hour)); len(purged) != 0 {
+		t.Fatal("a share was purged while its last permitted download was in flight")
+	}
+
+	finished := now.Add(time.Hour)
+	share.EndTransfer(finished)
+	if purged := reg.PurgeExpired(finished.Add(sharing.DownloadLimitGrace / 2)); len(purged) != 0 {
+		t.Fatal("a share was purged inside the grace period, which would break a paused video")
+	}
+	if purged := reg.PurgeExpired(finished.Add(sharing.DownloadLimitGrace)); len(purged) != 1 {
+		t.Fatal("a spent, idle share was not purged after the grace period")
+	}
+
+	expiring := sharing.New(sharing.Spec{ID: "ttl", Token: "t-ttl", ExpiresAt: now.Add(time.Minute)})
+	reg.Add(expiring)
+	expiring.BeginTransfer()
+	if purged := reg.PurgeExpired(now.Add(2 * time.Minute)); len(purged) != 1 {
+		t.Fatal("an expired share survived because a transfer was in flight; its TTL is a promise")
+	}
+}

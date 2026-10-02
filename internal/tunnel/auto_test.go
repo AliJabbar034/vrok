@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
-	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -106,17 +108,19 @@ func TestProvisionerFetchesExtractsAndCaches(t *testing.T) {
 		t.Skipf("unsupported platform: %v", err)
 	}
 
+	payload := []byte("#!/bin/sh\nexit 0\n")
+	if tarred {
+		payload = fakeTarball(t, "cloudflared", string(payload))
+	}
+	pinAsset(t, asset, payload)
+
 	var hits int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasSuffix(r.URL.Path, asset) {
 			t.Errorf("requested %q, which is not the asset for this platform", r.URL.Path)
 		}
 		hits++
-		if tarred {
-			w.Write(fakeTarball(t, "cloudflared", "#!/bin/sh\nexit 0\n"))
-			return
-		}
-		io.WriteString(w, "#!/bin/sh\nexit 0\n")
+		w.Write(payload)
 	}))
 	defer server.Close()
 
@@ -151,7 +155,8 @@ func TestProvisionerFetchesExtractsAndCaches(t *testing.T) {
 // An archive naming a path outside the cache directory is how extraction
 // turns into arbitrary file write, so only the expected entry is taken.
 func TestProvisionerIgnoresUnexpectedArchiveEntries(t *testing.T) {
-	if _, tarred, _ := cloudflaredAsset(); !tarred {
+	asset, tarred, _ := cloudflaredAsset()
+	if !tarred {
 		t.Skip("this platform downloads a bare executable")
 	}
 
@@ -159,8 +164,12 @@ func TestProvisionerIgnoresUnexpectedArchiveEntries(t *testing.T) {
 	t.Setenv("VROK_CACHE_DIR", cache)
 
 	escape := filepath.Join(cache, "escaped")
+	// Pinned, so the archive passes the checksum and extraction itself is
+	// what gets tested.
+	payload := fakeTarball(t, "../../"+filepath.Base(escape), "owned")
+	pinAsset(t, asset, payload)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Write(fakeTarball(t, "../../"+filepath.Base(escape), "owned"))
+		w.Write(payload)
 	}))
 	defer server.Close()
 
@@ -175,6 +184,62 @@ func TestProvisionerIgnoresUnexpectedArchiveEntries(t *testing.T) {
 	if _, err := os.Stat(escape); err == nil {
 		t.Fatal("extraction wrote a file the archive named outside the cache")
 	}
+}
+
+// A download that is not the pinned build is never installed, whatever it
+// contains: HTTPS proves where bytes came from, not that they are the right
+// ones.
+func TestProvisionerRejectsAnUnpinnedDownload(t *testing.T) {
+	asset, tarred, err := cloudflaredAsset()
+	if err != nil {
+		t.Skipf("unsupported platform: %v", err)
+	}
+	cache := t.TempDir()
+	t.Setenv("VROK_CACHE_DIR", cache)
+
+	payload := []byte("#!/bin/sh\necho tampered\n")
+	if tarred {
+		payload = fakeTarball(t, "cloudflared", string(payload))
+	}
+	pinAsset(t, asset, []byte("the build vrok was tested with"))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write(payload)
+	}))
+	defer server.Close()
+	restore := downloadBase
+	downloadBase = server.URL
+	defer func() { downloadBase = restore }()
+
+	p := &provisioner{logger: discardLogger()}
+	if _, err := p.executable(context.Background()); !errors.Is(err, ErrChecksumMismatch) {
+		t.Fatalf("executable() = %v, want ErrChecksumMismatch", err)
+	}
+	var leftovers []string
+	filepath.WalkDir(cache, func(path string, d fs.DirEntry, _ error) error {
+		if d != nil && !d.IsDir() {
+			leftovers = append(leftovers, path)
+		}
+		return nil
+	})
+	if len(leftovers) > 0 {
+		t.Fatalf("a rejected download left files behind: %v", leftovers)
+	}
+}
+
+// pinAsset makes payload the expected build of asset for one test.
+func pinAsset(t *testing.T, asset string, payload []byte) {
+	t.Helper()
+	sum := sha256.Sum256(payload)
+	previous, had := assetDigests[asset]
+	assetDigests[asset] = hex.EncodeToString(sum[:])
+	t.Cleanup(func() {
+		if had {
+			assetDigests[asset] = previous
+		} else {
+			delete(assetDigests, asset)
+		}
+	})
 }
 
 // A truncated or unreadable download must not leave a partial file that a

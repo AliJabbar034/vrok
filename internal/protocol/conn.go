@@ -20,6 +20,14 @@ const (
 	writeWait    = 30 * time.Second
 )
 
+// MaxMessageSize caps one inbound WebSocket message. Body frames are at most
+// MaxFrameData plus a header; the largest control message is a request
+// envelope carrying a visitor's headers, which net/http already bounds at
+// 1 MiB before JSON escaping. Without a cap, gorilla/websocket buffers a
+// message of any size, so one peer could exhaust the other's memory with a
+// single frame.
+const MaxMessageSize = 4 << 20
+
 // ErrClosed is returned once a connection has been closed.
 var ErrClosed = errors.New("protocol: connection closed")
 
@@ -38,6 +46,7 @@ type Conn struct {
 // NewConn wraps a WebSocket connection.
 func NewConn(ws *websocket.Conn) *Conn {
 	c := &Conn{ws: ws}
+	ws.SetReadLimit(MaxMessageSize)
 	// Every inbound message, including a pong, proves the peer is alive and
 	// extends the deadline.
 	ws.SetReadDeadline(time.Now().Add(pongWait))
