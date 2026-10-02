@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Go 1.25 or newer. Nothing else: templates and CSS are embedded in the binary,
+Go 1.27 or newer. Nothing else: templates and CSS are embedded in the binary,
 so there is no asset pipeline and no build step beyond `go build`.
 
 ## Common tasks

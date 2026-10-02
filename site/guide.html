@@ -86,8 +86,8 @@
               Your laptop sits behind NAT. Nobody on the internet can open a
               connection <em>to</em> it. vrok starts a small HTTP server on
               loopback, opens an outbound tunnel, and prints a public URL.
-              Visitors hit that URL; bytes are read from your disk — or
-              proxied to <code>localhost</code> — while they wait.
+              Visitors hit that URL; bytes are read from your disk — or proxied
+              to <code>localhost</code> — while they wait.
             </p>
             <p>That covers three different jobs with the same command:</p>
             <ul>
@@ -96,8 +96,8 @@
                 installer, anything.
               </li>
               <li>
-                A <strong>folder</strong> — browsable listing, or a built site
-                / Playwright report served as the real thing.
+                A <strong>folder</strong> — browsable listing, or a built site /
+                Playwright report served as the real thing.
               </li>
               <li>
                 A <strong>running server</strong> —
@@ -139,10 +139,10 @@ vrok share ./x                    # same as vrok ./x</code></pre>
 
             <h3>A localhost app</h3>
             <p>
-              vrok does not replace your framework. It reverse-proxies
-              whatever is already listening. Range requests and WebSocket
-              upgrades pass through on the default Cloudflare route, so Vite
-              / Next hot reload reaches the person you sent the link to.
+              vrok does not replace your framework. It reverse-proxies whatever
+              is already listening. Range requests and WebSocket upgrades pass
+              through on the default Cloudflare route, so Vite / Next hot reload
+              reaches the person you sent the link to.
             </p>
             <p>
               WebSocket upgrades are <strong>not</strong> carried through
@@ -173,8 +173,8 @@ vrok share ./x                    # same as vrok ./x</code></pre>
                 <tr>
                   <td><code>--downloads 5</code></td>
                   <td>
-                    Close after five downloads. Seeking inside a video does
-                    not spend one.
+                    Close after five downloads. Seeking inside a video does not
+                    spend one.
                   </td>
                 </tr>
                 <tr>
@@ -212,7 +212,9 @@ vrok share ./x                    # same as vrok ./x</code></pre>
                 </tr>
                 <tr>
                   <td><code>--name client-report</code></td>
-                  <td>Display name on the share and in <code>vrok list</code>.</td>
+                  <td>
+                    Display name on the share and in <code>vrok list</code>.
+                  </td>
                 </tr>
                 <tr>
                   <td><code>--port 8080</code></td>
@@ -242,9 +244,7 @@ vrok config set ttl 30m # store a default</code></pre>
 
           <section id="visitors">
             <h2>What visitors see</h2>
-            <p>
-              The table decides presentation only. Any type can be shared.
-            </p>
+            <p>The table decides presentation only. Any type can be shared.</p>
             <table class="guide-table">
               <thead>
                 <tr>
@@ -293,8 +293,8 @@ vrok config set ttl 30m # store a default</code></pre>
             </table>
             <p>
               Range requests work end to end, including through a tunnel, so
-              video seeking and resume work. Edits you make on disk show up
-              when the visitor refreshes; vrok does not cache a copy.
+              video seeking and resume work. Edits you make on disk show up when
+              the visitor refreshes; vrok does not cache a copy.
             </p>
           </section>
 
@@ -302,8 +302,8 @@ vrok config set ttl 30m # store a default</code></pre>
             <h2>Who can open the URL</h2>
             <p>
               The HTTP server always binds <code>127.0.0.1</code>. Reaching it
-              from anywhere else is a tunnel’s job. The banner states the
-              reach so you do not paste a loopback URL into a chat.
+              from anywhere else is a tunnel’s job. The banner states the reach
+              so you do not paste a loopback URL into a chat.
             </p>
             <table class="guide-table">
               <thead>
@@ -329,10 +329,9 @@ vrok config set ttl 30m # store a default</code></pre>
             </table>
             <p>
               <code>auto</code> prefers a relay you configured, then an
-              installed client, then fetches <code>cloudflared</code> once
-              into the cache. That download is announced in the terminal.
-              Store a private default with
-              <code>vrok config set tunnel local</code>.
+              installed client, then fetches <code>cloudflared</code> once into
+              the cache. That download is announced in the terminal. Store a
+              private default with <code>vrok config set tunnel local</code>.
             </p>
           </section>
 
@@ -340,7 +339,8 @@ vrok config set ttl 30m # store a default</code></pre>
             <h2>Security and privacy</h2>
             <p>
               The full model is in
-              <a href="https://github.com/AliJabbar034/vrok/blob/main/docs/security.md"
+              <a
+                href="https://github.com/AliJabbar034/vrok/blob/main/docs/security.md"
                 >docs/security.md</a
               >. The short version:
             </p>
@@ -352,45 +352,48 @@ vrok config set ttl 30m # store a default</code></pre>
                 URL. A visitor cannot ask for another path.
               </li>
               <li>
-                <strong>The visitor never names a file.</strong> The URL
-                carries a 128-bit token from <code>crypto/rand</code>. There
-                is no <code>?path=/Users/you/secret</code>.
+                <strong>The visitor never names a file.</strong> The URL carries
+                a 128-bit token from <code>crypto/rand</code>. There is no
+                <code>?path=/Users/you/secret</code>.
               </li>
               <li>
                 <strong>Path confinement.</strong>
                 <code>../</code>, encoded paths, and symlinks that escape the
-                shared directory all 404 the same way a missing file does.
-                A file replaced by a symlink after you shared it is refused
-                too.
+                shared directory all 404 the same way a missing file does. A
+                file replaced by a symlink after you shared it is refused too.
               </li>
               <li>
                 <strong>Uniform failure.</strong> Expired, revoked, exhausted
                 and unknown shares look identical. Probing reveals nothing.
               </li>
               <li>
-                <strong>Passwords</strong> are Argon2id digests in memory,
-                never plaintext on disk. The unlock cookie is HttpOnly.
+                <strong>Passwords</strong> are Argon2id digests in memory, never
+                plaintext on disk. The unlock cookie is HttpOnly.
               </li>
               <li>
                 <strong>No analytics.</strong> Download counts stay in your
-                terminal. Nothing is sent to a vrok server, because there
-                isn’t one on the default path.
+                terminal. Nothing is sent to a vrok server, because there isn’t
+                one on the default path.
               </li>
               <li>
-                <strong>Default reach is public</strong> via Cloudflare’s
-                quick tunnel. The banner says so. Use <code>--local</code> or
+                <strong>Default reach is public</strong> via Cloudflare’s quick
+                tunnel. The banner says so. Use <code>--local</code> or
                 <code>--tunnel local</code> when it should not leave the
                 building. A public URL still expires.
               </li>
               <li>
-                <strong>If you share a folder that contains a secret, the
-                secret is shared.</strong> vrok confines access to the
-                directory you chose. It does not judge what is in it.
+                <strong
+                  >If you share a folder that contains a secret, the secret is
+                  shared.</strong
+                >
+                vrok confines access to the directory you chose. It does not
+                judge what is in it.
               </li>
             </ul>
             <p>
               A vulnerability in those guarantees belongs in
-              <a href="https://github.com/AliJabbar034/vrok/security/advisories/new"
+              <a
+                href="https://github.com/AliJabbar034/vrok/security/advisories/new"
                 >private reporting</a
               >, not a public issue.
             </p>

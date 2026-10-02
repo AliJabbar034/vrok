@@ -193,8 +193,7 @@ h3 {
   padding: 0.7rem var(--gut);
   border-bottom: 1px solid var(--rule);
   background:
-    var(--enamel-grain),
-    linear-gradient(180deg, #10464c 0%, var(--enamel) 100%);
+    var(--enamel-grain), linear-gradient(180deg, #10464c 0%, var(--enamel) 100%);
   backdrop-filter: blur(8px);
 }
 

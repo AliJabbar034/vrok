@@ -52,7 +52,13 @@
 
     <header class="bar">
       <a class="wordmark" href="./" aria-label="vrok home">
-        <img class="wordmark__mark" src="assets/mark.svg" alt="" width="32" height="32" />
+        <img
+          class="wordmark__mark"
+          src="assets/mark.svg"
+          alt=""
+          width="32"
+          height="32"
+        />
         <span class="wordmark__text">vrok</span>
         <span class="wordmark__tag">share locally</span>
       </a>
@@ -89,9 +95,9 @@
               A URL for a file,<br />a folder, or<br />localhost
             </h1>
             <p class="plate__lede">
-              Free and open source. One command. Nothing is uploaded. The
-              person you send it to sees what is on your machine right now —
-              then the link expires.
+              Free and open source. One command. Nothing is uploaded. The person
+              you send it to sees what is on your machine right now — then the
+              link expires.
             </p>
 
             <ol class="steps">
@@ -140,7 +146,9 @@
                     </div>
                     <p class="cmd-label">Or Homebrew, once the tap is up</p>
                     <div class="cmd cmd--alt">
-                      <code class="cmd__text">brew install --cask AliJabbar034/tap/vrok</code>
+                      <code class="cmd__text"
+                        >brew install --cask AliJabbar034/tap/vrok</code
+                      >
                       <button class="copy" type="button" data-copy>
                         <span class="copy__label">Copy</span>
                       </button>
@@ -178,7 +186,9 @@
                   </div>
                   <p class="step__aside">
                     Free, MIT, no account.
-                    <a href="download.html">Windows, Linux packages, archives</a>
+                    <a href="download.html"
+                      >Windows, Linux packages, archives</a
+                    >
                     · <a href="guide.html">How to use it</a>
                   </p>
                 </div>
@@ -373,7 +383,9 @@
 
       <section class="compare" id="compare" aria-labelledby="compare-h">
         <div class="compare__inner">
-          <h2 class="compare__h" id="compare-h">Why this, and not the usual tools</h2>
+          <h2 class="compare__h" id="compare-h">
+            Why this, and not the usual tools
+          </h2>
           <p class="compare__lede">
             Most tools either upload a copy of a file, or expose a port until
             you remember to turn them off. vrok creates a <em>share</em>: a
@@ -416,65 +428,66 @@
             <article class="why">
               <h3>Free and open source</h3>
               <p>
-                MIT licensed. No paid tier, no usage meter. Read it, fork it,
-                or
-                <a href="https://github.com/AliJabbar034/vrok">open the source</a>.
+                MIT licensed. No paid tier, no usage meter. Read it, fork it, or
+                <a href="https://github.com/AliJabbar034/vrok"
+                  >open the source</a
+                >.
               </p>
             </article>
           </div>
 
           <div class="compare-scroll">
-          <table class="compare-table">
-            <caption class="visually-hidden">
-              How vrok differs from common alternatives
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">If you need</th>
-                <th scope="col">vrok</th>
-                <th scope="col">ngrok / cloudflared</th>
-                <th scope="col">WeTransfer / file hosts</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">A file or folder, live from disk</th>
-                <td class="yes">Yes — preview, seek, listing</td>
-                <td class="no">Only if you run a server yourself</td>
-                <td class="no">Uploads a copy; yours can go away</td>
-              </tr>
-              <tr>
-                <th scope="row">A running localhost app, with HMR</th>
-                <td class="yes">Yes — <code>vrok localhost:3000</code></td>
-                <td class="yes">Yes — that is their job</td>
-                <td class="no">No</td>
-              </tr>
-              <tr>
-                <th scope="row">The link dies on a timer or cap</th>
-                <td class="yes">TTL, downloads, password, revoke</td>
-                <td class="no">The tunnel stays until you stop it</td>
-                <td class="no">Days or weeks, on their disk</td>
-              </tr>
-              <tr>
-                <th scope="row">No account, no upload</th>
-                <td class="yes">Default</td>
-                <td class="no">Account for reserved domains</td>
-                <td class="no">The file is their copy</td>
-              </tr>
-              <tr>
-                <th scope="row">Works after you close the laptop</th>
-                <td class="no">No — by design</td>
-                <td class="no">No, unless something else hosts it</td>
-                <td class="yes">Yes — that is their job</td>
-              </tr>
-            </tbody>
-          </table>
+            <table class="compare-table">
+              <caption class="visually-hidden">
+                How vrok differs from common alternatives
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">If you need</th>
+                  <th scope="col">vrok</th>
+                  <th scope="col">ngrok / cloudflared</th>
+                  <th scope="col">WeTransfer / file hosts</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">A file or folder, live from disk</th>
+                  <td class="yes">Yes — preview, seek, listing</td>
+                  <td class="no">Only if you run a server yourself</td>
+                  <td class="no">Uploads a copy; yours can go away</td>
+                </tr>
+                <tr>
+                  <th scope="row">A running localhost app, with HMR</th>
+                  <td class="yes">Yes — <code>vrok localhost:3000</code></td>
+                  <td class="yes">Yes — that is their job</td>
+                  <td class="no">No</td>
+                </tr>
+                <tr>
+                  <th scope="row">The link dies on a timer or cap</th>
+                  <td class="yes">TTL, downloads, password, revoke</td>
+                  <td class="no">The tunnel stays until you stop it</td>
+                  <td class="no">Days or weeks, on their disk</td>
+                </tr>
+                <tr>
+                  <th scope="row">No account, no upload</th>
+                  <td class="yes">Default</td>
+                  <td class="no">Account for reserved domains</td>
+                  <td class="no">The file is their copy</td>
+                </tr>
+                <tr>
+                  <th scope="row">Works after you close the laptop</th>
+                  <td class="no">No — by design</td>
+                  <td class="no">No, unless something else hosts it</td>
+                  <td class="yes">Yes — that is their job</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <p class="compare__note">
             Use ngrok when you want a long-lived tunnel to a port you already
             serve. Use a file host when the recipient must still have the file
-            after you leave. Use vrok when someone needs what is on your
-            machine <em>now</em>, and should not have it tomorrow.
+            after you leave. Use vrok when someone needs what is on your machine
+            <em>now</em>, and should not have it tomorrow.
             <a href="guide.html">Full usage and security guide</a>.
           </p>
         </div>
@@ -491,8 +504,7 @@
             </button>
           </div>
           <p class="close__aside">
-            Free and open source · MIT ·
-            macOS, Linux and Windows ·
+            Free and open source · MIT · macOS, Linux and Windows ·
             <a href="download.html">archives</a>
             · <a href="guide.html">how to use it</a>
           </p>
