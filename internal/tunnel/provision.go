@@ -109,7 +109,7 @@ func (p *provisioner) executable(ctx context.Context) (string, error) {
 
 	// A cached copy from a previous share is the fast path, and the reason a
 	// user pays the download once rather than every time.
-	if info, err := os.Stat(target); err == nil && info.Mode()&0o111 != 0 {
+	if info, err := os.Stat(target); err == nil && isCachedBinary(info) {
 		p.logger.Debug("using cached provider", slog.String("path", target))
 		return target, nil
 	}
@@ -161,6 +161,19 @@ func (p *provisioner) fetch(ctx context.Context, asset string, tarred bool, targ
 		return p.extract(body, target)
 	}
 	return writeExecutable(target, body)
+}
+
+// isCachedBinary reports whether info is a previously fetched provider we can
+// run. Unix execute bits are the real check; Windows does not persist them
+// through Chmod, so a non-empty regular file is enough there.
+func isCachedBinary(info os.FileInfo) bool {
+	if !info.Mode().IsRegular() || info.Size() == 0 {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		return true
+	}
+	return info.Mode()&0o111 != 0
 }
 
 // extract pulls the cloudflared executable out of a gzipped tar.

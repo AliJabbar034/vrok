@@ -3,7 +3,7 @@
 # The CLI is not containerised: it exists to serve files from the machine it
 # runs on, and a container would only get in the way of that.
 
-FROM golang:1.25-alpine AS build
+FROM golang:1.27-alpine AS build
 
 WORKDIR /src
 
