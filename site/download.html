@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Download vrok</title>
+    <meta
+      name="description"
+      content="Install vrok with one command, a package manager, or a signed archive for macOS, Linux and Windows."
+    />
+    <meta name="theme-color" content="#0c3a3f" />
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="fonts/archivo-var.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="stylesheet" href="assets/download.css" />
+  </head>
+
+  <body>
+    <a class="skip" href="#quick">Skip to install</a>
+
+    <header class="bar">
+      <a class="wordmark" href="./" aria-label="vrok home">
+        <img class="wordmark__mark" src="assets/mark.svg" alt="" width="32" height="32" />
+        <span class="wordmark__text">vrok</span>
+        <span class="wordmark__tag">share locally</span>
+      </a>
+      <nav class="bar__nav" aria-label="Primary">
+        <button
+          class="bar__toggle"
+          type="button"
+          data-nav
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          Menu
+        </button>
+        <div class="bar__links" id="site-nav">
+          <a href="./#share">What it shares</a>
+          <a href="./#compare">Why vrok</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a class="bar__cta" href="download.html">Download</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="dl">
+      <div class="dl__inner">
+        <header class="dl__head">
+          <h1 class="dl__h">Collection point</h1>
+          <p class="dl__lede">
+            Free and open source. One self-contained binary. No runtime, no
+            account, nothing to configure.
+          </p>
+          <p class="dl__rel">
+            Latest release
+            <a
+              id="relTag"
+              href="https://github.com/AliJabbar034/vrok/releases/latest"
+            >
+              <span data-latest-tag>loading…</span>
+            </a>
+          </p>
+        </header>
+
+        <section class="quick plate" id="quick" aria-labelledby="quick-h">
+          <span class="rivet rivet--tl" aria-hidden="true"></span>
+          <span class="rivet rivet--tr" aria-hidden="true"></span>
+          <span class="rivet rivet--bl" aria-hidden="true"></span>
+          <span class="rivet rivet--br" aria-hidden="true"></span>
+
+          <h2 class="dl__sh" id="quick-h">One command</h2>
+          <p class="dl__note" data-detected hidden></p>
+
+          <div class="os" role="tablist" aria-label="Operating system">
+            <button
+              role="tab"
+              id="qt-mac"
+              aria-controls="qp-mac"
+              aria-selected="true"
+              data-os="mac"
+            >
+              macOS
+            </button>
+            <button
+              role="tab"
+              id="qt-linux"
+              aria-controls="qp-linux"
+              aria-selected="false"
+              data-os="linux"
+            >
+              Linux
+            </button>
+            <button
+              role="tab"
+              id="qt-win"
+              aria-controls="qp-win"
+              aria-selected="false"
+              data-os="win"
+            >
+              Windows
+            </button>
+          </div>
+
+          <div id="qp-mac" role="tabpanel" aria-labelledby="qt-mac">
+            <div class="cmd">
+              <!-- prettier-ignore -->
+              <code class="cmd__text">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p class="cmd-label">Or Homebrew, once the tap is published</p>
+            <div class="cmd cmd--alt">
+              <code class="cmd__text">brew install --cask AliJabbar034/tap/vrok</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="qp-linux" role="tabpanel" aria-labelledby="qt-linux" hidden>
+            <div class="cmd">
+              <!-- prettier-ignore -->
+              <code class="cmd__text">curl -fsSL https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.sh | sh</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p class="cmd-label">Or from source</p>
+            <div class="cmd cmd--alt">
+              <code class="cmd__text">go install github.com/AliJabbar034/vrok/cmd/vrok@latest</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p class="dl__alt">
+              <code>.deb</code>, <code>.rpm</code> and <code>.apk</code> sit on
+              the <a href="https://github.com/AliJabbar034/vrok/releases/latest">release page</a>.
+            </p>
+          </div>
+
+          <div id="qp-win" role="tabpanel" aria-labelledby="qt-win" hidden>
+            <div class="cmd">
+              <!-- prettier-ignore -->
+              <code class="cmd__text">irm https://raw.<wbr>githubusercontent.<wbr>com/<wbr>AliJabbar034/<wbr>vrok/<wbr>main/<wbr>install.ps1 | iex</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p class="cmd-label">Once published, winget</p>
+            <div class="cmd cmd--alt">
+              <code class="cmd__text">winget install AliJabbar034.vrok</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p class="cmd-label">Or Scoop — add the bucket, then install</p>
+            <div class="cmd cmd--alt">
+              <code class="cmd__text">scoop bucket add vrok https://github.com/AliJabbar034/scoop-bucket</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <div class="cmd cmd--alt">
+              <code class="cmd__text">scoop install vrok</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="archives" aria-labelledby="arch-h">
+          <h2 class="dl__sh" id="arch-h">Direct archives</h2>
+          <p class="dl__note">
+            Unpack and put <code>vrok</code> somewhere on your
+            <code>PATH</code>. Verify against
+            <a
+              id="sumsLink"
+              href="https://github.com/AliJabbar034/vrok/releases/latest"
+              >checksums.txt</a
+            >
+            in the release.
+          </p>
+
+          <ul class="rack" id="rack">
+            <li class="slot" data-plat="darwin-arm64">
+              <div class="slot__id">
+                <h3>macOS</h3>
+                <p>Apple silicon · arm64</p>
+              </div>
+              <a
+                class="slot__get"
+                data-asset="vrok_{tag}_darwin_arm64.tar.gz"
+                href="#"
+              >
+                <code class="slot__file">tar.gz</code>
+              </a>
+            </li>
+            <li class="slot" data-plat="darwin-amd64">
+              <div class="slot__id">
+                <h3>macOS</h3>
+                <p>Intel · amd64</p>
+              </div>
+              <a
+                class="slot__get"
+                data-asset="vrok_{tag}_darwin_amd64.tar.gz"
+                href="#"
+              >
+                <code class="slot__file">tar.gz</code>
+              </a>
+            </li>
+            <li class="slot" data-plat="linux-amd64">
+              <div class="slot__id">
+                <h3>Linux</h3>
+                <p>x86_64 · amd64</p>
+              </div>
+              <a
+                class="slot__get"
+                data-asset="vrok_{tag}_linux_amd64.tar.gz"
+                href="#"
+              >
+                <code class="slot__file">tar.gz</code>
+              </a>
+            </li>
+            <li class="slot" data-plat="linux-arm64">
+              <div class="slot__id">
+                <h3>Linux</h3>
+                <p>aarch64 · arm64</p>
+              </div>
+              <a
+                class="slot__get"
+                data-asset="vrok_{tag}_linux_arm64.tar.gz"
+                href="#"
+              >
+                <code class="slot__file">tar.gz</code>
+              </a>
+            </li>
+            <li class="slot" data-plat="windows-amd64">
+              <div class="slot__id">
+                <h3>Windows</h3>
+                <p>x86_64 · amd64</p>
+              </div>
+              <a
+                class="slot__get"
+                data-asset="vrok_{tag}_windows_amd64.zip"
+                href="#"
+              >
+                <code class="slot__file">zip</code>
+              </a>
+            </li>
+            <li class="slot" data-plat="windows-arm64">
+              <div class="slot__id">
+                <h3>Windows</h3>
+                <p>aarch64 · arm64</p>
+              </div>
+              <a
+                class="slot__get"
+                data-asset="vrok_{tag}_windows_arm64.zip"
+                href="#"
+              >
+                <code class="slot__file">zip</code>
+              </a>
+            </li>
+          </ul>
+
+          <p class="dl__alt">
+            Linux packages and every other artefact are attached to the
+            <a href="https://github.com/AliJabbar034/vrok/releases/latest"
+              >release page</a
+            >.
+          </p>
+        </section>
+
+        <section class="after" aria-labelledby="after-h">
+          <h2 class="dl__sh" id="after-h">Then what</h2>
+          <dl class="tariff__list">
+            <div class="tariff__row">
+              <dt>Check it</dt>
+              <dd><code>vrok version</code></dd>
+            </div>
+            <div class="tariff__row">
+              <dt>Share something</dt>
+              <dd>
+                <code>vrok ./quarterly.pdf</code> — prints a public URL that
+                expires in two hours.
+              </dd>
+            </div>
+            <div class="tariff__row">
+              <dt>See what is open</dt>
+              <dd>
+                <code>vrok list</code> · <code>vrok revoke &lt;id&gt;</code>
+              </dd>
+            </div>
+            <div class="tariff__row">
+              <dt>Build from source</dt>
+              <dd>
+                <code
+                  >go install github.com/AliJabbar034/vrok/cmd/vrok@latest</code
+                >
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__inner">
+        <a class="foot__brand" href="./" aria-label="vrok home">
+          <img
+            class="foot__logo"
+            src="assets/mark.svg"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="foot__mark">vrok</span>
+        </a>
+        <p>
+          Free and open source. MIT licensed. Built by
+          <a href="https://github.com/AliJabbar034">Ali Jabbar</a>
+          ·
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >.
+        </p>
+        <nav aria-label="Footer">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a href="https://github.com/AliJabbar034/vrok/issues">Issues</a>
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >
+        </nav>
+      </div>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>

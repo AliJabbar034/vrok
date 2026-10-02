@@ -1,0 +1,53 @@
+#!/bin/sh
+# Formats what you are about to commit, so formatting never reaches review.
+#
+# Only staged files are touched, and only the staged content is re-added, so
+# this cannot sweep up unrelated work in progress.
+
+set -eu
+
+. "$(dirname "$0")/lib.sh"
+
+staged() {
+	git diff --cached --name-only --diff-filter=ACMR -- "$@" | while read -r f; do
+		[ -f "$f" ] && printf '%s\n' "$f"
+	done
+}
+
+# ---- Go -------------------------------------------------------------------
+go_files=$(staged '*.go')
+if [ -n "$go_files" ]; then
+	unformatted=$(printf '%s\n' "$go_files" | xargs gofmt -l)
+	if [ -n "$unformatted" ]; then
+		step "formatting Go"
+		printf '%s\n' "$unformatted" | xargs gofmt -w
+		printf '%s\n' "$unformatted" | xargs git add
+		printf '%s\n' "$unformatted" | sed 's/^/    /'
+	fi
+fi
+
+# ---- Everything else ------------------------------------------------------
+# Prettier is optional. A Go contributor without Node is not blocked from
+# committing; CI still checks formatting, and `make fmt` fixes it.
+other=$(staged '*.md' '*.yml' '*.yaml' '*.json' '*.css')
+if [ -n "$other" ] && has_prettier; then
+	changed=$(printf '%s\n' "$other" | xargs "$PRETTIER_BIN" --list-different || true)
+	if [ -n "$changed" ]; then
+		step "formatting docs and config"
+		printf '%s\n' "$changed" | xargs "$PRETTIER_BIN" --write >/dev/null
+		printf '%s\n' "$changed" | xargs git add
+		printf '%s\n' "$changed" | sed 's/^/    /'
+	fi
+fi
+
+# ---- Catch the mistake that is expensive later ----------------------------
+if [ -n "$go_files" ]; then
+	step "go vet"
+	if ! go vet ./... >/dev/null 2>&1; then
+		fail "go vet failed" \
+			"Run 'go vet ./...' to see it." \
+			"To commit anyway: git commit --no-verify"
+	fi
+fi
+
+ok "pre-commit"

@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to use vrok — files, folders, localhost</title>
+    <meta
+      name="description"
+      content="Commands, flags, what visitors see, reach, and the security model. vrok shares files, folders and running servers without uploading them."
+    />
+    <meta name="theme-color" content="#0c3a3f" />
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="fonts/archivo-var.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+
+  <body>
+    <a class="skip" href="#guide">Skip to guide</a>
+
+    <header class="bar">
+      <a class="wordmark" href="./" aria-label="vrok home">
+        <img
+          class="wordmark__mark"
+          src="assets/mark.svg"
+          alt=""
+          width="32"
+          height="32"
+        />
+        <span class="wordmark__text">vrok</span>
+        <span class="wordmark__tag">share locally</span>
+      </a>
+      <nav class="bar__nav" aria-label="Primary">
+        <button
+          class="bar__toggle"
+          type="button"
+          data-nav
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          Menu
+        </button>
+        <div class="bar__links" id="site-nav">
+          <a href="./#share">What it shares</a>
+          <a href="./#compare">Why vrok</a>
+          <a href="guide.html">Guide</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a class="bar__cta" href="download.html">Download</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="guide" id="guide">
+      <div class="guide__layout">
+        <nav class="guide__toc" aria-label="On this page">
+          <h2>On this page</h2>
+          <ol>
+            <li><a href="#what">What it is</a></li>
+            <li><a href="#commands">Commands</a></li>
+            <li><a href="#flags">Flags</a></li>
+            <li><a href="#manage">Managing shares</a></li>
+            <li><a href="#visitors">What visitors see</a></li>
+            <li><a href="#reach">Who can open the URL</a></li>
+            <li><a href="#security">Security and privacy</a></li>
+          </ol>
+        </nav>
+
+        <article class="guide__body">
+          <header>
+            <h1>How to use vrok</h1>
+            <p class="guide__lede">
+              Free and open source. vrok is not a file-hosting site. It is a
+              local server plus a tunnel: one command publishes a file, a
+              folder, or a running HTTP app through a URL that is meant to die.
+            </p>
+          </header>
+
+          <section id="what">
+            <h2>What it is</h2>
+            <p>
+              Your laptop sits behind NAT. Nobody on the internet can open a
+              connection <em>to</em> it. vrok starts a small HTTP server on
+              loopback, opens an outbound tunnel, and prints a public URL.
+              Visitors hit that URL; bytes are read from your disk — or
+              proxied to <code>localhost</code> — while they wait.
+            </p>
+            <p>That covers three different jobs with the same command:</p>
+            <ul>
+              <li>
+                A <strong>file</strong> — video with seeking, a PDF, an
+                installer, anything.
+              </li>
+              <li>
+                A <strong>folder</strong> — browsable listing, or a built site
+                / Playwright report served as the real thing.
+              </li>
+              <li>
+                A <strong>running server</strong> —
+                <code>vrok localhost:3000</code> reverse-proxies it, WebSockets
+                included, so hot reload still works for the other person.
+              </li>
+            </ul>
+            <p>
+              Nothing is uploaded. Closing the terminal, hitting the TTL, or
+              revoking the share is what stops the URL. If the recipient needs
+              the file after you shut the lid, this is the wrong tool —
+              <a href="./#compare">see the comparison</a>.
+            </p>
+          </section>
+
+          <section id="commands">
+            <h2>Commands</h2>
+            <pre><code>vrok ./cut-03.mp4                 # one file
+vrok ./playwright-report          # a whole directory
+vrok report.pdf shot.png a.mp4    # several files, one index
+vrok localhost:3000               # a local HTTP server
+vrok share ./x                    # same as vrok ./x</code></pre>
+
+            <h3>A file</h3>
+            <p>
+              Recognised types get a preview (player, image, highlighted
+              source). Everything else gets a download card with the right
+              Content-Type. There is no allow-list: a 4&nbsp;GB disk image, an
+              <code>.xlsx</code>, or a file with no extension all work.
+            </p>
+
+            <h3>A folder</h3>
+            <p>
+              Visitors get a listing. If the folder contains
+              <code>index.html</code>, that file is served at the root — which
+              is why <code>vrok ./dist</code> looks like the real site. Add
+              <code>?list=1</code> to any directory URL to force the listing.
+            </p>
+
+            <h3>A localhost app</h3>
+            <p>
+              vrok does not replace your framework. It reverse-proxies
+              whatever is already listening. Range requests and WebSocket
+              upgrades pass through on the default Cloudflare route, so Vite
+              / Next hot reload reaches the person you sent the link to.
+            </p>
+            <p>
+              WebSocket upgrades are <strong>not</strong> carried through
+              <code>--tunnel relay</code> yet. If you use your own relay for
+              live frontend work, visitors must refresh.
+            </p>
+          </section>
+
+          <section id="flags">
+            <h2>Flags</h2>
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>Flag</th>
+                  <th>What it does</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>--ttl 30m</code></td>
+                  <td>
+                    How long the share lives. <code>45s</code>,
+                    <code>30m</code>, <code>2h</code>, <code>1d</code>,
+                    <code>1w</code>, or <code>0</code> for no expiry. Default
+                    <code>2h</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>--downloads 5</code></td>
+                  <td>
+                    Close after five downloads. Seeking inside a video does
+                    not spend one.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>--password</code></td>
+                  <td>
+                    Prompt for a visitor password. Also reads
+                    <code>VROK_PASSWORD</code>. Stored as Argon2id, never
+                    written to disk.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>--qr</code></td>
+                  <td>Print a QR code next to the URL.</td>
+                </tr>
+                <tr>
+                  <td><code>--local</code></td>
+                  <td>
+                    LAN only. No public tunnel. The banner says
+                    <code>your local network</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>--tunnel local</code></td>
+                  <td>
+                    This machine only. A <code>127.0.0.1</code> URL cannot be
+                    sent to anyone.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>--tunnel &lt;name&gt;</code></td>
+                  <td>
+                    <code>auto</code> (default), <code>cloudflare</code>, or
+                    <code>relay</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>--name client-report</code></td>
+                  <td>Display name on the share and in <code>vrok list</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>--port 8080</code></td>
+                  <td>Pick the local listen port instead of a free one.</td>
+                </tr>
+                <tr>
+                  <td><code>-v</code></td>
+                  <td>Request and tunnel diagnostics.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="manage">
+            <h2>Managing shares</h2>
+            <pre><code>vrok list               # every share running on this machine
+vrok list --json        # the same, for scripts
+vrok revoke a82kd9      # kill one URL now
+vrok stop --all         # stop every vrok process
+vrok config set ttl 30m # store a default</code></pre>
+            <p>
+              There is no database. Each sharing process reports itself over a
+              socket in your state directory. When the process exits, it
+              disappears from the list.
+            </p>
+          </section>
+
+          <section id="visitors">
+            <h2>What visitors see</h2>
+            <p>
+              The table decides presentation only. Any type can be shared.
+            </p>
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Preview</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>JPG, PNG, WebP, GIF, SVG</td>
+                  <td>Image</td>
+                </tr>
+                <tr>
+                  <td>MP4, WebM, MOV, MKV</td>
+                  <td>Video player with seeking</td>
+                </tr>
+                <tr>
+                  <td>MP3, WAV, FLAC, OGG</td>
+                  <td>Audio player</td>
+                </tr>
+                <tr>
+                  <td>PDF</td>
+                  <td>The browser’s PDF viewer</td>
+                </tr>
+                <tr>
+                  <td>Markdown, JSON, source, logs</td>
+                  <td>Rendered or highlighted text</td>
+                </tr>
+                <tr>
+                  <td>HTML / a folder with index.html</td>
+                  <td>The page itself</td>
+                </tr>
+                <tr>
+                  <td>ZIP, JAR</td>
+                  <td>Listing, without extracting</td>
+                </tr>
+                <tr>
+                  <td>XLSX, DOCX, PPTX, DMG, EXE, APK</td>
+                  <td>Download card, correct Content-Type</td>
+                </tr>
+                <tr>
+                  <td>Anything else</td>
+                  <td>Download card</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              Range requests work end to end, including through a tunnel, so
+              video seeking and resume work. Edits you make on disk show up
+              when the visitor refreshes; vrok does not cache a copy.
+            </p>
+          </section>
+
+          <section id="reach">
+            <h2>Who can open the URL</h2>
+            <p>
+              The HTTP server always binds <code>127.0.0.1</code>. Reaching it
+              from anywhere else is a tunnel’s job. The banner states the
+              reach so you do not paste a loopback URL into a chat.
+            </p>
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>Command</th>
+                  <th>Who can open it</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>vrok ./x</code></td>
+                  <td>Anyone with the link (auto tunnel)</td>
+                </tr>
+                <tr>
+                  <td><code>vrok ./x --local</code></td>
+                  <td>Your network</td>
+                </tr>
+                <tr>
+                  <td><code>vrok ./x --tunnel local</code></td>
+                  <td>This machine only</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              <code>auto</code> prefers a relay you configured, then an
+              installed client, then fetches <code>cloudflared</code> once
+              into the cache. That download is announced in the terminal.
+              Store a private default with
+              <code>vrok config set tunnel local</code>.
+            </p>
+          </section>
+
+          <section id="security">
+            <h2>Security and privacy</h2>
+            <p>
+              The full model is in
+              <a href="https://github.com/AliJabbar034/vrok/blob/main/docs/security.md"
+                >docs/security.md</a
+              >. The short version:
+            </p>
+            <ul>
+              <li>
+                <strong>Only what you shared is reachable.</strong>
+                <code>vrok ./demo.pdf</code> serves that file. The folder it
+                sits in, sibling files, and anything above it are not on the
+                URL. A visitor cannot ask for another path.
+              </li>
+              <li>
+                <strong>The visitor never names a file.</strong> The URL
+                carries a 128-bit token from <code>crypto/rand</code>. There
+                is no <code>?path=/Users/you/secret</code>.
+              </li>
+              <li>
+                <strong>Path confinement.</strong>
+                <code>../</code>, encoded paths, and symlinks that escape the
+                shared directory all 404 the same way a missing file does.
+                A file replaced by a symlink after you shared it is refused
+                too.
+              </li>
+              <li>
+                <strong>Uniform failure.</strong> Expired, revoked, exhausted
+                and unknown shares look identical. Probing reveals nothing.
+              </li>
+              <li>
+                <strong>Passwords</strong> are Argon2id digests in memory,
+                never plaintext on disk. The unlock cookie is HttpOnly.
+              </li>
+              <li>
+                <strong>No analytics.</strong> Download counts stay in your
+                terminal. Nothing is sent to a vrok server, because there
+                isn’t one on the default path.
+              </li>
+              <li>
+                <strong>Default reach is public</strong> via Cloudflare’s
+                quick tunnel. The banner says so. Use <code>--local</code> or
+                <code>--tunnel local</code> when it should not leave the
+                building. A public URL still expires.
+              </li>
+              <li>
+                <strong>If you share a folder that contains a secret, the
+                secret is shared.</strong> vrok confines access to the
+                directory you chose. It does not judge what is in it.
+              </li>
+            </ul>
+            <p>
+              A vulnerability in those guarantees belongs in
+              <a href="https://github.com/AliJabbar034/vrok/security/advisories/new"
+                >private reporting</a
+              >, not a public issue.
+            </p>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__inner">
+        <a class="foot__brand" href="./" aria-label="vrok home">
+          <img
+            class="foot__logo"
+            src="assets/mark.svg"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="foot__mark">vrok</span>
+        </a>
+        <p>
+          Free and open source. MIT licensed. Built by
+          <a href="https://github.com/AliJabbar034">Ali Jabbar</a>
+          ·
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >.
+        </p>
+        <nav aria-label="Footer">
+          <a href="./">Home</a>
+          <a href="download.html">Downloads</a>
+          <a href="https://github.com/AliJabbar034/vrok">Source</a>
+          <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            >LinkedIn</a
+          >
+        </nav>
+      </div>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>

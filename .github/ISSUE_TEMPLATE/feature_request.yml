@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest a capability vrok does not have.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        vrok is deliberately small. It has no accounts, no database, no cloud
+        storage, no teams and no permanent URLs, and proposals to add them
+        will be declined. The core idea is temporary access to something on
+        your own machine.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >
+        What are you trying to do that vrok makes hard today? Describe the
+        situation, not the feature — the best solution is often not the one
+        that first comes to mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: If you have a specific design, sketch the command line.
+      placeholder: vrok ./report.pdf --notify-on-download
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: Existing flags, other tools, or a workaround.
+    validations:
+      required: false

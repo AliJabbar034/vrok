@@ -1,0 +1,38 @@
+{{define "content"}}
+<section class="listing-page">
+  {{if .Breadcrumbs}}
+  <nav class="crumbs" aria-label="Breadcrumb">
+    {{range .Breadcrumbs}}<a href="{{.URL}}">{{.Name}}</a><span class="crumbs__sep">/</span>{{end}}
+    <span class="crumbs__current">{{.Current}}</span>
+  </nav>
+  {{end}}
+
+  <h1 class="listing-page__title">{{.Heading}}</h1>
+
+  {{if .Entries}}
+  <table class="listing">
+    <thead>
+      <tr><th>Name</th><th>Size</th><th>Modified</th><th></th></tr>
+    </thead>
+    <tbody>
+      {{range .Entries}}
+      <tr>
+        <td class="listing__name"><a href="{{.URL}}"><span class="listing__icon">{{.Icon}}</span>{{.Name}}</a></td>
+        <td class="listing__size">{{if .IsDir}}&mdash;{{else}}{{.SizeText}}{{end}}</td>
+        <td class="listing__time">{{.Modified}}</td>
+        <td class="listing__get">{{if not .IsDir}}<a href="{{.DownloadURL}}" download title="Download {{.Name}}">⬇</a>{{end}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{if .Truncated}}
+  <p class="note">
+    Showing the first {{len .Entries}} of {{.Total}} entries. Open a subfolder
+    to see the rest.
+  </p>
+  {{end}}
+  {{else}}
+  <p class="empty">This folder is empty.</p>
+  {{end}}
+</section>
+{{end}}

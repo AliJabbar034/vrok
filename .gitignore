@@ -1,0 +1,27 @@
+# Build output
+/bin/
+/dist/
+vrok
+vrok-relay
+
+# Coverage
+coverage.out
+coverage.html
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local scratch
+/tmp/
+*.local
+.impeccable/
+completions/
+
+# Personal notes. Anything named *.local.md stays on this machine.
+*.local.md
+
+# Formatting tooling only; vrok itself does not need node to build.
+node_modules/

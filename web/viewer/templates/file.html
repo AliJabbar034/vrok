@@ -1,0 +1,20 @@
+{{define "content"}}
+<section class="file">
+  {{if .Breadcrumbs}}
+  <nav class="crumbs" aria-label="Breadcrumb">
+    {{range .Breadcrumbs}}<a href="{{.URL}}">{{.Name}}</a><span class="crumbs__sep">/</span>{{end}}
+    <span class="crumbs__current">{{.Name}}</span>
+  </nav>
+  {{end}}
+
+  <div class="file__head">
+    <h1 class="file__name"><span class="file__icon">{{.Icon}}</span>{{.Name}}</h1>
+    <div class="file__actions">
+      <span class="file__size">{{.SizeText}}</span>
+      <a class="button" href="{{.DownloadURL}}" download>Download</a>
+    </div>
+  </div>
+
+  {{.Preview}}
+</section>
+{{end}}

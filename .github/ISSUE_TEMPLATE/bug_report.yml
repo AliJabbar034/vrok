@@ -1,0 +1,56 @@
+name: Bug report
+description: Something does not work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Found a security issue? Do not file it here — see
+        [SECURITY.md](../blob/main/SECURITY.md) for private reporting.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: The exact command
+      description: >
+        Run it again with `-v` and paste the output. Redact share tokens and
+        anything else you would not post publicly.
+      render: console
+      placeholder: |
+        $ vrok ./report.pdf -v
+        ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of `vrok --version`.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Linux, Windows, Other]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tunnel
+    attributes:
+      label: Tunnel provider
+      description: Shown as `Tunnel:` on the banner.
+      options: [auto, cloudflare, relay, local, "not sure"]
+    validations:
+      required: true

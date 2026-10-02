@@ -1,0 +1,189 @@
+/* Collection point: the same locker bank, read as a rack of numbered slots. */
+
+.dl {
+  padding: clamp(2.5rem, 5vw, 4.5rem) var(--gut) clamp(3rem, 6vw, 5rem);
+}
+.dl__inner {
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+.dl__head {
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--rule);
+}
+.dl__h {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  text-transform: uppercase;
+}
+.dl__lede {
+  margin: 0.9rem 0 0;
+  max-width: var(--measure);
+  font-size: clamp(1.02rem, 1vw + 0.8rem, 1.18rem);
+  color: var(--ink-soft);
+}
+.dl__rel {
+  margin: 1.25rem 0 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-stretch: 86%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.dl__rel a {
+  color: var(--signal);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.dl__sh {
+  font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+  font-weight: 700;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.dl__note,
+.dl__alt {
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.dl__alt {
+  margin: 0.9rem 0 0;
+}
+.dl__note code,
+.dl__alt code,
+.after dd code {
+  color: var(--ink);
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.12em 0.4em;
+  border-radius: 2px;
+}
+
+.archives,
+.after {
+  padding: clamp(2rem, 4vw, 3rem) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.after {
+  border-bottom: 0;
+}
+
+/* The primary action gets the same bolted instruction plate as the home
+   page, so the two pages are plainly the same installation. */
+.quick {
+  margin: clamp(2rem, 4vw, 3rem) 0;
+  padding: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+.quick .dl__sh,
+.quick .dl__alt {
+  color: var(--signal-ink);
+}
+.quick .dl__alt code {
+  color: var(--signal-ink);
+  background: rgba(26, 20, 3, 0.12);
+}
+.quick .dl__note[data-detected] {
+  color: #453613;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.quick .dl__sh {
+  margin-bottom: 0.6rem;
+}
+.quick .cmd-label {
+  color: #453613;
+}
+
+/* The rack of slots. */
+.rack {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+@media (min-width: 46rem) {
+  .rack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 2vw, 1.4rem);
+  background: linear-gradient(170deg, var(--enamel-lit) 0%, var(--enamel) 70%);
+  transition: background 0.25s var(--ease);
+}
+.slot:hover {
+  background: linear-gradient(170deg, #17656d 0%, #0e444a 70%);
+}
+.slot[data-yours="true"] {
+  background: linear-gradient(170deg, #1a6f77 0%, #104c53 70%);
+}
+
+.slot__id h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  font-stretch: 84%;
+}
+.slot__id p {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+.slot__id p .yours {
+  color: var(--signal);
+  font-weight: 700;
+}
+
+.slot__get {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  background: var(--enamel-deep);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.45rem 0.8rem;
+  transition:
+    background 0.18s var(--ease),
+    border-color 0.18s var(--ease);
+}
+.slot__get:hover {
+  background: var(--signal);
+  border-color: var(--signal);
+}
+.slot__file {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+.slot__get:hover .slot__file {
+  color: var(--signal-ink);
+}
+
+.after .tariff__list {
+  margin: 0;
+}
+.after .tariff__row:first-child {
+  border-top: 1px solid var(--rule);
+}

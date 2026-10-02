@@ -1,0 +1,94 @@
+#!/bin/sh
+# The last gate before work leaves your machine.
+#
+# Checks the branch name and runs the same suite CI runs, because finding out
+# from a red CI run costs a round trip and a force-push.
+
+set -eu
+
+. "$(dirname "$0")/lib.sh"
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# ---- Never push straight to main ------------------------------------------
+if [ "$branch" = "main" ]; then
+	fail "do not push directly to main" \
+		"" \
+		"  main is protected and releases from it are automatic." \
+		"  Move this work onto a branch:" \
+		"" \
+		"    git switch -c fix/my-change" \
+		"    git switch main && git reset --hard origin/main" \
+		"" \
+		"To push anyway: git push --no-verify"
+fi
+
+# ---- Branch name ----------------------------------------------------------
+if ! printf '%s' "$branch" | grep -qE "$BRANCH_RE"; then
+	fail "branch name does not follow the convention" \
+		"" \
+		"  got:  $branch" \
+		"  want: type/short-description" \
+		"" \
+		"    feat/qr-code-flag" \
+		"    fix/range-requests-on-large-files" \
+		"    docs/explain-relay-setup" \
+		"" \
+		"  Types:  $BRANCH_TYPES" \
+		"  Lowercase, hyphens, no spaces." \
+		"" \
+		"  Rename it:  git branch -m fix/my-change" \
+		"" \
+		"To push anyway: git push --no-verify"
+fi
+
+# ---- Every commit being pushed --------------------------------------------
+# A branch is squash-merged under the PR title, but a stray subject here
+# still ends up in the history and in `git log`.
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || echo "")
+if [ -n "$upstream" ]; then
+	range="$upstream..HEAD"
+else
+	range="origin/main..HEAD"
+fi
+
+if git rev-parse --verify --quiet "${range%%..*}" >/dev/null 2>&1; then
+	bad=""
+	for sha in $(git rev-list "$range" 2>/dev/null); do
+		subject=$(git log -1 --format=%s "$sha")
+		case "$subject" in
+		Merge\ * | Revert\ * | fixup!* | squash!*) continue ;;
+		esac
+		if ! printf '%s' "$subject" | grep -qE "$CONVENTIONAL_COMMIT_RE"; then
+			bad="$bad\n    ${sha%"${sha#???????}"}  $subject"
+		fi
+	done
+	if [ -n "$bad" ]; then
+		# shellcheck disable=SC2059
+		fail "some commits are not conventional commits" \
+			"$(printf "$bad")" \
+			"" \
+			"  Fix the most recent:  git commit --amend" \
+			"  Fix several:          git rebase -i $range" \
+			"" \
+			"To push anyway: git push --no-verify"
+	fi
+fi
+
+# ---- The suite ------------------------------------------------------------
+step "gofmt"
+unformatted=$(gofmt -l . 2>/dev/null | grep -v '^$' || true)
+if [ -n "$unformatted" ]; then
+	fail "these files need gofmt" "$unformatted" "" "Run: make fmt"
+fi
+
+step "go vet"
+go vet ./... || fail "go vet failed" "" "To push anyway: git push --no-verify"
+
+step "go test"
+go test ./... >/dev/null || fail "tests failed" \
+	"" \
+	"Run 'go test ./...' to see which." \
+	"To push anyway: git push --no-verify"
+
+ok "ready to push"

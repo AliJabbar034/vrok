@@ -1,0 +1,121 @@
+name: Tag
+
+# Turns merges into releases. Every push to main is inspected: if it contains
+# anything user-visible since the last tag, the next version is computed from
+# the commit messages and tagged, which is what release.yml triggers on.
+#
+# Nobody tags by hand. A human choosing version numbers is how a breaking
+# change ships as a patch.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # create the tag
+
+concurrency:
+  # Two merges landing together must not both compute "the next version" from
+  # the same starting point and race to create it.
+  group: tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.version.outputs.next }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the whole history, to find the last tag
+
+      - name: Work out the next version
+        id: version
+        run: |
+          set -euo pipefail
+
+          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "")
+          if [ -z "$previous" ]; then
+            echo "no tag yet; the first release is v0.1.0"
+            echo "next=v0.1.0" >> "$GITHUB_OUTPUT"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          range="${previous}..HEAD"
+          subjects=$(git log --format='%s' "$range")
+          bodies=$(git log --format='%B' "$range")
+
+          if [ -z "$subjects" ]; then
+            echo "nothing new since $previous"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Precedence matters: one breaking change in a batch of fixes is
+          # still a major release.
+          bump=none
+          if printf '%s' "$subjects" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+            bump=major
+          elif printf '%s' "$bodies" | grep -qE '^BREAKING[ -]CHANGE:'; then
+            bump=major
+          elif printf '%s' "$subjects" | grep -qE '^feat(\(.+\))?:'; then
+            bump=minor
+          elif printf '%s' "$subjects" | grep -qE '^(fix|perf|sec|security|revert)(\(.+\))?:'; then
+            bump=patch
+          fi
+
+          if [ "$bump" = none ]; then
+            echo "only docs/chore/test/ci commits since $previous; nothing to release"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          current=${previous#v}
+          major=${current%%.*}
+          rest=${current#*.}
+          minor=${rest%%.*}
+          patch=${rest#*.}
+
+          case "$bump" in
+            # Below 1.0 a breaking change is a minor bump, which is what the
+            # 0.x contract in semver actually says.
+            major) if [ "$major" -eq 0 ]; then minor=$((minor+1)); patch=0
+                   else major=$((major+1)); minor=0; patch=0; fi ;;
+            minor) minor=$((minor+1)); patch=0 ;;
+            patch) patch=$((patch+1)) ;;
+          esac
+
+          next="v${major}.${minor}.${patch}"
+          echo "$previous -> $next ($bump)"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create the tag
+        if: steps.version.outputs.release == 'true'
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          if git rev-parse "$NEXT" >/dev/null 2>&1; then
+            echo "$NEXT already exists; nothing to do"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEXT" -m "$NEXT"
+          git push origin "$NEXT"
+          echo "### Releasing $NEXT" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    needs: tag
+    if: needs.tag.outputs.release == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.tag.outputs.next }}
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
+      id-token: write

@@ -1,0 +1,1412 @@
+/* vrok — left-luggage locker bank.
+   Vitreous enamel ground, signal-yellow instruction plates, aluminium
+   hardware. Depth comes from the physics of a painted steel door: a hard
+   top light, a recessed interior, and chipped edges where hands go. */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("../fonts/archivo-var.ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/jetbrains-mono.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  /* Enamel carries the page: a committed field, not an accent. */
+  --enamel: #0c3a3f;
+  --enamel-deep: #072a2e;
+  --enamel-lit: #12565d;
+  --enamel-chip: #2b7e85;
+
+  --signal: #ffc400;
+  --signal-deep: #d9a100;
+  --signal-ink: #1a1403;
+
+  --alu: #b9c2c1;
+  --alu-dark: #7e8a89;
+
+  /* Secondary text is tinted from the enamel hue, never gray. */
+  --ink: #edf6f5;
+  --ink-soft: #a9c6c6;
+  --ink-faint: #7ba5a6;
+
+  --rule: #1b5159;
+
+  --measure: 68ch;
+  --gut: clamp(1.25rem, 4vw, 3rem);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Vitreous enamel is sprayed and fired, so it is never optically flat: it
+     carries a fine speckle. Fractal noise gives that without shipping a
+     raster texture, and it is what separates the surface from a gradient. */
+  --enamel-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+
+  /* Enamel on a signal plate is thicker and shows orange-peel rather than
+     speckle, so the plate gets a coarser, fainter grain. */
+  --plate-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.42' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23p)' opacity='0.1'/%3E%3C/svg%3E");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* `display` on a component beats the UA rule for [hidden], and the OS panels
+   are flex rows, so they stay visible without this. */
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.75rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--enamel);
+  /* Vitreous enamel: a hard light from above over a slightly uneven field. */
+  background-image:
+    var(--enamel-grain),
+    radial-gradient(
+      120% 70% at 50% -10%,
+      var(--enamel-lit) 0%,
+      transparent 60%
+    ),
+    radial-gradient(90% 50% at 85% 110%, #0a464c 0%, transparent 55%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The surfaces a browser would otherwise style for us. */
+::selection {
+  background: var(--signal);
+  color: var(--signal-ink);
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--enamel-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--enamel-chip);
+  border: 3px solid var(--enamel-deep);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--alu-dark);
+}
+* {
+  scrollbar-color: var(--enamel-chip) var(--enamel-deep);
+}
+
+:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+a {
+  color: var(--ink);
+  text-decoration-color: var(--enamel-chip);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1.5px;
+  transition: text-decoration-color 0.15s;
+}
+a:hover {
+  text-decoration-color: var(--signal);
+}
+
+code,
+pre,
+.term {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  text-wrap: balance;
+  font-stretch: 78%;
+  letter-spacing: -0.02em;
+  word-spacing: 0.16em;
+  line-height: 1.02;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  background: var(--signal);
+  color: var(--signal-ink);
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+}
+.skip:focus {
+  left: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- bar ---------- */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem var(--gut);
+  border-bottom: 1px solid var(--rule);
+  background:
+    var(--enamel-grain),
+    linear-gradient(180deg, #10464c 0%, var(--enamel) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+}
+.wordmark__mark {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.wordmark__text {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-stretch: 70%;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+.wordmark__tag {
+  display: none;
+  margin-left: 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-stretch: 88%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+@media (min-width: 48rem) {
+  .wordmark__tag {
+    display: inline;
+  }
+}
+
+.bar__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bar__links {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.85rem, 2.2vw, 1.6rem);
+  font-stretch: 85%;
+  font-size: 0.9rem;
+}
+.bar__links a {
+  text-decoration: none;
+  color: var(--ink-soft);
+  padding: 0.35rem 0;
+  border-bottom: 2px solid transparent;
+}
+.bar__links a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+.bar__links a[aria-current="page"] {
+  color: var(--signal);
+  border-bottom-color: var(--signal);
+}
+.bar__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--signal);
+  color: var(--signal-ink) !important;
+  font-weight: 700;
+  font-stretch: 84%;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  padding: 0.7rem 1.25rem;
+  min-height: 2.6rem;
+  border-radius: 3px;
+  border-bottom: 0 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.2) inset;
+}
+.bar__cta:hover {
+  background: #ffd43f;
+}
+
+.bar__toggle {
+  display: none;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-stretch: 86%;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--enamel-deep);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+@media (max-width: 52rem) {
+  .bar__toggle {
+    display: inline-flex;
+  }
+  .bar__links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.5rem var(--gut) 1rem;
+    background: var(--enamel-deep);
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar[data-open="true"] .bar__links {
+    display: flex;
+  }
+  .bar__links a {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar__cta {
+    margin-top: 0.4rem;
+    justify-content: center;
+    border-bottom: 0 !important;
+  }
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  padding: clamp(2.5rem, 6vw, 5rem) var(--gut) clamp(3rem, 7vw, 6rem);
+}
+.hero__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(2rem, 4vw, 3.5rem);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+@media (min-width: 62rem) {
+  .hero__inner {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  }
+}
+
+/* The tariff plate: enamelled steel bolted to the wall. */
+.plate {
+  position: relative;
+  background:
+    var(--plate-grain),
+    linear-gradient(177deg, var(--signal) 0%, var(--signal-deep) 100%);
+  color: var(--signal-ink);
+  padding: clamp(1.75rem, 3.5vw, 2.75rem);
+  border-radius: 3px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.18) inset,
+    0 18px 40px -16px rgba(0, 0, 0, 0.65),
+    0 3px 10px -4px rgba(0, 0, 0, 0.45);
+}
+
+/* Where the plate is bolted the enamel chips back to bare steel, which is the
+   one thing that separates fired enamel from printed card. */
+.plate::before,
+.plate::after {
+  content: "";
+  position: absolute;
+  background: var(--alu-dark);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.plate::before {
+  top: 5px;
+  left: 26px;
+  width: 20px;
+  height: 3px;
+  border-radius: 0 0 60% 40%;
+}
+.plate::after {
+  bottom: 7px;
+  right: 30px;
+  width: 14px;
+  height: 4px;
+  border-radius: 50% 30% 0 0;
+}
+
+.rivet {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff 0%,
+    var(--alu) 45%,
+    var(--alu-dark) 100%
+  );
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.rivet--tl {
+  top: 11px;
+  left: 11px;
+}
+.rivet--tr {
+  top: 11px;
+  right: 11px;
+}
+.rivet--bl {
+  bottom: 11px;
+  left: 11px;
+}
+.rivet--br {
+  bottom: 11px;
+  right: 11px;
+}
+
+.plate__title {
+  font-size: clamp(2.5rem, 6.2vw, 4.05rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+.plate__lede {
+  margin: 1rem 0 0;
+  max-width: 46ch;
+  font-size: clamp(1.02rem, 1vw + 0.8rem, 1.2rem);
+  line-height: 1.45;
+  color: #2e2405;
+}
+
+/* The three steps are a procedure, as on a real instruction plate. */
+.steps {
+  list-style: none;
+  margin: clamp(1.5rem, 2.6vw, 2.1rem) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+/* 01 spans the plate because it carries the command; 02 and 03 are short
+   enough to sit side by side, which keeps the plate from towering over the
+   locker it is bolted next to. */
+@media (min-width: 70rem) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.75rem;
+  }
+  .step:first-child {
+    grid-column: 1 / -1;
+  }
+}
+.step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(26, 20, 3, 0.28);
+}
+.step__n {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.5;
+  /* An explicit tint rather than opacity: at 0.6 these dropped to 3.5:1
+     against the dark end of the plate, and they carry the step order. */
+  color: #453613;
+}
+.step__h {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-stretch: 82%;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.step__aside {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #453613;
+}
+.step__aside--lead {
+  font-size: 0.98rem;
+  color: #2e2405;
+  max-width: 44ch;
+}
+.step__aside a {
+  color: inherit;
+  text-decoration-color: rgba(26, 20, 3, 0.4);
+}
+.step__aside a:hover {
+  text-decoration-color: var(--signal-ink);
+}
+.step__aside code {
+  font-size: 0.85em;
+  background: rgba(26, 20, 3, 0.1);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+}
+
+.step__cmd {
+  display: block;
+  margin-top: 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--signal-ink);
+  background: rgba(26, 20, 3, 0.1);
+  padding: 0.5rem 0.7rem;
+  border-radius: 2px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* OS tabs read as stamped metal selectors. */
+.os {
+  display: flex;
+  gap: 2px;
+  margin: 0.85rem 0 0.6rem;
+  background: rgba(26, 20, 3, 0.16);
+  padding: 2px;
+  border-radius: 3px;
+  width: fit-content;
+}
+.os button {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-stretch: 86%;
+  letter-spacing: 0.02em;
+  border: 0;
+  background: transparent;
+  color: #453613;
+  padding: 0.38rem 0.8rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    background 0.18s var(--ease),
+    color 0.18s var(--ease);
+}
+.os button:hover {
+  color: var(--signal-ink);
+}
+.os button[aria-selected="true"] {
+  background: var(--signal-ink);
+  color: var(--signal);
+}
+
+/* The command sits in a routed recess. Long lines scroll sideways so the
+   Copy button stays the same yellow plate as the first install command. */
+.cmd {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  background: var(--enamel-deep);
+  border-radius: 3px;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.35) inset,
+    0 1px 0 rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+.cmd__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+  font-size: clamp(0.76rem, 0.62rem + 0.42vw, 0.9rem);
+  line-height: 1.5;
+  padding: 0.85rem 1rem;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--enamel-chip) transparent;
+}
+.cmd__text::-webkit-scrollbar {
+  height: 6px;
+}
+.cmd__text::-webkit-scrollbar-thumb {
+  background: var(--enamel-chip);
+  border-radius: 99px;
+}
+.copy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-stretch: 84%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 0;
+  background: var(--signal);
+  color: var(--signal-ink);
+  padding: 0.85rem 1.2rem;
+  min-width: 6.4rem;
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.22) inset;
+  transition:
+    background 0.18s var(--ease),
+    transform 0.08s var(--ease);
+}
+.copy:hover {
+  background: #ffd43f;
+}
+.copy:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35) inset;
+}
+.copy[data-done="true"] {
+  background: var(--alu);
+  color: #10292b;
+}
+
+/* ---------- locker ---------- */
+
+/* The door is as wide as the opening it covers, swung far enough that its
+   foreshortened width is the narrow strip you see. A door narrower than its
+   bay could never close, and reads as a flap rather than a locker. */
+.locker {
+  --door: 280px;
+  --swing: 64deg;
+  position: relative;
+  display: grid;
+  gap: 0;
+  /* cos(64deg) ~= 0.438, so a 280px door projects to ~123px of page width. */
+  grid-template-columns: calc(var(--door) * 0.438) minmax(0, 1fr);
+  align-items: stretch;
+  align-self: center;
+  min-width: 0;
+}
+
+/* The door, standing open to the left of its bay. Light comes from above and
+   in front, so the leading (right) edge catches it and the hinge edge sits in
+   shadow — that is what makes a flat div read as a swung steel panel. */
+.locker__door {
+  position: relative;
+  width: var(--door);
+  border-radius: 3px 0 0 3px;
+  background:
+    var(--enamel-grain),
+    linear-gradient(
+      100deg,
+      #072529 0%,
+      var(--enamel) 46%,
+      var(--enamel-lit) 88%,
+      #1e737b 100%
+    );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.16) inset,
+    -1px 0 0 rgba(0, 0, 0, 0.4) inset,
+    0 24px 44px -20px rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--rule);
+  border-right: 0;
+  transform-origin: left center;
+  transform: perspective(1400px) rotateY(calc(var(--swing) * -1));
+  /* The one authored motion moment: the door swings open on load. */
+  animation: door-open 1.3s var(--ease) both;
+}
+@keyframes door-open {
+  from {
+    transform: perspective(1400px) rotateY(-6deg);
+  }
+  to {
+    transform: perspective(1400px) rotateY(calc(var(--swing) * -1));
+  }
+}
+/* The paint lip along the door's leading edge, which is the edge that
+   catches the light and the edge that hands actually wear. */
+.locker__door::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 3px;
+  background: linear-gradient(
+    to bottom,
+    var(--enamel-chip) 0%,
+    #8fb7b6 18%,
+    var(--enamel-chip) 44%,
+    #7aa9a8 70%,
+    var(--enamel-chip) 100%
+  );
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .locker__door {
+    animation: none;
+  }
+}
+
+/* The number is the one thing a locker door is really for. */
+.locker__num {
+  position: absolute;
+  top: 1.1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--signal);
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.locker__hinge {
+  position: absolute;
+  left: -2px;
+  width: 9px;
+  height: 46px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    #d6dcdb 0%,
+    var(--alu) 35%,
+    var(--alu-dark) 100%
+  );
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+.locker__hinge--a {
+  top: 14%;
+}
+.locker__hinge--b {
+  bottom: 14%;
+}
+
+/* A cam lock: aluminium cylinder, keyway turned to the open position. */
+.locker__lock {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 28%,
+    #f2f6f5 0%,
+    var(--alu) 42%,
+    #6e7a79 100%
+  );
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.75),
+    0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+.locker__lock::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #9aa5a4 0%, #4e5857 100%);
+}
+.locker__lock::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 13px;
+  margin: -6.5px 0 0 -1.5px;
+  border-radius: 2px;
+  background: #0a1414;
+  transform: rotate(32deg);
+}
+
+/* The bay: a routed steel interior holding the real output. */
+.locker__bay {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* The bay takes its content height. It was previously stretched to the
+     taller plate's row, which left a void underneath that read as a layout
+     hole rather than as the inside of a locker. */
+  background: linear-gradient(105deg, #061f23 0%, var(--enamel-deep) 34%);
+  /* The carcass: pressed steel surround, then the recess inside it. */
+  border: 1px solid var(--rule);
+  border-left: 0;
+  border-radius: 0 3px 3px 0;
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+  box-shadow:
+    0 0 0 5px #0a3338,
+    0 0 0 6px rgba(0, 0, 0, 0.5),
+    0 10px 24px rgba(0, 0, 0, 0.55) inset,
+    0 26px 48px -22px rgba(0, 0, 0, 0.85);
+}
+
+/* The banner is real terminal output, so it keeps the mono face and the
+   12-character label column the CLI actually pads to. It is marked up
+   rather than kept as one `pre` block only so the long URL can wrap
+   instead of being clipped — a half-shown URL would prove nothing. */
+.term {
+  font-size: clamp(0.7rem, 0.56rem + 0.4vw, 0.82rem);
+  line-height: 1.9;
+  color: var(--ink);
+}
+.term p {
+  margin: 0;
+}
+.term__cmd {
+  color: var(--ink-soft);
+  margin-bottom: 1.2em !important;
+}
+.term__prompt {
+  color: var(--enamel-chip);
+  margin-right: 0.5ch;
+}
+.term__head strong {
+  font-weight: 700;
+  color: #fff;
+}
+.term__gap {
+  margin-top: 1.7em !important;
+}
+.term__ok {
+  color: #5fe3a1;
+  font-weight: 700;
+  margin-right: 0.5ch;
+}
+.term__stop {
+  color: var(--ink-faint);
+  margin-right: 0.5ch;
+}
+.term__dim {
+  color: var(--ink-faint);
+  padding-left: 2ch;
+}
+
+.term__rows {
+  display: grid;
+  grid-template-columns: 12ch minmax(0, 1fr);
+  gap: 0 1ch;
+  margin: 0.55em 0 1.2em;
+  padding-left: 2ch;
+}
+.term__rows dt {
+  color: var(--ink-faint);
+}
+.term__rows dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.term__rows dd.term__url {
+  color: var(--signal);
+}
+
+/* On a phone the label column eats the width the URL needs, so the rows
+   stack — which is also what a narrow terminal does to this banner. */
+@media (max-width: 34rem) {
+  .locker {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+  .locker__num {
+    font-size: 1.3rem;
+  }
+  .term__rows {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 2ch;
+  }
+  .term__rows dd {
+    padding-left: 2ch;
+    margin-bottom: 0.35em;
+  }
+}
+
+.locker__bay figcaption {
+  margin-top: 1.1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ---------- tariff ---------- */
+
+.tariff {
+  padding: clamp(3rem, 6vw, 5rem) var(--gut);
+  background: var(--enamel-deep);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.tariff__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.tariff__h {
+  /* Conditions of deposit are the plate's fine print, set smaller and
+     tracked out like a tariff header rather than a second headline. */
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  font-weight: 700;
+  font-stretch: 88%;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding-bottom: 0.9rem;
+  border-bottom: 2px solid var(--signal);
+  margin-bottom: clamp(1.25rem, 2.4vw, 1.75rem);
+}
+.tariff__list {
+  margin: 0;
+  display: grid;
+  gap: 0;
+}
+.tariff__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem 2rem;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--rule);
+}
+.tariff__row:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+@media (min-width: 48rem) {
+  .tariff__row {
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
+.tariff__row dt {
+  font-weight: 700;
+  font-stretch: 84%;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.86rem;
+  color: var(--signal);
+  padding-top: 0.15rem;
+}
+.tariff__row dd {
+  margin: 0;
+  max-width: var(--measure);
+  color: var(--ink-soft);
+}
+.tariff__row dd code {
+  color: var(--ink);
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.12em 0.38em;
+  border-radius: 2px;
+}
+
+/* ---------- bank ---------- */
+
+.bank {
+  padding: clamp(3rem, 6vw, 5rem) var(--gut);
+}
+.bank__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.bank__h {
+  font-size: clamp(1.9rem, 4.4vw, 3.1rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+.bank__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+@media (min-width: 40rem) {
+  .bank__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 72rem) {
+  .bank__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Each unit is a locker face in the bank, not a card: a painted steel door
+   with a vent, a number and a lock, lit from the top edge. */
+.unit {
+  position: relative;
+  background:
+    var(--enamel-grain),
+    linear-gradient(
+      170deg,
+      var(--enamel-lit) 0%,
+      var(--enamel) 62%,
+      #0a3338 100%
+    );
+  padding: clamp(1.25rem, 2.4vw, 1.75rem);
+  padding-top: clamp(2.4rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.13) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset;
+  transition: background 0.25s var(--ease);
+}
+.unit:hover {
+  background: linear-gradient(170deg, #1a6f77 0%, #11494f 62%, #0a3338 100%);
+}
+
+/* The vent slots a real locker door is punched with. */
+.unit::before {
+  content: "";
+  position: absolute;
+  top: clamp(1.05rem, 1.9vw, 1.4rem);
+  left: clamp(1.25rem, 2.4vw, 1.75rem);
+  right: calc(clamp(1.25rem, 2.4vw, 1.75rem) + 26px);
+  height: 15px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.6) 0 3px,
+    rgba(255, 255, 255, 0.09) 3px 4px,
+    transparent 4px 7.5px
+  );
+  border-radius: 1px;
+}
+
+/* The cam lock, read small. */
+.unit::after {
+  content: "";
+  position: absolute;
+  top: clamp(0.85rem, 1.6vw, 1.15rem);
+  right: clamp(1.25rem, 2.4vw, 1.75rem);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 28%,
+    #e4eae9 0%,
+    var(--alu) 45%,
+    #65706f 100%
+  );
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+.unit__key {
+  position: absolute;
+  top: calc(clamp(0.85rem, 1.6vw, 1.15rem) + 4px);
+  right: calc(clamp(1.25rem, 2.4vw, 1.75rem) + 6.2px);
+  width: 2px;
+  height: 7px;
+  border-radius: 1px;
+  background: #0d1a1a;
+  transform: rotate(28deg);
+}
+
+.unit h3 {
+  font-size: 1.08rem;
+  font-weight: 700;
+  font-stretch: 84%;
+}
+.unit p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  flex: 1 1 auto;
+}
+.unit code {
+  font-size: 0.78rem;
+  color: var(--ink);
+  background: var(--enamel-deep);
+  padding: 0.45rem 0.6rem;
+  border-radius: 2px;
+  overflow-x: auto;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) inset;
+}
+
+/* ---------- close ---------- */
+
+.close {
+  padding: clamp(3rem, 7vw, 6rem) var(--gut);
+  background: var(--enamel-deep);
+  border-top: 1px solid var(--rule);
+}
+.close__inner {
+  max-width: 54rem;
+  margin: 0 auto;
+  text-align: center;
+}
+.close__h {
+  font-size: clamp(1.8rem, 4.4vw, 3rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+.cmd--close {
+  text-align: left;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.45) inset,
+    0 0 0 1px var(--rule);
+}
+.close__aside {
+  margin: 1.1rem 0 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- foot ---------- */
+
+.foot {
+  padding: 2rem var(--gut);
+  border-top: 1px solid var(--rule);
+}
+.foot__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+.foot__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: inherit;
+}
+.foot__logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  border-radius: 5px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.foot__mark {
+  font-weight: 700;
+  font-stretch: 70%;
+  font-size: 1.1rem;
+}
+.foot p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  flex: 1 1 auto;
+}
+.foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  font-size: 0.86rem;
+}
+
+/* A second command on a plate used to sit as unmarked prose, so it could
+   not be copied and did not look like a command. Same recess as the first. */
+.cmd + .cmd,
+.cmd-stack {
+  margin-top: 0.55rem;
+}
+.cmd-label {
+  margin: 0.85rem 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-stretch: 88%;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #453613;
+}
+
+/* ---------- compare ---------- */
+
+.compare {
+  padding: clamp(3rem, 6vw, 5.5rem) var(--gut);
+  border-top: 1px solid var(--rule);
+}
+.compare__inner {
+  max-width: 68rem;
+  margin: 0 auto;
+}
+.compare__h {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  text-transform: uppercase;
+}
+.compare__lede {
+  margin: 0.9rem 0 0;
+  max-width: var(--measure);
+  color: var(--ink-soft);
+}
+.compare__why {
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: clamp(1.5rem, 3vw, 2.2rem) 0;
+}
+@media (min-width: 48rem) {
+  .compare__why {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 72rem) {
+  .compare__why {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.why {
+  background:
+    var(--enamel-grain),
+    linear-gradient(170deg, var(--enamel-lit) 0%, var(--enamel) 70%);
+  padding: 1.25rem 1.35rem;
+}
+.why h3 {
+  font-size: 1.05rem;
+  font-stretch: 84%;
+  margin-bottom: 0.4rem;
+}
+.why p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.compare-scroll {
+  overflow-x: auto;
+  margin: 0 -0.25rem;
+  padding: 0 0.25rem;
+}
+.compare-table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.compare-table th,
+.compare-table td {
+  text-align: left;
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.compare-table th {
+  font-stretch: 82%;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 700;
+}
+.compare-table td:first-child,
+.compare-table th:first-child {
+  padding-left: 0;
+}
+.compare-table .yes {
+  color: var(--signal);
+  font-weight: 700;
+}
+.compare-table .no {
+  color: var(--ink-faint);
+}
+.compare__note {
+  margin: 1rem 0 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+}
+
+/* ---------- guide ---------- */
+
+.guide {
+  padding: clamp(2.2rem, 4vw, 3.5rem) var(--gut) clamp(3rem, 6vw, 5rem);
+}
+.guide__layout {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(2rem, 4vw, 3.5rem);
+}
+@media (min-width: 58rem) {
+  .guide__layout {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.guide__toc {
+  position: sticky;
+  top: 4.6rem;
+}
+.guide__toc h2 {
+  font-size: 0.75rem;
+  font-stretch: 88%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.7rem;
+}
+.guide__toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.guide__toc a {
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+.guide__toc a:hover,
+.guide__toc a[aria-current="true"] {
+  color: var(--signal);
+}
+.guide__body h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 700;
+  font-stretch: 74%;
+  text-transform: uppercase;
+}
+.guide__lede {
+  margin: 0.9rem 0 0;
+  max-width: var(--measure);
+  font-size: 1.1rem;
+  color: var(--ink-soft);
+}
+.guide__body section {
+  padding: clamp(1.8rem, 3vw, 2.6rem) 0;
+  border-top: 1px solid var(--rule);
+}
+.guide__body h2 {
+  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+  font-stretch: 80%;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.guide__body h3 {
+  font-size: 1.05rem;
+  font-stretch: 86%;
+  margin: 1.3rem 0 0.4rem;
+}
+.guide__body p,
+.guide__body li {
+  max-width: var(--measure);
+  color: var(--ink-soft);
+}
+.guide__body p {
+  margin: 0 0 0.8rem;
+}
+.guide__body ul,
+.guide__body ol {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+}
+.guide__body code {
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.1em 0.38em;
+  border-radius: 2px;
+  color: var(--ink);
+}
+.guide__body pre {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--enamel-deep);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow-x: auto;
+  color: var(--ink);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.guide__body pre code {
+  background: none;
+  padding: 0;
+}
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  margin: 0 0 1rem;
+}
+.guide-table th,
+.guide-table td {
+  text-align: left;
+  padding: 0.55rem 0.6rem 0.55rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.guide-table th {
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}

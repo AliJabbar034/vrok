@@ -1,0 +1,16 @@
+# Image built by GoReleaser, which has already cross-compiled the binary and
+# places it in the build context. The multi-stage Dockerfile at the repository
+# root is the one that builds from source.
+
+FROM gcr.io/distroless/static:nonroot
+
+COPY vrok-relay /vrok-relay
+
+# The relay stores nothing and needs no writable filesystem.
+USER nonroot:nonroot
+
+EXPOSE 8787
+
+ENV VROK_RELAY_ADDR=:8787
+
+ENTRYPOINT ["/vrok-relay"]

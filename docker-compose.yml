@@ -1,0 +1,38 @@
+# A vrok relay.
+#
+# Put a wildcard DNS record (*.vrok.example.com) in front of this and
+# terminate TLS there — a reverse proxy, a load balancer or Cloudflare. The
+# relay speaks plain HTTP and trusts X-Forwarded-Proto.
+
+services:
+  relay:
+    build:
+      context: .
+      args:
+        VERSION: ${VROK_VERSION:-dev}
+    image: vrok-relay:${VROK_VERSION:-dev}
+    restart: unless-stopped
+    ports:
+      - "${VROK_RELAY_PORT:-8787}:8787"
+    environment:
+      # The zone shares appear under. Required.
+      VROK_RELAY_DOMAIN: ${VROK_RELAY_DOMAIN:?set VROK_RELAY_DOMAIN, e.g. vrok.example.com}
+      # The scheme visitors reach the relay on, which is what it puts in the
+      # URLs it hands out.
+      VROK_RELAY_SCHEME: ${VROK_RELAY_SCHEME:-https}
+      # Set this to require a credential from every agent, and pass the same
+      # value to the CLI with --relay-token.
+      VROK_RELAY_TOKEN: ${VROK_RELAY_TOKEN:-}
+    command:
+      - -max-agents=${VROK_MAX_AGENTS:-500}
+    healthcheck:
+      # The relay's own /healthz, reached through the host so the check
+      # exercises the same path a visitor would.
+      test: ["CMD", "/vrok-relay", "-version"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    # The relay stores nothing, so nothing needs to be writable.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true

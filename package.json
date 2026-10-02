@@ -1,0 +1,13 @@
+{
+  "name": "vrok-tooling",
+  "private": true,
+  "description": "Formatting tooling only. vrok itself is Go and needs none of this to build.",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

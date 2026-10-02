@@ -1,0 +1,23 @@
+# Go templates are not HTML. Prettier does not understand {{...}} and
+# rewrites tag boundaries around actions, turning
+#   <a href="{{.URL}}">{{.Name}}</a><span>
+# into
+#   <a href="{{.URL}}">{{.Name}}</a\n><span>
+# Go's own formatting of these files is left alone.
+web/viewer/templates/
+
+# Build output and caches.
+bin/
+dist/
+completions/
+coverage.out
+coverage.html
+.impeccable/
+
+# Go has gofmt; prettier must not touch it.
+*.go
+go.sum
+
+# Generated or third-party.
+vendor/
+node_modules/

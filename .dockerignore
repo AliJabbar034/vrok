@@ -1,0 +1,13 @@
+.git
+.github
+bin
+dist
+docs
+examples
+tests
+coverage.out
+coverage.html
+*.md
+Makefile
+docker-compose.yml
+.DS_Store

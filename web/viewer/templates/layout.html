@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- A share is temporary and unlisted; keep it out of search indexes. -->
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="{{.StaticBase}}/viewer.css">
+  <link rel="icon" href="{{.StaticBase}}/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="{{.HomeURL}}" title="Shared with vrok">
+      <span class="brand__mark">▲</span><span class="brand__name">vrok</span>
+    </a>
+    <div class="top__meta">
+      {{if .Expires}}<span class="pill pill--clock" title="Time remaining">⏱ {{.Expires}}</span>{{end}}
+      {{if .Downloads}}<span class="pill" title="Download allowance">⬇ {{.Downloads}}</span>{{end}}
+    </div>
+  </header>
+
+  <main class="main">
+    {{template "content" .}}
+  </main>
+
+  <footer class="foot">
+    <span>Temporary share. The link stops working when it expires or the owner stops it.</span>
+  </footer>
+</body>
+</html>

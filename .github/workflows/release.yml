@@ -1,0 +1,146 @@
+name: Release
+
+# Normally invoked by tag.yml, which computes the version and creates the tag.
+#
+# It is called rather than triggered by the tag push, because a tag pushed with
+# GITHUB_TOKEN deliberately does not start another workflow — relying on that
+# would mean releases that silently never run.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag to release.
+        required: true
+        type: string
+  # A manual escape hatch for re-running a release that failed halfway.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The existing tag to release.
+        required: true
+        type: string
+  # A tag pushed by a human still releases.
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the release and upload archives
+  packages: write # push the relay image to ghcr.io
+  id-token: write # keyless signing
+
+env:
+  # The three triggers name the tag differently; everything below uses this.
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  # A tag is permanent and a release is public, so the tests run again here
+  # rather than trusting that CI passed on the commit.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...
+      - name: Check every released platform compiles
+        run: make cross
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0 # GoReleaser needs full history for the changelog
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A separate token, because GITHUB_TOKEN cannot push to the tap,
+          # bucket or winget repositories.
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+
+  # The installers are the path most people take, so a release that breaks
+  # them is worse than one that never shipped.
+  smoke-installers:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-13, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Install with install.sh
+        if: runner.os != 'Windows'
+        run: |
+          VROK_VERSION=${{ env.TAG }} \
+          VROK_INSTALL_DIR="$HOME/.vrok-test" \
+            sh ./install.sh
+          "$HOME/.vrok-test/vrok" --version
+
+      - name: Install with install.ps1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:VROK_VERSION = "${{ env.TAG }}"
+          $env:VROK_INSTALL_DIR = "$env:USERPROFILE\.vrok-test"
+          ./install.ps1
+          & "$env:USERPROFILE\.vrok-test\vrok.exe" --version
+
+      - name: Share a file end to end
+        if: runner.os != 'Windows'
+        run: |
+          echo "hello from ${{ matrix.os }}" > payload.txt
+          # --tunnel local keeps the smoke test hermetic: the point is that the
+          # installed binary serves a file, not that Cloudflare is reachable
+          # from a CI runner.
+          "$HOME/.vrok-test/vrok" ./payload.txt --tunnel local --ttl 2m > out.log 2>&1 &
+          sleep 3
+          cat out.log
+          url=$(grep 'URL:' out.log | grep -oE 'http://[^ ]+')
+          body=$(curl -s --noproxy '*' "${url}payload.txt?raw=1")
+          echo "got: $body"
+          test "$body" = "hello from ${{ matrix.os }}"
+
+      - name: Share a file end to end
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "hello from windows" | Out-File -Encoding ascii payload.txt
+          $vrok = "$env:USERPROFILE\.vrok-test\vrok.exe"
+          $p = Start-Process -FilePath $vrok `
+            -ArgumentList ".\payload.txt","--tunnel","local","--ttl","2m" `
+            -RedirectStandardOutput out.log -PassThru -NoNewWindow
+          Start-Sleep -Seconds 4
+          Get-Content out.log
+          $url = (Select-String -Path out.log -Pattern 'http://\S+').Matches.Value | Select-Object -First 1
+          $body = (Invoke-WebRequest -Uri "$($url)payload.txt?raw=1" -UseBasicParsing).Content
+          Write-Host "got: $body"
+          Stop-Process -Id $p.Id -Force
+          if ($body -notmatch 'hello from windows') { exit 1 }
