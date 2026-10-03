@@ -149,7 +149,9 @@ homebrew_casks:
     repository:
       owner: AliJabbar034
       name: homebrew-tap
-      token: '{{ envOrDefault "TAP_GITHUB_TOKEN" "" }}'
+      # .Env, not envOrDefault: token fields are rendered without that
+      # function, and the release fails with "function not defined".
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: https://github.com/AliJabbar034/vrok
     description: Share local files, folders and development servers through temporary URLs
@@ -182,7 +184,7 @@ scoops:
     repository:
       owner: AliJabbar034
       name: scoop-bucket
-      token: '{{ envOrDefault "TAP_GITHUB_TOKEN" "" }}'
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/AliJabbar034/vrok
     description: Share local files, folders and development servers through temporary URLs
     license: MIT
@@ -213,7 +215,7 @@ winget:
       owner: AliJabbar034
       name: winget-pkgs
       branch: "vrok-{{ .Version }}"
-      token: '{{ envOrDefault "WINGET_GITHUB_TOKEN" "" }}'
+      token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
       pull_request:
         enabled: true
         draft: false
