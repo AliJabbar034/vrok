@@ -327,6 +327,12 @@ together.
   not `TestResolve2`.
 - Every error a user can cause should tell them how to fix it.
 
+## Code of conduct
+
+Everyone taking part, in issues, pull requests, discussions or anywhere else,
+is expected to follow the [code of conduct](CODE_OF_CONDUCT.md). Report a
+problem privately as it describes.
+
 ## Reporting bugs
 
 Open an issue with the output of `vrok --version`, your OS, the exact command
