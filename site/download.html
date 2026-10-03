@@ -6,7 +6,7 @@
     <title>Download vrok for macOS, Linux and Windows</title>
     <meta
       name="description"
-      content="Install vrok with one command, Homebrew, Scoop, winget or a Linux package, or download a verified archive for macOS, Linux, Windows and FreeBSD."
+      content="Install vrok with one command, a Linux package or a verified archive for macOS, Linux, Windows and FreeBSD. Free, open source, no account."
     />
     <link
       rel="canonical"
@@ -184,10 +184,10 @@
                 <span class="copy__label">Copy</span>
               </button>
             </div>
-            <p class="cmd-label">Or Homebrew, once the tap is published</p>
+            <p class="cmd-label">Or from source, with Go</p>
             <div class="cmd cmd--alt">
               <code class="cmd__text"
-                >brew install --cask AliJabbar034/tap/vrok</code
+                >go install github.com/AliJabbar034/vrok/cmd/vrok@latest</code
               >
               <button class="copy" type="button" data-copy>
                 <span class="copy__label">Copy</span>
@@ -229,29 +229,10 @@
                 <span class="copy__label">Copy</span>
               </button>
             </div>
-            <p class="cmd-label">Once published, winget</p>
-            <div class="cmd cmd--alt">
-              <code class="cmd__text">winget install AliJabbar034.vrok</code>
-              <button class="copy" type="button" data-copy>
-                <span class="copy__label">Copy</span>
-              </button>
-            </div>
-            <p class="cmd-label">Or Scoop — add the bucket, then install</p>
-            <div class="cmd cmd--alt">
-              <code class="cmd__text"
-                >scoop bucket add vrok
-                https://github.com/AliJabbar034/scoop-bucket</code
-              >
-              <button class="copy" type="button" data-copy>
-                <span class="copy__label">Copy</span>
-              </button>
-            </div>
-            <div class="cmd cmd--alt">
-              <code class="cmd__text">scoop install vrok</code>
-              <button class="copy" type="button" data-copy>
-                <span class="copy__label">Copy</span>
-              </button>
-            </div>
+            <p class="dl__alt">
+              Or download the <code>.zip</code> for your machine below and put
+              <code>vrok.exe</code> on your <code>PATH</code>.
+            </p>
           </div>
         </section>
 
@@ -364,9 +345,7 @@
               <dt>Update</dt>
               <dd>
                 Run the install command again. It overwrites the binary with the
-                newest release. Homebrew:
-                <code>brew upgrade --cask AliJabbar034/tap/vrok</code>. From
-                source: <code>go install …/cmd/vrok@latest</code>. Then
+                newest release. From source: <code>go install …/cmd/vrok@latest</code>. Then
                 <code>vrok --version</code>.
               </dd>
             </div>

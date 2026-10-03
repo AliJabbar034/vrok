@@ -52,15 +52,11 @@ Both scripts detect your platform, verify the download against `checksums.txt`,
 and install without administrator rights. **To update, run the same command
 again.** It replaces the binary with the newest GitHub release.
 
-**Package managers**
+**Linux packages**
+
+Homebrew, Scoop and winget are on the way. Until then:
 
 ```sh
-brew install --cask AliJabbar034/tap/vrok  # macOS, Linux
-
-scoop bucket add vrok https://github.com/AliJabbar034/scoop-bucket
-scoop install vrok                         # Windows
-winget install AliJabbar034.vrok           # Windows
-
 sudo apt install ./vrok_*_amd64.deb        # Debian, Ubuntu
 sudo dnf install ./vrok_*_amd64.rpm        # Fedora, RHEL
 sudo apk add --allow-untrusted ./vrok_*.apk  # Alpine
@@ -90,7 +86,7 @@ your `PATH`. Every release ships builds for:
 | FreeBSD |   ✓   |       |       |
 
 Tab completion is included in the archive and installed automatically by
-Homebrew and the Linux packages. To set it up by hand:
+the Linux packages. To set it up by hand:
 
 ```sh
 vrok completion zsh  > "${fpath[1]}/_vrok"             # zsh
@@ -265,6 +261,19 @@ would rather own the whole path, vrok ships the server half too.
 The relay is a router, not a store: it forwards requests into the WebSocket
 tunnel held open by your CLI and streams the response straight back. It never
 writes a file.
+
+> The Docker image `ghcr.io/alijabbar034/vrok-relay` is this self-hosted
+> relay. To share files, install the `vrok` CLI instead (see
+> [Install](#install)); the CLI is not a container, because it needs your
+> files and your `localhost`.
+
+The image runs the relay on port 8787:
+
+```sh
+docker run -d -p 8787:8787 \
+  -e VROK_RELAY_TOKEN=change-me \
+  ghcr.io/alijabbar034/vrok-relay -domain vrok.example.com
+```
 
 Deploy it once on a host with a public IP and your own domain:
 

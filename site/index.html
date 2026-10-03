@@ -143,7 +143,7 @@
               "name": "Does it work on Windows, macOS and Linux?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. vrok is a single binary for macOS (Apple silicon and Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD, installable with one command, Homebrew, Scoop, winget or a Linux package."
+                "text": "Yes. vrok is a single binary for macOS (Apple silicon and Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD, installable with one command, a Linux package (.deb, .rpm, .apk) or a verified archive."
               }
             }
           ]
@@ -236,10 +236,16 @@
               A URL for a file,<br />a folder, or<br />localhost
             </h1>
             <p class="plate__lede">
-              Free and open source. One command. Nothing is uploaded. The person
-              you send it to sees what is on your machine right now — then the
-              link expires.
+              <strong>Stop uploading. Stop deploying.</strong> One command
+              gives your files, folders or local dev server a link anyone can
+              open, served straight from your machine. No account, no size
+              limit, and it's gone when you stop it.
             </p>
+            <ul class="plate__proof" aria-label="At a glance">
+              <li>No size limit</li>
+              <li>No account</li>
+              <li>macOS · Linux · Windows</li>
+            </ul>
             <a class="plate__watch" href="#watch">
               <span class="plate__play" aria-hidden="true"></span>
               Watch it run — 20 seconds
@@ -289,10 +295,10 @@
                         <span class="copy__label">Copy</span>
                       </button>
                     </div>
-                    <p class="cmd-label">Or Homebrew, once the tap is up</p>
+                    <p class="cmd-label">Or from source, with Go</p>
                     <div class="cmd cmd--alt">
                       <code class="cmd__text"
-                        >brew install --cask AliJabbar034/tap/vrok</code
+                        >go install github.com/AliJabbar034/vrok/cmd/vrok@latest</code
                       >
                       <button class="copy" type="button" data-copy>
                         <span class="copy__label">Copy</span>
@@ -1007,8 +1013,8 @@
               <p>
                 Yes. vrok is a single binary for macOS (Apple silicon and
                 Intel), Linux (x86_64, ARM64, ARMv7), Windows and FreeBSD,
-                installable with one command, Homebrew, Scoop, winget or a Linux
-                package.
+                installable with one command, a Linux package (.deb, .rpm, .apk)
+                or a verified archive.
               </p>
             </details>
           </div>

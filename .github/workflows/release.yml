@@ -85,6 +85,8 @@ jobs:
           # A separate token, because GITHUB_TOKEN cannot push to the tap,
           # bucket or winget repositories.
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          # Optional: only set once a fork of microsoft/winget-pkgs exists.
+          WINGET_GITHUB_TOKEN: ${{ secrets.WINGET_GITHUB_TOKEN }}
 
       # Signed, publicly logged provenance for every file in checksums.txt:
       # which workflow, commit and tag built it. Anyone can check a download
