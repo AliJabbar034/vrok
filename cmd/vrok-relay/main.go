@@ -59,6 +59,14 @@ func run() error {
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 
+	// An open relay lets anyone on the internet serve content under this
+	// domain, which is how a relay ends up hosting someone else's phishing
+	// page. Allowed, for a quick test, but never silently.
+	if *token == "" {
+		logger.Warn("relay is open: any agent can serve content under this domain; " +
+			"set -token or VROK_RELAY_TOKEN to require a credential")
+	}
+
 	server, err := relay.New(relay.Options{
 		Addr:      *addr,
 		Domain:    *domain,

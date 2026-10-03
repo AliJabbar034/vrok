@@ -79,22 +79,30 @@ try {
         }
 
         # Verify the download before it becomes an executable on the PATH.
+        # This fails closed: anyone able to block checksums.txt could
+        # otherwise also swap the archive. VROK_SKIP_VERIFY=1 opts out, for a
+        # mirror trusted without a checksum file.
+        Write-Step 'Verifying checksum'
+        $expected = $null
         try {
             $sums = Join-Path $tmp 'checksums.txt'
             Invoke-WebRequest -Uri "$base/checksums.txt" -OutFile $sums -UseBasicParsing
-            Write-Step 'Verifying checksum'
             $line = Select-String -Path $sums -Pattern ([regex]::Escape($archive)) | Select-Object -First 1
-            if ($line) {
-                $expected = ($line.Line -split '\s+')[0]
-                $actual   = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLower()
-                if ($actual -ne $expected.ToLower()) {
-                    throw "Checksum mismatch for $archive.`n  expected $expected`n  got      $actual`nNot installing. Please report this."
-                }
+            if ($line) { $expected = ($line.Line -split '\s+')[0].ToLower() }
+        } catch {
+            $expected = $null
+        }
+        if (-not $expected) {
+            if ($env:VROK_SKIP_VERIFY -eq '1') {
+                Write-Warn "Could not verify $archive; installing anyway (VROK_SKIP_VERIFY=1)"
             } else {
-                Write-Warn "No checksum listed for $archive; skipping verification"
+                throw "Could not get a checksum for $archive from $base/checksums.txt.`nNot installing an unverified binary. Try again, or set VROK_SKIP_VERIFY=1 if you trust this source."
             }
-        } catch [System.Net.WebException] {
-            Write-Warn 'Could not fetch checksums.txt; skipping verification'
+        } else {
+            $actual = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLower()
+            if ($actual -ne $expected) {
+                throw "Checksum mismatch for $archive.`n  expected $expected`n  got      $actual`nNot installing. Please report this."
+            }
         }
 
         Write-Step 'Extracting'
