@@ -1,0 +1,14 @@
+# Who must approve a pull request touching these paths. Rules lower in the
+# file win. The ruleset on main requires a code owner's approval, so every
+# path needs an owner here.
+
+*                        @AliJabbar034
+
+# Paths where a mistake reaches every user: the release pipeline, the
+# installers people pipe into a shell, and the security boundary.
+/.github/                @AliJabbar034
+/.goreleaser.yaml        @AliJabbar034
+/install.sh              @AliJabbar034
+/install.ps1             @AliJabbar034
+/internal/security/      @AliJabbar034
+/internal/server/gate.go @AliJabbar034

@@ -32,6 +32,46 @@ gh pr create --fill                        # title must be a conventional commit
 A maintainer reviews it, you squash-merge into `main`, and the release
 happens on its own. You never create a tag and never edit a version number.
 
+### Contributing from a fork
+
+Without write access to this repository, which is everyone outside the
+maintainers, work in your own fork instead:
+
+```sh
+gh repo fork AliJabbar034/vrok --clone      # fork on GitHub and clone it
+cd vrok
+git switch -c fix/listing-escapes-root
+# ... change things, add a test ...
+make check
+git commit -m "fix(server): confine listings to the share root"
+git push -u origin fix/listing-escapes-root # pushes to your fork
+gh pr create --fill --repo AliJabbar034/vrok
+```
+
+To bring your fork up to date before starting new work:
+
+```sh
+gh repo sync --branch main                  # updates your fork on GitHub
+git switch main && git pull
+```
+
+What to expect after you open the pull request:
+
+1. **CI waits for a maintainer** the first time you contribute. GitHub holds
+   workflows from new contributors until someone approves the run, so nobody
+   can use this repository's CI to run arbitrary code. After that it runs on
+   every push.
+2. **Secrets are never available to your pull request.** Tests that need
+   them do not exist; if something only fails in your fork, say so in the PR.
+3. **A maintainer reviews.** Expect questions and requested changes; push new
+   commits to the same branch to answer them. Do not force-push over a review
+   in progress, so the reviewer can see what changed.
+4. **The maintainer squash-merges.** Your PR title becomes the commit on
+   `main`, and you are credited as its author.
+
+Leave "Allow edits by maintainers" ticked on the pull request, so small fixes
+such as a typo or a rebase can be made without a round trip.
+
 ## Branches
 
 `main` is the only long-lived branch. It is always releasable, and it is
