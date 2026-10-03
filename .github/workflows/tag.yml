@@ -115,7 +115,11 @@ jobs:
     with:
       tag: ${{ needs.tag.outputs.next }}
     secrets: inherit
+    # A called workflow cannot hold more than its caller grants, so this
+    # must list every permission release.yml declares, or the run fails at
+    # startup without running a single job.
     permissions:
       contents: write
       packages: write
       id-token: write
+      attestations: write
