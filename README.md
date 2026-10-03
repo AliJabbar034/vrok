@@ -52,11 +52,14 @@ Both scripts detect your platform, verify the download against `checksums.txt`,
 and install without administrator rights. **To update, run the same command
 again.** It replaces the binary with the newest GitHub release.
 
-**Linux packages**
-
-Homebrew, Scoop and winget are on the way. Until then:
+**Package managers**
 
 ```sh
+brew install --cask AliJabbar034/tap/vrok    # macOS, Linux
+
+scoop bucket add vrok https://github.com/AliJabbar034/scoop-bucket
+scoop install vrok                           # Windows
+
 sudo apt install ./vrok_*_amd64.deb        # Debian, Ubuntu
 sudo dnf install ./vrok_*_amd64.rpm        # Fedora, RHEL
 sudo apk add --allow-untrusted ./vrok_*.apk  # Alpine
@@ -86,7 +89,7 @@ your `PATH`. Every release ships builds for:
 | FreeBSD |   ✓   |       |       |
 
 Tab completion is included in the archive and installed automatically by
-the Linux packages. To set it up by hand:
+Homebrew and the Linux packages. To set it up by hand:
 
 ```sh
 vrok completion zsh  > "${fpath[1]}/_vrok"             # zsh
