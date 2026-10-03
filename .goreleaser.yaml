@@ -166,15 +166,20 @@ homebrew_casks:
       zsh: completions/vrok.zsh
       bash: completions/vrok.bash
       fish: completions/vrok.fish
-    hooks:
-      post:
-        install: |
-          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
-            # Homebrew downloads over HTTPS, but Gatekeeper still quarantines
-            # an unsigned binary; clearing it avoids a dialog on first run.
-            system_command "/usr/bin/xattr",
-                           args: ["-dr", "com.apple.quarantine", "#{staged_path}/vrok"]
-          end
+    # Homebrew downloads over HTTPS, but Gatekeeper still quarantines an
+    # unsigned binary; clearing the flag avoids a "cannot be opened" dialog on
+    # first run. Written by hand because GoReleaser still emits the legacy
+    # `postflight do` block, which Homebrew now warns about on every install.
+    # A steps block may only hold literal arguments, so the path uses the
+    # {{staged_path}} token, which Homebrew expands at install time.
+    custom_block: |
+      postflight_steps do
+        on_macos do
+          run "/usr/bin/xattr",
+              args:         ["-dr", "com.apple.quarantine", "{{ "{{" }}staged_path{{ "}}" }}/vrok"],
+              must_succeed: false
+        end
+      end
 
 # scoop install vrok
 scoops:
