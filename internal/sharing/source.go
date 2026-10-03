@@ -62,7 +62,10 @@ func classifyOne(arg string) (Source, error) {
 	case errors.Is(err, os.ErrNotExist):
 		target, ok := ParseHTTPTarget(arg)
 		if !ok {
-			return Source{}, fmt.Errorf("sharing: %q is neither an existing path nor a host:port target", arg)
+			// The usual cause is a typo in a path, so say that first; the
+			// host:port form is the other thing this argument could be.
+			return Source{}, fmt.Errorf("no such file or folder: %s\n"+
+				"To share a running server instead, give its address, e.g. vrok localhost:3000", arg)
 		}
 		return Source{Kind: KindHTTP, Target: target, Name: target}, nil
 

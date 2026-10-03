@@ -10,6 +10,8 @@
 #   VROK_NO_SUDO       set to 1 to never escalate
 #   VROK_DOWNLOAD_BASE serve the archives from somewhere else, for a mirror or
 #                      an air-gapped network
+#   VROK_SKIP_VERIFY   set to 1 to install even when the checksum cannot be
+#                      checked. Only for a mirror you trust without one.
 #
 # POSIX sh on purpose: this has to run on a minimal container, a BSD and a Mac
 # without assuming bash exists.
@@ -170,30 +172,38 @@ main() {
 Check that $VERSION exists and publishes a $PLATFORM build."
 
 	# Verify the download. A corrupted or substituted archive is worth
-	# catching before it becomes an executable on your PATH.
+	# catching before it becomes an executable on your PATH. Verification
+	# fails closed: anyone able to block checksums.txt could otherwise also
+	# swap the archive, and a warning scrolls past unread in a piped install.
+	step "Verifying checksum"
+	expected=''
+	actual=''
 	if download "$base/checksums.txt" "$tmp/checksums.txt" 2>/dev/null; then
-		step "Verifying checksum"
 		expected=$(grep " $archive\$" "$tmp/checksums.txt" | awk '{print $1}')
-		if [ -z "$expected" ]; then
-			warn "no checksum listed for $archive; skipping verification"
+	fi
+	if command -v shasum >/dev/null 2>&1; then
+		actual=$(shasum -a 256 "$tmp/$archive" | awk '{print $1}')
+	elif command -v sha256sum >/dev/null 2>&1; then
+		actual=$(sha256sum "$tmp/$archive" | awk '{print $1}')
+	elif command -v openssl >/dev/null 2>&1; then
+		actual=$(openssl dgst -sha256 "$tmp/$archive" | awk '{print $NF}')
+	fi
+	if [ -z "$expected" ] || [ -z "$actual" ]; then
+		if [ "${VROK_SKIP_VERIFY:-}" = 1 ]; then
+			warn "could not verify $archive; installing anyway (VROK_SKIP_VERIFY=1)"
+		elif [ -z "$expected" ]; then
+			die "could not get a checksum for $archive from $base/checksums.txt.
+Not installing an unverified binary. Try again, or set VROK_SKIP_VERIFY=1
+if you trust this source."
 		else
-			if command -v shasum >/dev/null 2>&1; then
-				actual=$(shasum -a 256 "$tmp/$archive" | awk '{print $1}')
-			elif command -v sha256sum >/dev/null 2>&1; then
-				actual=$(sha256sum "$tmp/$archive" | awk '{print $1}')
-			else
-				actual=''
-				warn "no sha256 tool found; skipping verification"
-			fi
-			if [ -n "$actual" ] && [ "$actual" != "$expected" ]; then
-				die "checksum mismatch for $archive.
+			die "no sha256 tool found (shasum, sha256sum or openssl).
+Not installing an unverified binary. Install one, or set VROK_SKIP_VERIFY=1."
+		fi
+	elif [ "$actual" != "$expected" ]; then
+		die "checksum mismatch for $archive.
   expected $expected
   got      $actual
 Not installing. Please report this."
-			fi
-		fi
-	else
-		warn "could not fetch checksums.txt; skipping verification"
 	fi
 
 	step "Extracting"
