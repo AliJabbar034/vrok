@@ -285,6 +285,10 @@ release:
   github:
     owner: AliJabbar034
     name: vrok
+  # Re-running a release that failed halfway (release.yml's manual trigger)
+  # must replace the files it already uploaded instead of failing on them.
+  mode: keep-existing
+  replace_existing_artifacts: true
   footer: |
     ## Install
 
