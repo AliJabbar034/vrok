@@ -135,8 +135,10 @@ changelog:
 # Until that secret is set these are skipped, so the first release of a fresh
 # repository succeeds instead of failing on a missing tap.
 #
-# To enable: create AliJabbar034/homebrew-tap and AliJabbar034/scoop-bucket,
-# fork microsoft/winget-pkgs, then add the TAP_GITHUB_TOKEN secret.
+# To enable Homebrew and Scoop: create AliJabbar034/homebrew-tap and
+# AliJabbar034/scoop-bucket, then add a TAP_GITHUB_TOKEN secret that can write
+# to both. winget is separate: fork microsoft/winget-pkgs and add a
+# WINGET_GITHUB_TOKEN secret that can write to the fork.
 #
 # A cask rather than a formula: Homebrew now expects prebuilt binaries to ship
 # as casks, and formulae for them are deprecated.
@@ -193,7 +195,10 @@ winget:
   - name: vrok
     publisher: AliJabbar034
     ids: [cli]
-    skip_upload: '{{ if eq (envOrDefault "TAP_GITHUB_TOKEN" "") "" }}true{{ else }}false{{ end }}'
+    # Its own token: winget publishes through a fork of microsoft/winget-pkgs,
+    # which the tap token is not scoped to. Without this secret the step is
+    # skipped instead of failing the release.
+    skip_upload: '{{ if eq (envOrDefault "WINGET_GITHUB_TOKEN" "") "" }}true{{ else }}false{{ end }}'
     license: MIT
     homepage: https://github.com/AliJabbar034/vrok
     short_description: Share local files, folders and development servers through temporary URLs
@@ -208,7 +213,7 @@ winget:
       owner: AliJabbar034
       name: winget-pkgs
       branch: "vrok-{{ .Version }}"
-      token: '{{ envOrDefault "TAP_GITHUB_TOKEN" "" }}'
+      token: '{{ envOrDefault "WINGET_GITHUB_TOKEN" "" }}'
       pull_request:
         enabled: true
         draft: false
@@ -266,7 +271,9 @@ dockers_v2:
     platforms: [linux/amd64, linux/arm64]
     labels:
       org.opencontainers.image.title: vrok-relay
-      org.opencontainers.image.description: Relay that routes requests to a vrok CLI over a WebSocket tunnel
+      # Shown on the GitHub package page, where people arrive looking for
+      # vrok itself: say up front that this is not the CLI.
+      org.opencontainers.image.description: "Self-hosted relay for vrok. To share files, install the vrok CLI instead: https://alijabbar034.github.io/vrok/download.html"
       org.opencontainers.image.version: "{{ .Version }}"
       org.opencontainers.image.revision: "{{ .FullCommit }}"
       org.opencontainers.image.source: https://github.com/AliJabbar034/vrok
