@@ -29,7 +29,9 @@ fi
 # ---- Everything else ------------------------------------------------------
 # Prettier is optional. A Go contributor without Node is not blocked from
 # committing; CI still checks formatting, and `make fmt` fixes it.
-other=$(staged '*.md' '*.yml' '*.yaml' '*.json' '*.css')
+# Everything CI's `prettier --check .` covers, including the site's HTML and
+# JS; .prettierignore still excludes the Go templates.
+other=$(staged '*.md' '*.yml' '*.yaml' '*.json' '*.css' '*.html' '*.js' '*.mjs')
 if [ -n "$other" ] && has_prettier; then
 	changed=$(printf '%s\n' "$other" | xargs "$PRETTIER_BIN" --list-different || true)
 	if [ -n "$changed" ]; then
