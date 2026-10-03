@@ -377,6 +377,9 @@ merges, and how releases are built and verified.
 
 Security issues go through [SECURITY.md](SECURITY.md), not the issue tracker.
 
+Everyone taking part is expected to follow the
+[code of conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
