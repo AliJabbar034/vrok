@@ -227,9 +227,11 @@ h3 {
   text-transform: uppercase;
   color: var(--signal-ink);
   background: transparent;
-  border: 1px solid rgba(26, 20, 3, 0.28);
+  /* 2px in the plate ink: a 1px 28% stroke vanishes on large / high-DPI
+     screens and leaves Hide reading as leftover banner text. */
+  border: 2px solid var(--signal-ink);
   border-radius: 2px;
-  padding: 0.25rem 0.55rem;
+  padding: 0.2rem 0.55rem;
   cursor: pointer;
 }
 
@@ -493,6 +495,26 @@ h3 {
   font-size: clamp(1.02rem, 1vw + 0.8rem, 1.2rem);
   line-height: 1.45;
   color: #2e2405;
+}
+.plate__lede strong {
+  color: var(--signal-ink);
+}
+/* The three objections people raise first, answered before they scroll. */
+.plate__proof {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+.plate__proof li {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(26, 20, 3, 0.12);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--signal-ink);
 }
 
 /* The three steps are a procedure, as on a real instruction plate. */
