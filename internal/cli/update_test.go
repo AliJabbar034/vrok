@@ -31,8 +31,9 @@ func TestInstallVersionGuards(t *testing.T) {
 		if err == nil {
 			t.Fatal("a release without `vrok update` was installed by it")
 		}
-		// The way out has to be in the message, not just the refusal.
-		if !strings.Contains(err.Error(), "VROK_VERSION=v0.5.1") {
+		// The way out has to be in the message, not just the refusal, and in
+		// this platform's form: PowerShell on Windows, sh elsewhere.
+		if !strings.Contains(err.Error(), scriptCommand("v0.5.1")) {
 			t.Fatalf("err does not offer the install script:\n%v", err)
 		}
 	})
