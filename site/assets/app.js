@@ -474,6 +474,10 @@ function wireReport() {
 
 const FEEDBACK_KEY = "vrok-feedback:";
 
+// Thumb icons, drawn rather than emoji so they take the button's colour.
+const THUMB =
+  '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M8.8 1.1a1 1 0 0 1 1.4.3c.5.8.6 1.8.3 2.7L10 5.5h3a1.6 1.6 0 0 1 1.6 1.9l-1 5.3A1.6 1.6 0 0 1 12 14H6.2a1 1 0 0 1-1-1V6.6c0-.3.1-.5.3-.7l3.3-4.8ZM2 6.5h1.6a.6.6 0 0 1 .6.6v6.3a.6.6 0 0 1-.6.6H2a.6.6 0 0 1-.6-.6V7.1a.6.6 0 0 1 .6-.6Z"/></svg>';
+
 function wireFeedback() {
   for (const section of document.querySelectorAll(".guide__body section[id]")) {
     const id = section.id;
@@ -481,43 +485,52 @@ function wireFeedback() {
     const heading = section.querySelector("h2")?.textContent.trim() || id;
 
     const box = el("div", "helpful");
-    const question = el("p", "helpful__q", "Was this section helpful?");
+    const question = el("p", "helpful__q", "Did this section help?");
     question.id = `helpful-${id}`;
-    const answers = el("div", "helpful__answers");
+    question.setAttribute("aria-live", "polite");
+    const answers = el("div", "helpful__seg");
     answers.setAttribute("role", "group");
     answers.setAttribute("aria-labelledby", question.id);
     for (const [value, label] of [
       ["yes", "Yes"],
       ["no", "No"]
     ]) {
-      const button = el("button", "helpful__btn", label);
+      const button = el("button", "helpful__btn");
       button.type = "button";
       button.dataset.helpful = value;
+      button.setAttribute("aria-pressed", "false");
+      button.innerHTML = THUMB;
+      button.append(label);
       answers.append(button);
     }
     box.append(question, answers);
 
     answers.addEventListener("click", (event) => {
       const button = event.target.closest("[data-helpful]");
-      if (!button) return;
+      if (!button || box.dataset.answered) return;
       const helpful = button.dataset.helpful;
       track("guide-feedback", { section: id, helpful });
       storeSet(localStorage, FEEDBACK_KEY + id, helpful);
 
-      const done = el("p", "helpful__done");
-      done.setAttribute("role", "status");
+      // The choice stays on screen, lit, so the click visibly landed.
+      box.dataset.answered = helpful;
+      button.setAttribute("aria-pressed", "true");
+      for (const b of answers.querySelectorAll("button")) b.disabled = true;
+
       if (helpful === "yes") {
-        done.textContent = "Thanks. Glad it helped.";
-      } else {
-        const link = el("a", null, "Tell me what was missing");
-        link.href = reportHref(
-          `The "${heading}" section did not answer my question.\n\nWhat I was trying to do:\n`
-        );
-        link.target = "_blank";
-        link.rel = "noopener";
-        done.append("Thanks for saying so. ", link, " (opens a GitHub issue).");
+        question.textContent = "Thanks, glad it helped.";
+        return;
       }
-      box.replaceChildren(done);
+      question.textContent = "Thanks for saying so.";
+      const more = el("p", "helpful__more");
+      const link = el("a", null, "Tell me what was missing");
+      link.href = reportHref(
+        `The "${heading}" section did not answer my question.\n\nWhat I was trying to do:\n`
+      );
+      link.target = "_blank";
+      link.rel = "noopener";
+      more.append(link, " — it opens a short GitHub issue.");
+      box.append(more);
     });
 
     section.append(box);
@@ -605,6 +618,132 @@ async function wireChangelog() {
       .getElementById(decodeURIComponent(location.hash.slice(1)))
       ?.scrollIntoView();
   }
+}
+
+/* ---------- version examples ---------- */
+
+/* The guide's version examples follow the releases instead of going stale:
+   "newest" is the current release, and "rollback" the newest older release
+   that still has `vrok update`, which is what someone stepping back from a
+   bad release would install. The markup holds a working value for when
+   GitHub cannot be reached. */
+
+// Mirrors update.FirstWithUpdate in internal/update.
+const FIRST_WITH_UPDATE = [0, 6, 0];
+
+function versionParts(tag) {
+  const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(tag || "");
+  return m ? m.slice(1).map(Number) : null;
+}
+
+function compareVersions(a, b) {
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+  return 0;
+}
+
+async function wireVersionExamples() {
+  const slots = document.querySelectorAll("[data-example]");
+  if (!slots.length) return;
+
+  let tags;
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${REPO}/releases?per_page=20`,
+      { headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!response.ok) return;
+    tags = (await response.json())
+      .filter((r) => !r.draft && !r.prerelease && versionParts(r.tag_name))
+      .map((r) => r.tag_name)
+      .sort((a, b) => compareVersions(versionParts(b), versionParts(a)));
+  } catch {
+    return;
+  }
+  if (!tags.length) return;
+
+  const newest = tags[0];
+  const rollback =
+    tags
+      .slice(1)
+      .find((t) => compareVersions(versionParts(t), FIRST_WITH_UPDATE) >= 0) ||
+    newest;
+
+  for (const slot of slots) {
+    slot.textContent = slot.dataset.example === "rollback" ? rollback : newest;
+  }
+}
+
+/* ---------- guide contents ---------- */
+
+/* The contents list marks the section being read. "Being read" is the last
+   section whose heading has scrolled past a line a third of the way down
+   the screen, which matches where the eye is rather than whatever happens
+   to touch the top edge. At the very bottom the last section wins, since a
+   short final section may never reach that line. */
+
+function wireToc() {
+  const links = [...document.querySelectorAll(".guide__toc a[href^='#']")];
+  const pairs = links
+    .map((link) => [link, document.getElementById(link.hash.slice(1))])
+    .filter(([, section]) => section);
+  if (!pairs.length) return;
+
+  let current = null;
+  const mark = (link) => {
+    if (link === current) return;
+    current?.removeAttribute("aria-current");
+    link?.setAttribute("aria-current", "true");
+    current = link;
+  };
+
+  // After a click the page glides past other sections; the clicked link
+  // holds until that scroll settles, and the next scroll resumes tracking.
+  let held = false;
+  let settle;
+
+  let queued = false;
+  const update = () => {
+    queued = false;
+    const line = innerHeight / 3;
+    let active = null;
+    for (const [link, section] of pairs) {
+      if (section.getBoundingClientRect().top <= line) active = link;
+    }
+    const atBottom =
+      innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
+    mark(atBottom ? pairs[pairs.length - 1][0] : active);
+  };
+  const schedule = () => {
+    if (held) {
+      clearTimeout(settle);
+      // Released without re-measuring: the clicked link stays marked until
+      // the reader scrolls on their own, even where the page bottoms out
+      // before its section reaches the line.
+      settle = setTimeout(() => {
+        held = false;
+      }, 150);
+      return;
+    }
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(update);
+  };
+
+  addEventListener("scroll", schedule, { passive: true });
+  addEventListener("resize", schedule);
+  // A click marks its target at once, instead of after the scroll settles.
+  for (const [link] of pairs) {
+    link.addEventListener("click", () => {
+      mark(link);
+      held = true;
+      // If the page cannot scroll that far, no scroll event will release it.
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        held = false;
+      }, 1000);
+    });
+  }
+  update();
 }
 
 function wireNav() {
@@ -1300,9 +1439,11 @@ wireCopy();
 wireOS();
 wireRelease();
 wireNav();
+wireToc();
 wireWatch();
 wireStars();
 wireStarAsk();
 wireReport();
 wireFeedback();
 wireChangelog();
+wireVersionExamples();
