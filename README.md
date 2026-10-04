@@ -49,8 +49,24 @@ irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex
 ```
 
 Both scripts detect your platform, verify the download against `checksums.txt`,
-and install without administrator rights. **To update, run the same command
-again.** It replaces the binary with the newest GitHub release.
+and install without administrator rights. **To update, run `vrok update`.** It
+replaces the binary with the newest GitHub release after checking its checksum.
+Installed with Homebrew, Scoop or `go install`? It prints that tool's command
+instead. On a version without `vrok update`, run the install command again.
+
+**A specific version.** If a release breaks something, go back to one that
+worked, and run plain `vrok update` later to return to the newest:
+
+```sh
+vrok update --version v0.6.0
+
+# Releases before 0.6.0, or pinning a version in CI:
+curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | VROK_VERSION=v0.5.2 sh
+$env:VROK_VERSION='v0.5.2'; irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex
+go install github.com/AliJabbar034/vrok/cmd/vrok@v0.5.2
+```
+
+Homebrew and Scoop only install the newest release.
 
 **Package managers**
 
@@ -161,7 +177,14 @@ vrok list --json        # the same, for scripts
 vrok revoke a82kd9      # make one URL stop working now
 vrok stop --all         # stop every vrok process
 vrok config set ttl 30m # store a default
+vrok update             # install the newest release
+vrok doctor             # check this machine for common problems
 ```
+
+When something does not work, `vrok doctor` checks for a duplicate or outdated
+install, a broken config file, the tunnel provider, and whether Cloudflare is
+reachable from your network. It changes nothing, and its output is what a bug
+report needs.
 
 `vrok list` has no database behind it. Each sharing process reports its own
 shares over a socket in your state directory, which is why a share disappears
@@ -339,8 +362,9 @@ Dependencies are checked with `govulncheck` on every change and weekly.
 
 vrok collects nothing. There is no telemetry and no usage reporting; download
 counts live in the running process and are printed in your terminal when the
-share ends. The CLI connects only to the tunnel or relay you use, and to GitHub
-once to fetch `cloudflared` if it is missing.
+share ends. The CLI connects only to the tunnel or relay you use, to GitHub
+once to fetch `cloudflared` if it is missing, and to GitHub and Cloudflare when
+you run `vrok update` or `vrok doctor`. It never checks for updates on its own.
 
 ### Responsible use
 

@@ -1,8 +1,9 @@
-/* Seven jobs: copy a command, preselect the visitor's OS, point the archive
-   links at whatever the newest release actually is, replay the CLI in the
-   "Watch it run" section, show the star count once it means something, ask
-   for a star once a visitor has shown they care, and count the few actions
-   that say whether the page works. Everything
+/* The site's behaviour: copy a command, preselect the visitor's OS, point the
+   archive links at whatever the newest release actually is, replay the CLI
+   in the "Watch it run" section, show the star count once it means something,
+   ask for a star once a visitor has shown they care, count the few actions
+   that say whether the page works, ask whether each guide section helped,
+   prefill problem reports, and list the releases. Everything
    degrades to a working page with JavaScript off — the commands are in the
    markup and the archive links fall back to the release page. */
 
@@ -438,6 +439,172 @@ function wireStarAsk() {
   addEventListener("scroll", depth, { passive: true });
   cleanups.push(() => clearInterval(tick));
   cleanups.push(() => removeEventListener("scroll", depth));
+}
+
+/* ---------- report a problem ---------- */
+
+/* "Report a problem" opens GitHub's website-problem form with the page and
+   browser already filled in. Nothing is sent anywhere: the visitor sees the
+   prefilled form and decides whether to submit it. */
+
+function reportHref(whatHappened) {
+  const url = new URL(`https://github.com/${REPO}/issues/new`);
+  url.searchParams.set("template", "website_problem.yml");
+  url.searchParams.set(
+    "page",
+    location.origin + location.pathname + location.hash
+  );
+  url.searchParams.set("browser", navigator.userAgent.slice(0, 240));
+  if (whatHappened) url.searchParams.set("what-happened", whatHappened);
+  return url.href;
+}
+
+function wireReport() {
+  for (const link of document.querySelectorAll("a[data-report]")) {
+    link.href = reportHref(link.dataset.reportText || "");
+  }
+}
+
+/* ---------- guide feedback ---------- */
+
+/* One question at the end of each section. An answer is an Umami count, not
+   a form: the point is to find the sections that do not work, and a "no"
+   offers the prefilled report for anyone with more to say. Each section asks
+   once per browser. */
+
+const FEEDBACK_KEY = "vrok-feedback:";
+
+function wireFeedback() {
+  for (const section of document.querySelectorAll(".guide__body section[id]")) {
+    const id = section.id;
+    if (storeGet(localStorage, FEEDBACK_KEY + id)) continue;
+    const heading = section.querySelector("h2")?.textContent.trim() || id;
+
+    const box = el("div", "helpful");
+    const question = el("p", "helpful__q", "Was this section helpful?");
+    question.id = `helpful-${id}`;
+    const answers = el("div", "helpful__answers");
+    answers.setAttribute("role", "group");
+    answers.setAttribute("aria-labelledby", question.id);
+    for (const [value, label] of [
+      ["yes", "Yes"],
+      ["no", "No"]
+    ]) {
+      const button = el("button", "helpful__btn", label);
+      button.type = "button";
+      button.dataset.helpful = value;
+      answers.append(button);
+    }
+    box.append(question, answers);
+
+    answers.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-helpful]");
+      if (!button) return;
+      const helpful = button.dataset.helpful;
+      track("guide-feedback", { section: id, helpful });
+      storeSet(localStorage, FEEDBACK_KEY + id, helpful);
+
+      const done = el("p", "helpful__done");
+      done.setAttribute("role", "status");
+      if (helpful === "yes") {
+        done.textContent = "Thanks. Glad it helped.";
+      } else {
+        const link = el("a", null, "Tell me what was missing");
+        link.href = reportHref(
+          `The "${heading}" section did not answer my question.\n\nWhat I was trying to do:\n`
+        );
+        link.target = "_blank";
+        link.rel = "noopener";
+        done.append("Thanks for saying so. ", link, " (opens a GitHub issue).");
+      }
+      box.replaceChildren(done);
+    });
+
+    section.append(box);
+  }
+}
+
+/* ---------- changelog ---------- */
+
+/* Release notes come from GitHub's API as HTML GitHub has already rendered
+   and sanitised, so the page shows exactly what the release page shows.
+   Without JavaScript, or when the API is unreachable, the page keeps its
+   link to the releases on GitHub. */
+
+async function wireChangelog() {
+  const root = document.querySelector("[data-changelog]");
+  if (!root) return;
+  const status = root.querySelector("[data-changelog-status]");
+  const fallback = status?.innerHTML;
+  if (status) status.textContent = "Loading releases…";
+
+  let releases;
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${REPO}/releases?per_page=30`,
+      { headers: { Accept: "application/vnd.github.html+json" } }
+    );
+    if (!response.ok) throw new Error(String(response.status));
+    releases = (await response.json()).filter((r) => !r.draft && !r.prerelease);
+  } catch {
+    if (status) status.innerHTML = fallback;
+    return;
+  }
+  if (!releases.length) {
+    if (status) status.innerHTML = fallback;
+    return;
+  }
+  status?.remove();
+
+  const day = new Intl.DateTimeFormat(undefined, { dateStyle: "long" });
+  for (const [i, release] of releases.entries()) {
+    const article = el("article", "rel");
+    article.id = release.tag_name;
+
+    const title = el("h2", "rel__tag", release.tag_name);
+    if (i === 0) title.append(" ", el("span", "rel__latest", "Latest"));
+
+    const meta = el("p", "rel__meta");
+    const published = Date.parse(release.published_at || "");
+    if (Number.isFinite(published)) meta.append(day.format(published), " · ");
+    const onGitHub = el("a", null, "on GitHub");
+    onGitHub.href = release.html_url;
+    meta.append(onGitHub);
+
+    const notes = el("div", "rel__notes");
+    notes.innerHTML = release.body_html || "<p>No notes for this release.</p>";
+    // GitHub sometimes wraps a heading in div.markdown-heading, so cut from
+    // the wrapper when there is one.
+    const heading = (text) => {
+      const h = [...notes.querySelectorAll("h1, h2, h3")].find((x) =>
+        text.test(x.textContent.trim())
+      );
+      return h && (h.closest(".markdown-heading") || h);
+    };
+    // GoReleaser opens every body with a "Changelog" heading, which only
+    // repeats the page title.
+    heading(/^changelog$/i)?.remove();
+    // Every release ends with the same install instructions. Once per page
+    // is plenty, and the download page has them already.
+    const install = heading(/^install/i);
+    if (install) {
+      while (install.nextSibling) install.nextSibling.remove();
+      install.remove();
+    }
+    for (const link of notes.querySelectorAll("a[href^='http']")) {
+      link.rel = "noopener";
+    }
+
+    article.append(title, meta, notes);
+    root.append(article);
+  }
+
+  // A link to #v0.5.2 arrives before the release it names exists.
+  if (location.hash) {
+    document
+      .getElementById(decodeURIComponent(location.hash.slice(1)))
+      ?.scrollIntoView();
+  }
 }
 
 function wireNav() {
@@ -1136,3 +1303,6 @@ wireNav();
 wireWatch();
 wireStars();
 wireStarAsk();
+wireReport();
+wireFeedback();
+wireChangelog();

@@ -101,8 +101,8 @@
       <div class="release__inner">
         <p>
           <span class="release__new" data-release-fresh hidden>New</span>
-          <strong data-latest-tag></strong> is out. Update with the same command
-          you used to install.
+          <strong data-latest-tag></strong> is out. Update with
+          <span class="release__cmd">vrok update</span>.
           <a href="#update">How to update</a>
         </p>
         <button type="button" class="release__hide" data-release-dismiss>
@@ -154,6 +154,7 @@
             <li><a href="#flags">Flags</a></li>
             <li><a href="#large">Large files</a></li>
             <li><a href="#manage">Managing shares</a></li>
+            <li><a href="#doctor">When something breaks</a></li>
             <li><a href="#visitors">What visitors see</a></li>
             <li><a href="#reach">Who can open the URL</a></li>
             <li><a href="#security">Security and privacy</a></li>
@@ -209,16 +210,100 @@
           <section id="update">
             <h2>Updating</h2>
             <p>
-              vrok has no auto-updater and never checks for updates in the
-              background. To update, run the command for the way you installed
-              it. That replaces the binary with the newest release. Your flags
-              and habits carry over; vrok keeps no state between runs.
+              vrok never checks for updates in the background. When you want the
+              newest release, ask for it:
+            </p>
+            <div class="cmd">
+              <code class="cmd__text">vrok update</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              It finds the newest release on GitHub, downloads the build for
+              your platform, checks it against the published checksum, makes
+              sure it runs, and only then replaces itself. If Homebrew, Scoop or
+              <code>go install</code> put vrok on your machine, it prints that
+              tool's command instead, so the package manager stays in charge.
+              Add <code>--check</code> to only see whether there is a newer
+              release.
             </p>
             <p class="update-latest">
               Newest release:
-              <a href="https://github.com/AliJabbar034/vrok/releases/latest"
+              <a href="changelog.html"
                 ><strong data-latest-tag>see releases</strong> · what changed</a
               >
+            </p>
+
+            <h3 id="update-version">Install a specific version</h3>
+            <p>
+              If a new release breaks something for you, go back to the one that
+              worked. Pick the version from the
+              <a href="changelog.html">changelog</a>:
+            </p>
+            <div class="cmd">
+              <code class="cmd__text">vrok update --version v0.6.0</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              Plain <code>vrok update</code> returns you to the newest release
+              later. Releases older than 0.6.0 do not have
+              <code>vrok update</code>, so install those with the install
+              script, which takes the version from <code>VROK_VERSION</code>:
+            </p>
+            <dl class="update-ways">
+              <div>
+                <dt>macOS · Linux</dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >curl -fsSL
+                      https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh
+                      | VROK_VERSION=v0.5.2 sh</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+              <div>
+                <dt>Windows</dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >$env:VROK_VERSION='v0.5.2'; irm
+                      https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1
+                      | iex</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+            </dl>
+            <p>
+              The same variable pins a version in CI, so every run uses the
+              release you tested with. Homebrew and Scoop only install the
+              newest release. From source:
+            </p>
+            <div class="cmd">
+              <code class="cmd__text"
+                >go install github.com/AliJabbar034/vrok/cmd/vrok@v0.6.0</code
+              >
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+
+            <h3 id="update-manual">Without <code>vrok update</code></h3>
+            <p>
+              Older versions answer <code>unknown command "update"</code>.
+              Update once the way you installed, below. After that,
+              <code>vrok update</code> works.
             </p>
 
             <h3>1. Stop running shares</h3>
@@ -367,8 +452,9 @@
             <h3 id="update-trouble">Still showing the old version?</h3>
             <ul>
               <li>
-                <strong>Two copies on your PATH.</strong> The first one found
-                wins. List them with <code>which -a vrok</code> or
+                <strong>Two copies on your PATH.</strong>
+                <code>vrok doctor</code> lists them. The first one found wins.
+                List them with <code>which -a vrok</code> or
                 <code>Get-Command vrok -All</code>, then delete the old one or
                 update it with its own method.
               </li>
@@ -577,11 +663,60 @@ vrok share ./x                    # same as vrok ./x</code></pre>
 vrok list --json        # the same, for scripts
 vrok revoke a82kd9      # kill one URL now
 vrok stop --all         # stop every vrok process
-vrok config set ttl 30m # store a default</code></pre>
+vrok config set ttl 30m # store a default
+vrok update             # install the newest release
+vrok doctor             # check this machine for common problems</code></pre>
             <p>
               There is no database. Each sharing process reports itself over a
               socket in your state directory. When the process exits, it
               disappears from the list.
+            </p>
+          </section>
+
+          <section id="doctor">
+            <h2>When something breaks</h2>
+            <p>
+              Run the doctor first. It checks the things that most often stop
+              vrok from working, changes nothing, and finishes in a few seconds:
+            </p>
+            <div class="cmd">
+              <code class="cmd__text">vrok doctor</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <pre><code>✓ Install      /usr/local/bin/vrok (the install script)
+! PATH         2 copies of vrok; the first one runs:
+               /usr/local/bin/vrok
+               /Users/ana/go/bin/vrok
+               Delete the ones you do not use.
+✓ Config       defaults (no config file)
+✓ cloudflared  fetched by vrok
+! Port 8080    in use; `vrok --local` needs it free, or pass --port
+✓ Cloudflare   reachable (64 ms)
+✓ Version      newest release</code></pre>
+            <ul>
+              <li>
+                <strong>✗ Cloudflare unreachable.</strong> Your network blocks
+                the tunnel. Share on the local network with
+                <code>--local</code>, or use a relay you control.
+              </li>
+              <li>
+                <strong>✗ Config.</strong> The config file does not parse. Fix
+                it, or delete it to go back to the defaults.
+              </li>
+              <li>
+                <strong>! PATH or Version.</strong> See
+                <a href="#update-trouble">Still showing the old version?</a>
+              </li>
+            </ul>
+            <p>
+              Still stuck?
+              <a
+                href="https://github.com/AliJabbar034/vrok/issues/new?template=bug_report.yml"
+                >Open a bug report</a
+              >
+              and paste the doctor's output into it.
             </p>
           </section>
 
@@ -816,8 +951,10 @@ vrok config set ttl 30m # store a default</code></pre>
               <strong>The CLI collects nothing.</strong> It sends no telemetry
               and reports no usage. Download counts are kept in the running
               process and printed in your terminal when the share ends. It
-              connects only to the tunnel or relay you use, and to GitHub once,
-              to fetch <code>cloudflared</code> if it is missing.
+              connects only to the tunnel or relay you use, to GitHub once to
+              fetch <code>cloudflared</code> if it is missing, and to GitHub and
+              Cloudflare when you run <code>vrok update</code> or
+              <code>vrok doctor</code>. It never checks for updates on its own.
             </p>
             <p>
               <strong>This site sets no cookies.</strong> It counts visits with
@@ -825,14 +962,15 @@ vrok config set ttl 30m # store a default</code></pre>
               builds no profile and follows no one to other sites. It records
               the page, referrer, country and browser, plus a few actions:
               copying an install command, clicking a download or GitHub link,
-              playing a demo scene, how the star request was answered, and
-              script errors so broken pages get fixed. If your browser sends Do
-              Not Track, nothing is counted.
+              playing a demo scene, how the star request was answered, whether a
+              guide section helped, and script errors so broken pages get fixed.
+              If your browser sends Do Not Track, nothing is counted.
             </p>
             <p>
               Fonts are served from the site itself. Your browser asks GitHub's
-              public API for the latest release, and remembers in local storage
-              that you dismissed the release banner or the star request.
+              public API for the latest release and the changelog, and remembers
+              in local storage that you dismissed the release banner or the star
+              request, and which sections you already rated.
             </p>
             <p>
               <strong>Share pages</strong> set only the cookies they need: one
@@ -873,6 +1011,12 @@ vrok config set ttl 30m # store a default</code></pre>
           <a href="download.html">Downloads</a>
           <a href="https://github.com/AliJabbar034/vrok">Source</a>
           <a href="#privacy">Privacy</a>
+          <a href="changelog.html">Changelog</a>
+          <a
+            href="https://github.com/AliJabbar034/vrok/issues/new?template=website_problem.yml"
+            data-report
+            >Report a problem</a
+          >
           <a href="https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
             >LinkedIn</a
           >

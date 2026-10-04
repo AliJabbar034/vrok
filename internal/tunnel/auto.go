@@ -117,6 +117,7 @@ func (e *ErrNoRoute) Error() string {
 		"    vrok <path> --tunnel local     share with this machine only\n\n" +
 		"If you would rather use a provider you control:\n" +
 		"    vrok config set relay-url https://relay.example.com\n\n" +
+		"To see what is blocking it, run:  vrok doctor\n\n" +
 		"Underlying failure: " + errors.Join(e.Causes...).Error()
 }
 

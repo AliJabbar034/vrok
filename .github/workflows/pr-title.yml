@@ -1,0 +1,46 @@
+name: PR title
+
+# The PR title becomes the squashed commit subject, which decides the next
+# version (see tag.yml). It lives apart from ci.yml so it can re-run when a
+# title is edited without re-running the whole test matrix: a rename used to
+# leave the old failure standing until the PR was closed and reopened.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  # The release version is derived from commit subjects, so a subject that
+  # does not parse is not a style problem: it is a release that silently does
+  # not happen. The PR title is checked because merges are squashed and the
+  # title becomes the commit subject.
+  commit-style:
+    name: Commit convention
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          pattern='^(feat|fix|perf|sec|security|revert|docs|test|chore|ci|refactor|build)(\([a-z0-9/-]+\))?!?: .+'
+          if printf '%s' "$TITLE" | grep -qE "$pattern"; then
+            echo "ok: $TITLE"
+            exit 0
+          fi
+          cat >&2 <<MSG
+          The pull request title must be a conventional commit, because it
+          becomes the squashed commit subject and decides the next version.
+
+            got:  $TITLE
+
+            feat: add a thing          -> next minor
+            fix: correct a thing       -> next patch
+            feat!: remove a flag       -> next major
+            docs: explain a thing      -> no release
+
+          Scopes are allowed: fix(server): ...
+          MSG
+          exit 1

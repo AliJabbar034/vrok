@@ -10,40 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  # The release version is derived from commit subjects, so a subject that
-  # does not parse is not a style problem: it is a release that silently does
-  # not happen. The PR title is checked because merges are squashed and the
-  # title becomes the commit subject.
-  commit-style:
-    name: Commit convention
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check the PR title
-        env:
-          TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          set -euo pipefail
-          pattern='^(feat|fix|perf|sec|security|revert|docs|test|chore|ci|refactor|build)(\([a-z0-9/-]+\))?!?: .+'
-          if printf '%s' "$TITLE" | grep -qE "$pattern"; then
-            echo "ok: $TITLE"
-            exit 0
-          fi
-          cat >&2 <<MSG
-          The pull request title must be a conventional commit, because it
-          becomes the squashed commit subject and decides the next version.
-
-            got:  $TITLE
-
-            feat: add a thing          -> next minor
-            fix: correct a thing       -> next patch
-            feat!: remove a flag       -> next major
-            docs: explain a thing      -> no release
-
-          Scopes are allowed: fix(server): ...
-          MSG
-          exit 1
-
   # The hooks can be skipped with --no-verify, and a web edit never runs them
   # at all, so the same rules are enforced here as well.
   format:

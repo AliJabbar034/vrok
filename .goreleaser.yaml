@@ -130,7 +130,7 @@ changelog:
       - '^[a-z]+\(site\)!?:'
       - Merge pull request
 
-# brew install vrok/tap/vrok
+# brew install --cask AliJabbar034/tap/vrok
 #
 # Publishing to a tap, a bucket or winget needs repositories that do not exist
 # until you create them, plus a TAP_GITHUB_TOKEN secret that can write to them.
@@ -307,7 +307,7 @@ release:
     irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex
 
     # Homebrew
-    brew install vrok/tap/vrok
+    brew install --cask AliJabbar034/tap/vrok
 
     # Scoop
     scoop bucket add vrok https://github.com/AliJabbar034/scoop-bucket

@@ -2,20 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <!-- GitHub Pages serves this page at whatever path was missing, so
-         relative links need a base: the project path when published under
-         /vrok/, the site root when served locally. -->
-    <script>
-      document.write(
-        '<base href="' +
-          (location.pathname.startsWith("/vrok/") ? "/vrok/" : "/") +
-          '">'
-      );
-    </script>
-    <meta name="robots" content="noindex" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Not found — vrok</title>
-    <meta name="description" content="This page does not exist." />
+    <title>Changelog | vrok</title>
+    <meta
+      name="description"
+      content="Every vrok release and what changed in it."
+    />
+    <link
+      rel="canonical"
+      href="https://alijabbar034.github.io/vrok/changelog.html"
+    />
     <meta name="theme-color" content="#0c3a3f" />
     <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
     <link
@@ -34,10 +30,26 @@
       data-domains="alijabbar034.github.io"
       data-do-not-track="true"
     ></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="vrok" />
+    <meta property="og:title" content="Changelog | vrok" />
+    <meta
+      property="og:description"
+      content="Every vrok release and what changed in it."
+    />
+    <meta
+      property="og:url"
+      content="https://alijabbar034.github.io/vrok/changelog.html"
+    />
+    <meta
+      property="og:image"
+      content="https://alijabbar034.github.io/vrok/assets/og-card.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
 
   <body>
-    <a class="skip" href="#start">Skip to content</a>
+    <a class="skip" href="#guide">Skip to content</a>
 
     <aside class="release" data-release hidden role="status">
       <div class="release__inner">
@@ -85,23 +97,31 @@
       </nav>
     </header>
 
-    <main class="lost" id="start">
-      <div class="plate lost__plate" role="group" aria-labelledby="lost-h">
-        <span class="rivet rivet--tl" aria-hidden="true"></span>
-        <span class="rivet rivet--tr" aria-hidden="true"></span>
-        <span class="rivet rivet--bl" aria-hidden="true"></span>
-        <span class="rivet rivet--br" aria-hidden="true"></span>
-        <p class="lost__code">404</p>
-        <h1 class="plate__title" id="lost-h">Empty locker</h1>
-        <p class="plate__lede">
-          Nothing is stored at this address. If someone sent you a vrok share
-          link, it lives on their machine, not on this site: ask them for a
-          fresh one.
-        </p>
-        <p class="lost__links">
-          <a class="lost__home" href="./">Go to the homepage</a>
-          <a href="guide.html">How vrok works</a>
-        </p>
+    <main class="guide" id="guide">
+      <div class="guide__layout guide__layout--single">
+        <article class="guide__body">
+          <nav class="crumbs-nav" aria-label="Breadcrumb">
+            <a href="./">vrok</a> <span aria-hidden="true">/</span>
+            <span aria-current="page">Changelog</span>
+          </nav>
+          <header>
+            <h1>Changelog</h1>
+            <p class="guide__lede">
+              What changed in each release. Update to the newest with
+              <code>vrok update</code>, or see
+              <a href="guide.html#update">other ways to update</a>.
+            </p>
+          </header>
+
+          <div class="changelog" data-changelog aria-live="polite">
+            <p class="changelog__status" data-changelog-status>
+              Release notes live on GitHub.
+              <a href="https://github.com/AliJabbar034/vrok/releases"
+                >Read them there</a
+              >.
+            </p>
+          </div>
+        </article>
       </div>
     </main>
 
@@ -130,9 +150,8 @@
           <a href="send-large-files.html">Send large files</a>
           <a href="ngrok-alternative.html">ngrok alternative</a>
           <a href="./">Home</a>
-          <a href="guide.html">Guide</a>
+          <a href="download.html">Downloads</a>
           <a href="https://github.com/AliJabbar034/vrok">Source</a>
-          <a href="https://github.com/AliJabbar034/vrok/issues">Issues</a>
           <a href="guide.html#privacy">Privacy</a>
           <a href="changelog.html">Changelog</a>
           <a
@@ -147,10 +166,6 @@
       </div>
     </footer>
 
-    <script>
-      // The <base> above would send this fragment link to the homepage.
-      document.querySelector(".skip").href = location.pathname + "#start";
-    </script>
     <script src="assets/app.js" defer></script>
   </body>
 </html>
