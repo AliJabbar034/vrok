@@ -2245,13 +2245,41 @@ h3 {
   gap: 0.35rem;
 }
 .guide__toc a {
+  position: relative;
+  display: inline-block;
   text-decoration: none;
   color: var(--ink-soft);
   font-size: 0.88rem;
+  transition: color 0.2s var(--ease);
 }
 .guide__toc a:hover,
 .guide__toc a[aria-current="true"] {
   color: var(--signal);
+}
+/* The section being read gets a signal bar beside it, so it stays findable
+   at a glance and does not read as a hover that got stuck. */
+.guide__toc a::before {
+  content: "";
+  position: absolute;
+  left: -0.8rem;
+  top: 0.2em;
+  bottom: 0.2em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--signal);
+  transform: scaleY(0);
+  transition: transform 0.25s var(--ease);
+}
+.guide__toc a[aria-current="true"] {
+  font-weight: 600;
+}
+.guide__toc a[aria-current="true"]::before {
+  transform: scaleY(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide__toc a::before {
+    transition: none;
+  }
 }
 .guide__body h1 {
   font-size: clamp(2.2rem, 5vw, 3.4rem);
@@ -2953,45 +2981,104 @@ h3 {
 
 /* ---------- guide feedback ---------- */
 
+/* A small recessed plate at the end of a section: present, but quieter than
+   the content it asks about. The two answers are one segmented control, and
+   the chosen one lights in signal yellow so the click visibly lands. */
 .helpful {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.9rem;
-  margin-top: 1.4rem;
-  padding-top: 0.9rem;
-  border-top: 1px dashed var(--rule);
+  gap: 0.5rem 0.85rem;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 1.2rem;
+  padding: 0.4rem 0.4rem 0.4rem 0.9rem;
+  background: var(--enamel-deep);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25) inset;
 }
-.guide__body .helpful__q,
-.guide__body .helpful__done {
+.guide__body .helpful__q {
   margin: 0;
   font-size: 0.86rem;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
-.helpful__answers {
-  display: flex;
-  gap: 0.4rem;
+.helpful__seg {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
 }
 .helpful__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.8rem;
   font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.84rem;
+  font-weight: 600;
   color: var(--ink-soft);
   background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  padding: 0.3rem 0.8rem;
-  min-height: 2rem;
+  border: 0;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    color 0.15s;
+    background 0.18s var(--ease),
+    color 0.18s var(--ease),
+    opacity 0.18s var(--ease);
 }
-.helpful__btn:hover {
-  border-color: var(--signal);
-  color: var(--signal);
+.helpful__btn + .helpful__btn {
+  border-left: 1px solid var(--rule);
+}
+/* The same thumb, turned over. */
+.helpful__btn[data-helpful="no"] svg {
+  transform: scaleY(-1);
+}
+.helpful__btn:hover:not(:disabled) {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+.helpful__btn[aria-pressed="true"] {
+  color: var(--signal-ink);
+  background: var(--signal);
+  opacity: 1;
+}
+.helpful__btn[aria-pressed="true"] svg {
+  animation: thumb-pop 0.45s var(--ease);
+}
+.helpful__btn:disabled {
+  cursor: default;
+}
+.helpful__btn:disabled:not([aria-pressed="true"]) {
+  opacity: 0.4;
+}
+.guide__body .helpful__more {
+  flex-basis: 100%;
+  margin: 0 0 0.1rem;
+  font-size: 0.84rem;
+  color: var(--ink-faint);
+}
+@keyframes thumb-pop {
+  40% {
+    transform: scale(1.3) rotate(-8deg);
+  }
+}
+.helpful__btn[data-helpful="no"][aria-pressed="true"] svg {
+  animation-name: thumb-pop-down;
+}
+@keyframes thumb-pop-down {
+  0%,
+  100% {
+    transform: scaleY(-1);
+  }
+  40% {
+    transform: scaleY(-1) scale(1.3) rotate(8deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .helpful__btn svg {
+    animation: none !important;
+  }
 }
 
 /* ---------- changelog ---------- */
