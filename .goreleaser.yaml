@@ -126,6 +126,8 @@ changelog:
       - "^test:"
       - "^chore:"
       - "^ci:"
+      # Website changes ship through pages.yml, not in a CLI release.
+      - '^[a-z]+\(site\)!?:'
       - Merge pull request
 
 # brew install vrok/tap/vrok

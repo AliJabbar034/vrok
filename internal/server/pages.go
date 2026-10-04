@@ -57,14 +57,16 @@ func noStore(w http.ResponseWriter) {
 // wrong token, expired, revoked, limit reached — produces a 404 with the same
 // shape, so a visitor cannot probe for which tokens exist.
 func (p *pages) gone(w http.ResponseWriter, r *http.Request, reason error) {
-	heading, message, icon := "Not found", "This link is not valid.", "🔍"
+	// Each message ends with the one thing the visitor can do about it. For
+	// every case that is the same: only the sender can make a new link.
+	heading, message, icon := "Not found", "This link is not valid. Check that it was copied in full, or ask the sender for a new one.", "🔍"
 	switch {
 	case errors.Is(reason, sharing.ErrExpired):
-		heading, message, icon = "Share expired", "This link has passed its expiry time.", "⌛"
+		heading, message, icon = "Share expired", "This link has passed its expiry time. Ask the sender for a new one.", "⌛"
 	case errors.Is(reason, sharing.ErrDownloadLimit):
-		heading, message, icon = "Share expired", "This link reached its download limit.", "⛔"
+		heading, message, icon = "Share expired", "This link reached its download limit. Ask the sender for a new one.", "⛔"
 	case errors.Is(reason, sharing.ErrRevoked):
-		heading, message, icon = "Share stopped", "The owner stopped sharing this.", "🚫"
+		heading, message, icon = "Share stopped", "The owner stopped sharing this. Ask them to share it again.", "🚫"
 	}
 
 	noStore(w)
@@ -101,7 +103,30 @@ func (p *pages) serverError(w http.ResponseWriter, r *http.Request, err error) {
 	p.logger.Error("request failed",
 		slog.String("path", r.URL.Path),
 		slog.String("error", err.Error()))
-	p.fail(w)
+	p.broken(w)
+}
+
+// broken renders the styled 500 page. It says what the visitor can do, not
+// what failed: the cause is in the owner's terminal, and naming it here could
+// reveal paths or internals of the owner's machine.
+func (p *pages) broken(w http.ResponseWriter) {
+	// The failing handler may already have described a file it never sent.
+	// Left in place, these would have the browser save the error page as a
+	// download, or cut it short at the file's length.
+	for _, h := range []string{"Content-Disposition", "Content-Length", "Content-Range",
+		"Content-Encoding", "ETag", "Last-Modified", "Accept-Ranges"} {
+		w.Header().Del(h)
+	}
+	noStore(w)
+	data := viewer.GonePage{
+		Meta:    viewer.Meta{Title: "Something went wrong · vrok", StaticBase: staticPrefix},
+		Icon:    "⚠️",
+		Heading: "Something went wrong",
+		Message: "vrok could not serve this page. Try again in a moment. If it keeps happening, tell the person who sent you the link.",
+	}
+	if err := p.render.Gone(w, http.StatusInternalServerError, data); err != nil {
+		p.fail(w)
+	}
 }
 
 // fail is the last resort, used when even rendering a page failed.

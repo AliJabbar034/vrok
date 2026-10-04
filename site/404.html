@@ -26,6 +26,14 @@
       crossorigin
     />
     <link rel="stylesheet" href="assets/style.css" />
+    <!-- Cookieless page and event counts; see guide.html#privacy. -->
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="2bb2d325-961a-47a2-8542-539ca2694974"
+      data-domains="alijabbar034.github.io"
+      data-do-not-track="true"
+    ></script>
   </head>
 
   <body>
@@ -37,7 +45,7 @@
           <span class="release__new" data-release-fresh hidden>New</span>
           <strong data-latest-tag></strong> is out. Run the install command
           again to replace the binary.
-          <a href="download.html#update">How to update</a>
+          <a href="guide.html#update">How to update</a>
         </p>
         <button type="button" class="release__hide" data-release-dismiss>
           Hide
@@ -133,6 +141,10 @@
       </div>
     </footer>
 
+    <script>
+      // The <base> above would send this fragment link to the homepage.
+      document.querySelector(".skip").href = location.pathname + "#start";
+    </script>
     <script src="assets/app.js" defer></script>
   </body>
 </html>

@@ -1,11 +1,67 @@
-/* Five jobs: copy a command, preselect the visitor's OS, point the archive
+/* Seven jobs: copy a command, preselect the visitor's OS, point the archive
    links at whatever the newest release actually is, replay the CLI in the
-   "Watch it run" section, and show the star count once it means something. Everything
+   "Watch it run" section, show the star count once it means something, ask
+   for a star once a visitor has shown they care, and count the few actions
+   that say whether the page works. Everything
    degrades to a working page with JavaScript off — the commands are in the
    markup and the archive links fall back to the release page. */
 
 const REPO = "AliJabbar034/vrok";
 const RELEASES = `https://github.com/${REPO}/releases`;
+
+/* ---------- counts ---------- */
+
+/* Umami, cookieless, loaded from each page's <head>. Its script is deferred
+   and often blocked, so every call goes through here and is a no-op when it
+   is missing. Events carry no identifiers, only what was done and where.
+   guide.html#privacy lists them; keep that list in step with this file. */
+
+function track(name, data) {
+  try {
+    window.umami?.track(name, data);
+  } catch {
+    /* counting must never break the page */
+  }
+}
+
+// Which OS a copied command is for: the tab that owns its panel, else the
+// visitor's own OS (the closing command has no tabs).
+function osOf(node) {
+  const panel = node.closest("[role='tabpanel']");
+  const tab = panel && document.querySelector(`[aria-controls="${panel.id}"]`);
+  return tab?.dataset.os || detectOS() || "other";
+}
+
+function wireCounts() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[href]");
+    if (!link) return;
+    if (link.matches("a[data-asset]")) {
+      track("download-clicked", { file: link.dataset.asset });
+    } else if (/^https:\/\/github\.com\/AliJabbar034\/vrok/.test(link.href)) {
+      track("github-clicked", { to: new URL(link.href).pathname });
+    }
+  });
+
+  // A few errors a page view is enough to see a pattern; more is a loop.
+  let errors = 0;
+  const report = (message, where) => {
+    if (++errors > 5) return;
+    track("js-error", {
+      message: String(message).slice(0, 200),
+      where: String(where || "").slice(0, 200)
+    });
+  };
+  addEventListener("error", (event) =>
+    report(
+      event.message,
+      event.filename && `${event.filename.split("/").pop()}:${event.lineno}`
+    )
+  );
+  addEventListener("unhandledrejection", (event) =>
+    report(event.reason?.message || event.reason, "promise")
+  );
+}
 
 /* ---------- copy ---------- */
 
@@ -32,6 +88,7 @@ function wireCopy() {
       try {
         await navigator.clipboard.writeText(text);
         settle("Copied", true);
+        track("install-copied", { os: osOf(button) });
       } catch {
         // Clipboard writes are refused on insecure origins and by some
         // permission policies. Selecting the command is a worse but honest
@@ -42,6 +99,7 @@ function wireCopy() {
         selection.removeAllRanges();
         selection.addRange(range);
         settle(detectOS() === "mac" ? "Press ⌘C" : "Press Ctrl+C", false);
+        track("install-copied", { os: osOf(button), clipboard: "refused" });
       }
     });
   }
@@ -228,6 +286,158 @@ async function wireStars() {
   } catch {
     // Offline or rate-limited: the row simply stays hidden.
   }
+}
+
+/* ---------- star ask ---------- */
+
+/* A plate in the corner asking for a GitHub star. It waits for a sign the
+   visitor is interested: copying an install command, taking an archive, or
+   reading most of a page for a while. An ask on arrival is noise. A star
+   ends the ask for good; "Not now" holds it off for a month; and it shows
+   at most once a session. Add ?star to the URL to force it while working on it. */
+
+const STAR_DONE = "vrok-star:done";
+const STAR_SNOOZE = "vrok-star:snooze";
+const STAR_SESSION = "vrok-star:session";
+const STAR_SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;
+const STAR_READ_MS = 40 * 1000;
+const STAR_READ_DEPTH = 0.5;
+
+function storeGet(store, key) {
+  try {
+    return store.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function storeSet(store, key, value) {
+  try {
+    store.setItem(key, value);
+  } catch {
+    /* private mode: the ask just may come back next session */
+  }
+}
+
+function starAllowed() {
+  if (new URLSearchParams(location.search).has("star")) return true;
+  if (document.title.startsWith("Not found")) return false;
+  if (storeGet(localStorage, STAR_DONE)) return false;
+  if (storeGet(sessionStorage, STAR_SESSION)) return false;
+  const snoozed = Number(storeGet(localStorage, STAR_SNOOZE));
+  return !(snoozed && Date.now() - snoozed < STAR_SNOOZE_MS);
+}
+
+function buildStarAsk() {
+  const ask = el("aside", "star-ask");
+  ask.setAttribute("aria-labelledby", "star-ask-title");
+  ask.innerHTML = `
+    <span class="rivet rivet--tl" aria-hidden="true"></span>
+    <span class="rivet rivet--tr" aria-hidden="true"></span>
+    <button type="button" class="star-ask__close" data-star-close aria-label="Dismiss">×</button>
+    <div class="star-ask__body" data-star-body>
+      <p class="star-ask__eyebrow">Made by one person</p>
+      <h2 class="star-ask__title" id="star-ask-title">Useful? Star it on GitHub.</h2>
+      <p class="star-ask__text">No ads, no account, no telemetry. A star is the only way I find out vrok helped someone.</p>
+      <div class="star-ask__actions">
+        <a class="star-ask__star" data-star-go href="https://github.com/${REPO}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 .25a.75.75 0 0 1 .67.42l1.88 3.8 4.2.61a.75.75 0 0 1 .41 1.28l-3.04 2.96.72 4.18a.75.75 0 0 1-1.09.79L8 12.33l-3.75 1.97a.75.75 0 0 1-1.09-.8l.72-4.17L.84 6.37a.75.75 0 0 1 .41-1.28l4.2-.61L7.33.67A.75.75 0 0 1 8 .25Z"/></svg>
+          Star on GitHub
+        </a>
+        <button type="button" class="star-ask__later" data-star-close>Not now</button>
+      </div>
+    </div>
+    <p class="star-ask__thanks" data-star-thanks role="status" hidden>Thank you. That genuinely helps.</p>`;
+  return ask;
+}
+
+function wireStarAsk() {
+  if (!starAllowed()) return;
+  const forced = new URLSearchParams(location.search).has("star");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let ask = null;
+  let shown = false;
+  const cleanups = [];
+
+  const close = (snooze, how) => {
+    if (!ask) return;
+    if (snooze) storeSet(localStorage, STAR_SNOOZE, String(Date.now()));
+    if (how) track("star-ask-dismissed", { how });
+    ask.dataset.state = "leaving";
+    const node = ask;
+    setTimeout(() => node.remove(), reduced ? 0 : 260);
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (event) => {
+    if (event.key === "Escape") close(true, "escape");
+  };
+
+  const show = (delay, trigger) => {
+    if (shown) return;
+    shown = true;
+    for (const undo of cleanups) undo();
+    setTimeout(() => {
+      if (!forced && !starAllowed()) return;
+      storeSet(sessionStorage, STAR_SESSION, "1");
+      track("star-ask-shown", { trigger });
+      ask = buildStarAsk();
+      document.body.append(ask);
+      // A frame between insert and state change so the entry transitions.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => (ask.dataset.state = "open"))
+      );
+      for (const button of ask.querySelectorAll("[data-star-close]"))
+        button.addEventListener("click", () =>
+          close(
+            true,
+            button.classList.contains("star-ask__later") ? "not-now" : "close"
+          )
+        );
+      ask.querySelector("[data-star-go]").addEventListener("click", () => {
+        // GitHub has no link that stars a repo, so a click on the way there
+        // is the closest honest signal. Take it as done.
+        storeSet(localStorage, STAR_DONE, "1");
+        track("star-ask-clicked");
+        ask.querySelector("[data-star-body]").hidden = true;
+        ask.querySelector("[data-star-close]").hidden = true;
+        ask.querySelector("[data-star-thanks]").hidden = false;
+        setTimeout(() => close(false), 2600);
+      });
+      document.addEventListener("keydown", onKey);
+    }, delay);
+  };
+
+  if (forced) return show(600, "forced");
+
+  // Interest signal 1: an install command copied. Wait for "Copied" to land.
+  const onCopy = (event) => {
+    if (event.target.closest("[data-copy]")) show(2600, "copy");
+  };
+  // Interest signal 2: an archive or release page taken.
+  const onTake = (event) => {
+    const link = event.target.closest("a[data-asset], a[href*='/releases']");
+    if (link) show(1800, "download");
+  };
+  document.addEventListener("click", onCopy);
+  document.addEventListener("click", onTake);
+  cleanups.push(() => document.removeEventListener("click", onCopy));
+  cleanups.push(() => document.removeEventListener("click", onTake));
+
+  // Interest signal 3: real reading — time with the tab visible, plus depth.
+  let readMs = 0;
+  let deepest = 0;
+  const depth = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    deepest = Math.max(deepest, max > 0 ? scrollY / max : 1);
+  };
+  const tick = setInterval(() => {
+    if (document.visibilityState === "visible") readMs += 1000;
+    depth();
+    if (readMs >= STAR_READ_MS && deepest >= STAR_READ_DEPTH)
+      show(0, "reading");
+  }, 1000);
+  addEventListener("scroll", depth, { passive: true });
+  cleanups.push(() => clearInterval(tick));
+  cleanups.push(() => removeEventListener("scroll", depth));
 }
 
 function wireNav() {
@@ -880,6 +1090,7 @@ function wireWatch() {
     // Narration is announced only once the visitor is driving; an
     // auto-rotating demo would otherwise talk over the rest of the page.
     narration.setAttribute("aria-live", "polite");
+    track("demo-played", { scene: name });
     play(name);
   };
 
@@ -917,9 +1128,11 @@ function wireWatch() {
   ).observe(section.querySelector("#watch-stage"));
 }
 
+wireCounts();
 wireCopy();
 wireOS();
 wireRelease();
 wireNav();
 wireWatch();
 wireStars();
+wireStarAsk();

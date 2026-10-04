@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"log/slog"
 	"net"
 	"net/http"
@@ -252,7 +253,7 @@ func (r *Relay) register(conn *protocol.Conn) (*Agent, error) {
 func (r *Relay) serveVisitor(w http.ResponseWriter, req *http.Request) {
 	label, ok := r.hostLabel(req.Host)
 	if !ok {
-		r.notFound(w, "No share here", "Open a share link to view a shared file.")
+		r.notFound(w, "No share here", "This address is a vrok relay. Open the full share link you were sent.")
 		return
 	}
 
@@ -260,7 +261,7 @@ func (r *Relay) serveVisitor(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		// An unknown or disconnected label is reported the same way, so a
 		// visitor cannot learn which shares exist.
-		r.notFound(w, "Share not available", "This share has been stopped or has expired.")
+		r.notFound(w, "Share not available", "This share has been stopped or has expired. Ask the sender for a new link.")
 		return
 	}
 
@@ -293,25 +294,37 @@ func (r *Relay) hostLabel(host string) (string, bool) {
 }
 
 func (r *Relay) notFound(w http.ResponseWriter, heading, message string) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-store")
-	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, notFoundHTML, heading, message)
+	writePage(w, http.StatusNotFound, heading, message)
 }
 
-// notFoundHTML is self-contained: the relay serves no assets of its own, so
-// this page has to carry its own styling.
-const notFoundHTML = `<!doctype html>
+// writePage answers a visitor with a styled page instead of bare text. The
+// relay serves no assets of its own, so the page carries its own styling: the
+// same enamel and signal palette as the share viewer, so a visitor who meets
+// an error mid-share is plainly still on vrok.
+func writePage(w http.ResponseWriter, status int, heading, message string) {
+	h := w.Header()
+	h.Set("Content-Type", "text/html; charset=utf-8")
+	h.Set("Cache-Control", "no-store")
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("Referrer-Policy", "no-referrer")
+	w.WriteHeader(status)
+	fmt.Fprintf(w, pageHTML, html.EscapeString(heading), html.EscapeString(message))
+}
+
+const pageHTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>%[1]s</title>
+<meta name="robots" content="noindex, nofollow">
+<title>%[1]s · vrok</title>
 <style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e1116;color:#e6edf3;
-       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;text-align:center}
-  h1{margin:0 0 8px;font-size:22px}
-  p{margin:0;color:#8b98a5}
-  .mark{color:#4c8dff;font-size:13px;letter-spacing:.3em;margin-bottom:18px}
-  @media(prefers-color-scheme:light){body{background:#fff;color:#1f2328}p{color:#636c76}}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;
+       background:linear-gradient(180deg,#12565d 0%%,#0c3a3f 38%%,#072a2e 100%%) #0c3a3f;color:#edf6f5;
+       font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;text-align:center}
+  main{max-width:30rem}
+  .mark{display:inline-block;margin-bottom:22px;padding:3px 10px;border-radius:2px;background:#ffc400;color:#1a1403;
+        font-size:12px;font-weight:800;letter-spacing:.18em}
+  h1{margin:0 0 8px;font-size:24px;line-height:1.25}
+  p{margin:0;color:#a9c6c6}
 </style></head>
 <body><main><div class="mark">VROK</div><h1>%[1]s</h1><p>%[2]s</p></main></body></html>
 `

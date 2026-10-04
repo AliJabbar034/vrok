@@ -575,6 +575,7 @@ a:hover {
   font-size: 22px;
 }
 .gone__message {
-  margin: 0;
+  max-width: 34rem;
+  margin: 0 auto;
   color: var(--ink-soft);
 }
