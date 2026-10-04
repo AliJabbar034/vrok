@@ -132,7 +132,7 @@ func New(opts Options) (*Server, error) {
 	}
 
 	handler := Chain(newRouter(d),
-		recoverer(opts.Logger),
+		recoverer(opts.Logger, pageRenderer.broken),
 		accessLogger(opts.Logger),
 	)
 

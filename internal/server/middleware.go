@@ -22,9 +22,15 @@ func Chain(h http.Handler, mw ...Middleware) http.Handler {
 // recoverer converts a panic in any handler into a 500 instead of killing the
 // process. A share server is often the only thing standing between a demo and
 // an audience; one bad file must not take it down.
-func recoverer(logger *slog.Logger) Middleware {
+//
+// The visitor gets the styled error page from failed, but only if nothing has
+// been sent yet. Once a response has started, appending a page would splice
+// HTML into the middle of a file, so the connection is cut instead and the
+// browser reports an interrupted download honestly.
+func recoverer(logger *slog.Logger, failed func(http.ResponseWriter)) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rec := &recorder{ResponseWriter: w, status: http.StatusOK}
 			defer func() {
 				if v := recover(); v != nil {
 					// ErrAbortHandler is how net/http signals a deliberate
@@ -36,10 +42,13 @@ func recoverer(logger *slog.Logger) Middleware {
 						slog.String("path", r.URL.Path),
 						slog.Any("panic", v),
 						slog.String("stack", string(debug.Stack())))
-					http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+					if rec.started {
+						panic(http.ErrAbortHandler)
+					}
+					failed(w)
 				}
 			}()
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(rec, r)
 		})
 	}
 }
@@ -71,14 +80,20 @@ type recorder struct {
 	http.ResponseWriter
 	status  int
 	written int64
+	started bool // a status line has gone out; the response can't change
 }
 
 func (r *recorder) WriteHeader(status int) {
+	// 1xx responses are interim; the real status is still to come.
+	if status >= 200 {
+		r.started = true
+	}
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
 }
 
 func (r *recorder) Write(b []byte) (int, error) {
+	r.started = true
 	n, err := r.ResponseWriter.Write(b)
 	r.written += int64(n)
 	return n, err

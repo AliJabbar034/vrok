@@ -293,3 +293,26 @@ func TestOversizedAgentMessagesAreRefused(t *testing.T) {
 		}
 	}
 }
+
+func TestDisconnectedShareGetsAStyledRetryablePage(t *testing.T) {
+	rec := httptest.NewRecorder()
+	notConnected(rec)
+
+	if rec.Code != http.StatusBadGateway {
+		t.Fatalf("status = %d, want 502", rec.Code)
+	}
+	if got := rec.Header().Get("Retry-After"); got == "" {
+		t.Error("no Retry-After: a sleeping laptop is a retryable condition")
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q, want an HTML page", ct)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "<h1>Share not connected</h1>") || !strings.Contains(body, "<style>") {
+		t.Errorf("body is not the styled page:\n%s", body)
+	}
+	// The percent signs in the CSS must survive Fprintf.
+	if strings.Contains(body, "%!") {
+		t.Errorf("format verbs leaked into the page:\n%s", body)
+	}
+}

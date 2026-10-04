@@ -2684,3 +2684,259 @@ h3 {
     color: var(--ink-faint);
   }
 }
+
+/* ---------- star ask ---------- */
+
+/* A small tariff plate bolted into the corner: the same signal enamel as the
+   hero plate, so the ask reads as part of the locker bank, not an ad. */
+.star-ask {
+  position: fixed;
+  z-index: 60;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1.35rem 1.35rem 1.2rem;
+  background:
+    var(--plate-grain),
+    linear-gradient(177deg, var(--signal) 0%, var(--signal-deep) 100%);
+  color: var(--signal-ink);
+  border-radius: 3px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.18) inset,
+    /* A dark edge keeps it distinct when it floats over another plate. */ 0 0 0
+      1px rgba(7, 42, 46, 0.55),
+    0 22px 48px -18px rgba(0, 0, 0, 0.75),
+    0 -6px 24px -8px rgba(7, 42, 46, 0.55),
+    0 4px 12px -4px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(1.25rem) rotate(-1.2deg);
+  transform-origin: 85% 100%;
+  transition:
+    opacity 0.26s var(--ease),
+    transform 0.5s var(--ease);
+}
+.star-ask[data-state="open"] {
+  opacity: 1;
+  transform: none;
+}
+.star-ask[data-state="leaving"] {
+  opacity: 0;
+  transform: translateY(0.75rem);
+  transition-duration: 0.22s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .star-ask,
+  .star-ask[data-state="leaving"] {
+    transform: none;
+    transition: opacity 0.2s linear;
+  }
+}
+
+.star-ask .rivet {
+  width: 9px;
+  height: 9px;
+}
+.star-ask .rivet--tl,
+.star-ask .rivet--tr {
+  top: 8px;
+}
+.star-ask .rivet--tl {
+  left: 8px;
+}
+.star-ask .rivet--tr {
+  right: 8px;
+}
+
+.star-ask__close {
+  position: absolute;
+  top: 1rem;
+  right: 1.1rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--signal-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.star-ask__close:hover {
+  opacity: 1;
+  background: rgba(26, 20, 3, 0.1);
+}
+.star-ask :focus-visible {
+  outline-color: var(--signal-ink);
+}
+
+.star-ask__eyebrow {
+  margin: 0 0 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-stretch: 88%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.star-ask__title {
+  margin: 0 2rem 0.45rem 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-stretch: 78%;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+.star-ask__text {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.star-ask__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+}
+.star-ask__star {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-stretch: 84%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--signal);
+  background: var(--signal-ink);
+  border-radius: 2px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 2px 0 rgba(0, 0, 0, 0.25);
+  transition:
+    transform 0.08s var(--ease),
+    background 0.18s var(--ease);
+}
+.star-ask__star:hover {
+  background: #2c2208;
+}
+.star-ask__star:active {
+  transform: translateY(1px);
+}
+.star-ask__star svg {
+  flex: 0 0 auto;
+}
+.star-ask__later {
+  padding: 0.4rem 0.1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--signal-ink);
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(26, 20, 3, 0.35);
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.star-ask__later:hover {
+  text-decoration-color: currentColor;
+}
+
+.star-ask__thanks {
+  margin: 0.2rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-stretch: 84%;
+}
+
+/* On a phone the plate spans the width rather than hiding content in a
+   corner it doesn't fit. */
+@media (max-width: 30rem) {
+  .star-ask {
+    left: max(1rem, env(safe-area-inset-left));
+    right: max(1rem, env(safe-area-inset-right));
+    width: auto;
+  }
+}
+
+/* ---------- updating (guide) ---------- */
+
+/* Arriving from "How to update" should land on something unmistakable: the
+   section's heading carries a signal bar for a moment. */
+.guide__body section:target > h2 {
+  animation: arrived 2.4s var(--ease) 0.2s both;
+}
+@keyframes arrived {
+  0%,
+  45% {
+    box-shadow: -0.9rem 0 0 -0.55rem var(--signal);
+    color: var(--signal);
+  }
+  100% {
+    box-shadow: -0.9rem 0 0 -0.55rem transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide__body section:target > h2 {
+    animation: none;
+    color: var(--signal);
+  }
+}
+
+.update-latest {
+  font-size: 0.92rem;
+}
+.update-latest strong {
+  color: var(--signal);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.92em;
+}
+
+.update-ways {
+  margin: 0.4rem 0 1.2rem;
+  display: grid;
+  /* Long commands scroll inside their box rather than widening the page. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+}
+.update-ways dt {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-stretch: 88%;
+  color: var(--ink);
+}
+.update-ways dt span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.update-ways dd {
+  margin: 0;
+}
+.guide__body .update-ways .cmd {
+  margin: 0.35rem 0 0;
+}
+
+.guide__body kbd {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.8em;
+  padding: 0.08em 0.4em;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--enamel-deep);
+  color: var(--ink);
+}

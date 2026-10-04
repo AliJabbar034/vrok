@@ -156,7 +156,7 @@ func (a *Agent) onFrame(f protocol.Frame) {
 func (a *Agent) Forward(w http.ResponseWriter, r *http.Request) {
 	s, err := a.open()
 	if err != nil {
-		http.Error(w, "Share is not connected.", http.StatusBadGateway)
+		notConnected(w)
 		return
 	}
 	defer a.release(s)
@@ -171,7 +171,7 @@ func (a *Agent) Forward(w http.ResponseWriter, r *http.Request) {
 		HasBody:    hasBody,
 	}
 	if err := a.conn.Send(protocol.TypeRequest, request); err != nil {
-		http.Error(w, "Share is not connected.", http.StatusBadGateway)
+		notConnected(w)
 		return
 	}
 
@@ -313,4 +313,12 @@ func (a *Agent) failAll(err error) {
 func (a *Agent) Close(err error) {
 	a.failAll(err)
 	a.conn.Close()
+}
+
+// notConnected tells a visitor the share exists but its owner's machine
+// dropped off the relay — usually sleep or lost Wi-Fi — which a retry can fix.
+func notConnected(w http.ResponseWriter) {
+	w.Header().Set("Retry-After", "10")
+	writePage(w, http.StatusBadGateway, "Share not connected",
+		"The sender's computer is not reachable right now. It may be asleep or offline. Try again in a moment.")
 }

@@ -22,6 +22,14 @@
       crossorigin
     />
     <link rel="stylesheet" href="assets/style.css" />
+    <!-- Cookieless page and event counts; see guide.html#privacy. -->
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="2bb2d325-961a-47a2-8542-539ca2694974"
+      data-domains="alijabbar034.github.io"
+      data-do-not-track="true"
+    ></script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="vrok" />
     <meta property="og:title" content="How to use vrok" />
@@ -95,7 +103,7 @@
           <span class="release__new" data-release-fresh hidden>New</span>
           <strong data-latest-tag></strong> is out. Update with the same command
           you used to install.
-          <a href="download.html#update">How to update</a>
+          <a href="#update">How to update</a>
         </p>
         <button type="button" class="release__hide" data-release-dismiss>
           Hide
@@ -201,19 +209,192 @@
           <section id="update">
             <h2>Updating</h2>
             <p>
-              There is no separate updater. The install command installs
-              whatever GitHub currently calls latest, and overwrites the
-              previous binary.
+              vrok has no auto-updater and never checks for updates in the
+              background. To update, run the command for the way you installed
+              it. That replaces the binary with the newest release. Your flags
+              and habits carry over; vrok keeps no state between runs.
             </p>
-            <pre><code>curl -fsSL https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh | sh
-irm https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1 | iex
-go install github.com/AliJabbar034/vrok/cmd/vrok@latest
-brew upgrade --cask AliJabbar034/tap/vrok
-scoop update vrok</code></pre>
+            <p class="update-latest">
+              Newest release:
+              <a href="https://github.com/AliJabbar034/vrok/releases/latest"
+                ><strong data-latest-tag>see releases</strong> · what changed</a
+              >
+            </p>
+
+            <h3>1. Stop running shares</h3>
             <p>
-              Then <code>vrok --version</code>. The site banner shows the tag
-              that is current.
+              Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in any terminal running vrok.
+              On Windows this is required: a running <code>vrok.exe</code>
+              cannot be replaced. On macOS and Linux an open share keeps running
+              the old version until you start it again.
             </p>
+
+            <h3>2. Run the update for your install method</h3>
+            <dl class="update-ways">
+              <div>
+                <dt>Install script <span>macOS · Linux</span></dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >curl -fsSL
+                      https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.sh
+                      | sh</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+              <div>
+                <dt>PowerShell script <span>Windows</span></dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >irm
+                      https://raw.githubusercontent.com/AliJabbar034/vrok/main/install.ps1
+                      | iex</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+              <div>
+                <dt>Homebrew <span>macOS · Linux</span></dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >brew update &amp;&amp; brew upgrade --cask
+                      AliJabbar034/tap/vrok</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+              <div>
+                <dt>Scoop <span>Windows</span></dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >scoop update; scoop update vrok</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+              <div>
+                <dt>Go <span>any platform</span></dt>
+                <dd>
+                  <div class="cmd">
+                    <code class="cmd__text"
+                      >go install
+                      github.com/AliJabbar034/vrok/cmd/vrok@latest</code
+                    >
+                    <button class="copy" type="button" data-copy>
+                      <span class="copy__label">Copy</span>
+                    </button>
+                  </div>
+                </dd>
+              </div>
+            </dl>
+
+            <h3 id="update-which">Not sure how you installed it?</h3>
+            <p>
+              Ask your shell where <code>vrok</code> lives:
+              <code>which vrok</code> on macOS and Linux,
+              <code>(Get-Command vrok).Source</code> in PowerShell. Then match
+              the path:
+            </p>
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>Path contains</th>
+                  <th>Installed with</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>/opt/homebrew/</code>, <code>linuxbrew</code></td>
+                  <td>Homebrew</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>/usr/local/bin/</code>, <code>~/.local/bin/</code>
+                  </td>
+                  <td>
+                    Install script. On an Intel Mac, Homebrew also uses
+                    <code>/usr/local/bin</code>: if
+                    <code>ls -l $(which vrok)</code> points into
+                    <code>Caskroom</code>, it is Homebrew.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>\AppData\Local\Programs\vrok\</code></td>
+                  <td>PowerShell script</td>
+                </tr>
+                <tr>
+                  <td><code>\scoop\shims\</code></td>
+                  <td>Scoop</td>
+                </tr>
+                <tr>
+                  <td><code>/go/bin/</code></td>
+                  <td>Go</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>3. Check it</h3>
+            <div class="cmd">
+              <code class="cmd__text">vrok --version</code>
+              <button class="copy" type="button" data-copy>
+                <span class="copy__label">Copy</span>
+              </button>
+            </div>
+            <p>
+              It prints <code>vrok version X.Y.Z (…)</code>, where
+              <code>X.Y.Z</code> is the newest release above without the
+              <code>v</code>. A build from <code>go install</code> prints
+              <code>dev</code> instead; that is expected, and it is still the
+              latest code.
+            </p>
+
+            <h3 id="update-trouble">Still showing the old version?</h3>
+            <ul>
+              <li>
+                <strong>Two copies on your PATH.</strong> The first one found
+                wins. List them with <code>which -a vrok</code> or
+                <code>Get-Command vrok -All</code>, then delete the old one or
+                update it with its own method.
+              </li>
+              <li>
+                <strong>Your shell remembers the old path.</strong> Run
+                <code>hash -r</code>, or open a new terminal. On Windows always
+                open a new terminal after installing.
+              </li>
+              <li>
+                <strong>Homebrew says it is up to date.</strong> Its tap list is
+                stale: <code>brew update</code> first, then upgrade again.
+              </li>
+              <li>
+                <strong>“Access is denied” on Windows.</strong> vrok is still
+                running somewhere. Stop it, or check Task Manager for
+                <code>vrok.exe</code>.
+              </li>
+              <li>
+                Something else?
+                <a href="https://github.com/AliJabbar034/vrok/issues/new"
+                  >Open an issue</a
+                >
+                with the output of <code>vrok --version</code> and the path from
+                above.
+              </li>
+            </ul>
           </section>
 
           <section id="commands">
@@ -639,10 +820,19 @@ vrok config set ttl 30m # store a default</code></pre>
               to fetch <code>cloudflared</code> if it is missing.
             </p>
             <p>
-              <strong>This site sets no cookies and runs no analytics.</strong>
+              <strong>This site sets no cookies.</strong> It counts visits with
+              <a href="https://umami.is">Umami</a>, which keeps no cookies,
+              builds no profile and follows no one to other sites. It records
+              the page, referrer, country and browser, plus a few actions:
+              copying an install command, clicking a download or GitHub link,
+              playing a demo scene, how the star request was answered, and
+              script errors so broken pages get fixed. If your browser sends Do
+              Not Track, nothing is counted.
+            </p>
+            <p>
               Fonts are served from the site itself. Your browser asks GitHub's
               public API for the latest release, and remembers in local storage
-              that you dismissed the release banner. That is all.
+              that you dismissed the release banner or the star request.
             </p>
             <p>
               <strong>Share pages</strong> set only the cookies they need: one

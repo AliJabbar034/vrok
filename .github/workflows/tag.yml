@@ -43,12 +43,17 @@ jobs:
             exit 0
           fi
 
+          # Only commits that touch something outside site/ count. The website
+          # ships through pages.yml on its own; a `feat(site):` merge must not
+          # cut a CLI release that changes nothing, and then tell every
+          # visitor through the site's banner to reinstall for it.
           range="${previous}..HEAD"
-          subjects=$(git log --format='%s' "$range")
-          bodies=$(git log --format='%B' "$range")
+          scope=(-- . ':(exclude)site')
+          subjects=$(git log --format='%s' "$range" "${scope[@]}")
+          bodies=$(git log --format='%B' "$range" "${scope[@]}")
 
           if [ -z "$subjects" ]; then
-            echo "nothing new since $previous"
+            echo "nothing outside site/ since $previous"
             echo "release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
