@@ -1,0 +1,25 @@
+name: Website problem
+description: Something on the vrok website is broken, wrong or unclear.
+labels: [website]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What is wrong
+      description: What did you expect to see or be able to do?
+    validations:
+      required: true
+
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The address of the page. Filled in for you from the site's "Report a problem" link.
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      description: Filled in for you from the site's link. Edit it if it is wrong.

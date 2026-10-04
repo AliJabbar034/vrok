@@ -125,3 +125,31 @@ func pad(text string, width int) string {
 	}
 	return text + strings.Repeat(" ", width-len(text))
 }
+
+// Status is the outcome of one diagnostic check.
+type Status int
+
+const (
+	StatusOK Status = iota
+	StatusWarn
+	StatusFail
+)
+
+// Check prints one diagnostic line. Unlike Warn and Error it writes every
+// outcome to the output stream, so a report keeps its order and survives
+// being piped or pasted into an issue whole.
+func (p *Printer) Check(s Status, label, value string) {
+	symbol := p.style(green, "✓")
+	switch s {
+	case StatusWarn:
+		symbol = p.style(yellow, "!")
+	case StatusFail:
+		symbol = p.style(red, "✗")
+	}
+	fmt.Fprintf(p.out, "%s %s %s\n", symbol, pad(label, 12), value)
+}
+
+// Hint prints a follow-up line under a Check.
+func (p *Printer) Hint(format string, args ...any) {
+	fmt.Fprintf(p.out, "  %s %s\n", pad("", 12), p.Dim(fmt.Sprintf(format, args...)))
+}

@@ -2314,7 +2314,9 @@ h3 {
   font-size: 0.84rem;
   line-height: 1.55;
 }
-.guide__body pre code {
+/* :not() matches the inline rule's specificity, which a plain `pre code`
+   loses to, leaving every line of a block with its own pill. */
+.guide__body pre code:not(.cmd__text) {
   background: none;
   padding: 0;
 }
@@ -2939,4 +2941,116 @@ h3 {
   border-radius: 3px;
   background: var(--enamel-deep);
   color: var(--ink);
+}
+.release__cmd {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.92em;
+  padding: 0.02em 0.35em;
+  border-radius: 2px;
+  background: rgba(26, 20, 3, 0.12);
+  white-space: nowrap;
+}
+
+/* ---------- guide feedback ---------- */
+
+.helpful {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  margin-top: 1.4rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--rule);
+}
+.guide__body .helpful__q,
+.guide__body .helpful__done {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+}
+.helpful__answers {
+  display: flex;
+  gap: 0.4rem;
+}
+.helpful__btn {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.3rem 0.8rem;
+  min-height: 2rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+.helpful__btn:hover {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+/* ---------- changelog ---------- */
+
+.changelog {
+  margin-top: 1.5rem;
+}
+.guide__body .changelog__status {
+  color: var(--ink-faint);
+}
+.guide__body .rel {
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--rule);
+}
+.guide__body .rel__tag {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 1.25rem;
+  font-stretch: 100%;
+  text-transform: none;
+}
+.rel__latest {
+  font-family: "Archivo", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border-radius: 2px;
+  background: var(--signal);
+  color: var(--signal-ink);
+}
+.guide__body .rel__meta {
+  margin: 0.2rem 0 0.8rem;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+.rel__notes h2,
+.rel__notes h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.8rem;
+  font-stretch: 88%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.rel__notes ul {
+  margin: 0;
+}
+.rel__notes li {
+  font-size: 0.93rem;
+}
+/* GoReleaser lists each change with its commit hash; the hash is a link and
+   reads as noise at full strength. */
+.rel__notes li > a:first-child tt,
+.rel__notes li > a:first-child code {
+  color: var(--ink-faint);
+  font-size: 0.8em;
 }

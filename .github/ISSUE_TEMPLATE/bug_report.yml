@@ -38,6 +38,16 @@ body:
     validations:
       required: true
 
+  - type: textarea
+    id: doctor
+    attributes:
+      label: vrok doctor
+      description: >
+        Paste the output of `vrok doctor`. It checks the install, config,
+        tunnel provider and network, and changes nothing. (Older versions do
+        not have it; skip this if yours says "unknown command".)
+      render: console
+
   - type: dropdown
     id: os
     attributes:

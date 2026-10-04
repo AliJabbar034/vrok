@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -280,4 +281,26 @@ func writeExecutable(path string, r io.Reader) error {
 		return fmt.Errorf("tunnel: install %s: %w", path, err)
 	}
 	return nil
+}
+
+// Cloudflared reports which cloudflared vrok would run, without fetching one:
+// a copy on PATH first, then the copy vrok fetched earlier. fetched says it is
+// vrok's own copy. Both empty means the next public share downloads it.
+func Cloudflared() (path string, fetched bool) {
+	if p, err := exec.LookPath("cloudflared"); err == nil {
+		return p, false
+	}
+	dir, err := cacheDir()
+	if err != nil {
+		return "", false
+	}
+	name := "cloudflared"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	target := filepath.Join(dir, name)
+	if info, err := os.Stat(target); err == nil && isCachedBinary(info) {
+		return target, true
+	}
+	return "", false
 }

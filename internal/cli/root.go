@@ -50,7 +50,8 @@ machine while the command runs. Stop the process and the URL stops working.`,
 	// The root declares the share flags again, bound to the same options
 	// struct, so both spellings of the command behave identically.
 	bindShareFlags(root, &runner.opts)
-	root.AddCommand(share, newListCommand(a), newRevokeCommand(a), newStopCommand(a), newConfigCommand(a))
+	root.AddCommand(share, newListCommand(a), newRevokeCommand(a), newStopCommand(a), newConfigCommand(a),
+		newUpdateCommand(a, version), newDoctorCommand(a, version))
 	return root
 }
 
