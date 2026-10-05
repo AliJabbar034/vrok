@@ -31,15 +31,26 @@ function Write-Ok   { param($m) Write-Host "OK  " -ForegroundColor Green -NoNewl
 function Write-Warn { param($m) Write-Host "!   " -ForegroundColor Yellow -NoNewline; Write-Host $m }
 
 function Get-Architecture {
-    # PROCESSOR_ARCHITECTURE reports the shell's architecture, which lies
-    # inside a 32-bit host; the OS value is authoritative.
-    switch ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) {
-        'X64'   { 'amd64' }
-        'Arm64' { 'arm64' }
-        default {
-            throw "vrok does not publish a build for $_. Install from source instead: go install github.com/$Repo/cmd/vrok@latest"
-        }
+    # Name it first. switch on the enum misses on some hosts when this file
+    # is run with `irm | iex`, and $_ in that default branch is the empty
+    # pipeline object, so the error was "a build for ." with no architecture.
+    $name = ''
+    try {
+        $name = [string][System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+    } catch {
+        $name = ''
     }
+    # 32-bit Windows PowerShell reports X86. The zip has to match the OS.
+    # Under WOW64 that name is PROCESSOR_ARCHITEW6432 (AMD64 or ARM64).
+    if ([string]::IsNullOrWhiteSpace($name) -or $name -eq 'X86') {
+        if ($env:PROCESSOR_ARCHITEW6432) { $name = $env:PROCESSOR_ARCHITEW6432 }
+        elseif ($env:PROCESSOR_ARCHITECTURE) { $name = $env:PROCESSOR_ARCHITECTURE }
+    }
+    $normalized = if ($name) { $name.ToUpperInvariant() } else { '' }
+    if ($normalized -eq 'X64' -or $normalized -eq 'AMD64') { return 'amd64' }
+    if ($normalized -eq 'ARM64' -or $normalized -eq 'AARCH64') { return 'arm64' }
+    $shown = if ([string]::IsNullOrWhiteSpace($name)) { 'unknown' } else { $name }
+    throw "vrok does not publish a build for $shown. Install from source instead: go install github.com/$Repo/cmd/vrok@latest"
 }
 
 function Get-LatestVersion {
@@ -57,9 +68,14 @@ function Get-LatestVersion {
     }
     if ($PSVersionTable.PSVersion.Major -lt 6) { $params.UseBasicParsing = $true }
     $response = Invoke-WebRequest @params
+    # Windows PowerShell exposes the final URL as ResponseUri. PowerShell 7
+    # returns an HttpResponseMessage, which carries it on RequestMessage.
     $final = $null
-    if ($response.BaseResponse -and $response.BaseResponse.ResponseUri) {
-        $final = $response.BaseResponse.ResponseUri.AbsoluteUri
+    $base = $response.BaseResponse
+    if ($base -and $base.PSObject.Properties['ResponseUri'] -and $base.ResponseUri) {
+        $final = $base.ResponseUri.AbsoluteUri
+    } elseif ($base -and $base.PSObject.Properties['RequestMessage'] -and $base.RequestMessage.RequestUri) {
+        $final = $base.RequestMessage.RequestUri.AbsoluteUri
     }
     if (-not $final) {
         $location = $response.Headers['Location']
@@ -185,5 +201,7 @@ try {
     }
 } catch {
     Write-Host "X   $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
+    # exit tears down the whole PowerShell process when the script is run
+    # with `irm | iex`. A file invocation, such as CI, still has to fail.
+    if ($MyInvocation.MyCommand.Path) { exit 1 }
 }
