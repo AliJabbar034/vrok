@@ -44,15 +44,46 @@ function Get-Architecture {
 
 function Get-LatestVersion {
     Write-Step 'Finding the latest release'
-    # The /releases/latest redirect carries the tag, which avoids the JSON
-    # API's unauthenticated rate limit.
-    $response = Invoke-WebRequest -Uri "https://github.com/$Repo/releases/latest" `
-        -MaximumRedirection 0 -ErrorAction SilentlyContinue -UseBasicParsing
-    $location = $response.Headers['Location']
-    if (-not $location) {
-        throw "Could not determine the latest version. Set one explicitly: `$env:VROK_VERSION='v0.1.0'"
+    # Follow /releases/latest and read the URL it lands on. The tag in that
+    # URL avoids the JSON API's unauthenticated rate limit.
+    #
+    # -MaximumRedirection 0 is the wrong tool for this: PowerShell 7 treats
+    # the redirect as a terminating error, and some Windows PowerShell 5.1
+    # builds do too, so the install stopped before it downloaded anything.
+    $params = @{
+        Uri         = "https://github.com/$Repo/releases/latest"
+        Method      = 'Head'
+        ErrorAction = 'Stop'
     }
-    ($location -split '/')[-1]
+    if ($PSVersionTable.PSVersion.Major -lt 6) { $params.UseBasicParsing = $true }
+    $response = Invoke-WebRequest @params
+    $final = $null
+    if ($response.BaseResponse -and $response.BaseResponse.ResponseUri) {
+        $final = $response.BaseResponse.ResponseUri.AbsoluteUri
+    }
+    if (-not $final) {
+        $location = $response.Headers['Location']
+        if ($location -is [array]) { $location = $location[0] }
+        $final = [string]$location
+    }
+    if ($final -match '/tag/([^/?#]+)') { return $Matches[1] }
+    throw "Could not determine the latest version. Set one explicitly: `$env:VROK_VERSION='v0.1.0'"
+}
+
+function Publish-EnvironmentChange {
+    # Explorer caches the environment from logon. Without this broadcast a
+    # terminal opened from the Start menu keeps the PATH from before install.
+    if (-not ('Vrok.NativeMethods' -as [type])) {
+        Add-Type -Namespace Vrok -Name NativeMethods -MemberDefinition @'
+[DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+public static extern IntPtr SendMessageTimeout(
+    IntPtr hWnd, uint Msg, UIntPtr wParam, string lParam,
+    uint fuFlags, uint uTimeout, out UIntPtr lpdwResult);
+'@
+    }
+    $result = [UIntPtr]::Zero
+    [void][Vrok.NativeMethods]::SendMessageTimeout(
+        [IntPtr]0xffff, 0x001A, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$result)
 }
 
 try {
@@ -87,7 +118,9 @@ try {
         try {
             $sums = Join-Path $tmp 'checksums.txt'
             Invoke-WebRequest -Uri "$base/checksums.txt" -OutFile $sums -UseBasicParsing
-            $line = Select-String -Path $sums -Pattern ([regex]::Escape($archive)) | Select-Object -First 1
+            # Anchor on the archive name. A prefix match would accept
+            # vrok_*_windows_amd64.zip.sbom.json and then reject a good zip.
+            $line = Select-String -Path $sums -Pattern (' ' + [regex]::Escape($archive) + '\s*$') | Select-Object -First 1
             if ($line) { $expected = ($line.Line -split '\s+')[0].ToLower() }
         } catch {
             $expected = $null
@@ -115,7 +148,11 @@ try {
         # the archive and as a container image for anyone who wants it.
         Write-Step "Installing to $InstallDir"
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-        Copy-Item -Path $binary.FullName -Destination $InstallDir -Force
+        $installed = Join-Path $InstallDir 'vrok.exe'
+        Copy-Item -Path $binary.FullName -Destination $installed -Force
+        # A download keeps the Mark of the Web. Leaving it on vrok.exe makes
+        # SmartScreen block the program the first time it runs.
+        Unblock-File -LiteralPath $installed -ErrorAction SilentlyContinue
 
         # Add to the *user* PATH, so no elevation is required. The registry is
         # the durable copy; $env:PATH is patched so this session works too.
@@ -125,14 +162,19 @@ try {
             $updated = if ($userPath) { "$userPath;$InstallDir" } else { $InstallDir }
             [Environment]::SetEnvironmentVariable('Path', $updated, 'User')
             $env:Path = "$env:Path;$InstallDir"
+            try { Publish-EnvironmentChange } catch { Write-Warn 'PATH was saved, but Windows was not notified. Quit and reopen your terminal.' }
             $pathChanged = $true
         }
 
-        $reported = & (Join-Path $InstallDir 'vrok.exe') --version 2>$null
+        $reported = & $installed --version 2>$null
         Write-Ok $(if ($reported) { "Installed $reported" } else { "Installed vrok $Version" })
         Write-Host ''
+        Write-Host '  ' -NoNewline
+        Write-Host $installed -ForegroundColor DarkGray
         if ($pathChanged) {
-            Write-Host '  Open a new terminal, then try:  ' -NoNewline
+            # A new tab inherits the terminal app's old environment. Only a
+            # full restart of that app picks up the PATH entry.
+            Write-Host '  Quit and reopen your terminal, then try:  ' -NoNewline
             Write-Host 'vrok .\some-file' -ForegroundColor DarkGray
         } else {
             Write-Host '  Try it:  ' -NoNewline
