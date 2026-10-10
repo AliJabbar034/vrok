@@ -50,7 +50,8 @@ func newConfigShowCommand(a *app) *cobra.Command {
 			table.Row("ttl", cfg.TTL.String())
 			table.Row("tunnel", cfg.Tunnel)
 			table.Row("addr", cfg.Addr)
-			table.Row("qr", strconv.FormatBool(cfg.QR))
+			table.Row("qr", qrSetting(cfg.QR))
+			table.Row("update_check", strconv.FormatBool(cfg.UpdateCheck == nil || *cfg.UpdateCheck))
 			table.Row("domain", orDash(cfg.Domain))
 			table.Row("relay_url", orDash(cfg.RelayURL))
 			// The token is never printed: the whole point of storing it with
@@ -68,8 +69,8 @@ func newConfigSetCommand(a *app) *cobra.Command {
 		Short: "Change one setting",
 		Long: `Set writes one key to the configuration file.
 
-Keys: ttl, tunnel, addr, qr, domain, relay_url, relay_token`,
-		Example: "  vrok config set ttl 30m\n  vrok config set tunnel cloudflare",
+Keys: ttl, tunnel, addr, qr, update_check, domain, relay_url, relay_token`,
+		Example: "  vrok config set ttl 30m\n  vrok config set tunnel cloudflare\n  vrok config set qr false\n  vrok config set update-check false",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a.load()
@@ -90,7 +91,7 @@ Keys: ttl, tunnel, addr, qr, domain, relay_url, relay_token`,
 
 // settingKeys are the writable configuration keys, in the order `config show`
 // prints them.
-var settingKeys = []string{"ttl", "tunnel", "addr", "qr", "domain", "relay_url", "relay_token"}
+var settingKeys = []string{"ttl", "tunnel", "addr", "qr", "update_check", "domain", "relay_url", "relay_token"}
 
 // applySetting validates and assigns one configuration key. Validation happens
 // here rather than at use time so a typo is reported when it is made, not the
@@ -119,11 +120,22 @@ func applySetting(cfg *config.Config, key, value string) error {
 		cfg.Addr = value
 
 	case "qr":
+		if value == "auto" {
+			cfg.QR = nil
+			break
+		}
 		enabled, err := strconv.ParseBool(value)
 		if err != nil {
-			return fmt.Errorf("qr must be true or false")
+			return fmt.Errorf("qr must be true, false or auto")
 		}
-		cfg.QR = enabled
+		cfg.QR = &enabled
+
+	case "update_check":
+		enabled, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("update_check must be true or false")
+		}
+		cfg.UpdateCheck = &enabled
 
 	case "domain":
 		cfg.Domain = value
@@ -152,4 +164,11 @@ func secretState(value string) string {
 		return "-"
 	}
 	return "(set)"
+}
+
+func qrSetting(value *bool) string {
+	if value == nil {
+		return "auto (on in a terminal)"
+	}
+	return strconv.FormatBool(*value)
 }

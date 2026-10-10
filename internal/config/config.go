@@ -42,8 +42,12 @@ type Config struct {
 	Addr string `json:"addr"`
 	// Domain requests a custom domain where the provider supports it.
 	Domain string `json:"domain,omitempty"`
-	// QR prints a QR code for every share.
-	QR bool `json:"qr,omitempty"`
+	// QR forces the share QR code on or off. Nil leaves it to vrok, which
+	// prints one whenever it runs in an interactive terminal.
+	QR *bool `json:"qr,omitempty"`
+	// UpdateCheck turns the once-a-day new-release notice off when false.
+	// Nil means on.
+	UpdateCheck *bool `json:"update_check,omitempty"`
 }
 
 // Default returns the built-in configuration.

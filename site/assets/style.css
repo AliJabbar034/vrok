@@ -1818,6 +1818,17 @@ h3 {
 .term__gap-s {
   margin-top: 1.2em !important;
 }
+/* Dark modules on a light tile, whatever the terminal colours: that is the
+   polarity every phone camera reads. */
+.term__qr {
+  display: block;
+  width: clamp(6.5rem, 5rem + 4vw, 8.5rem);
+  height: auto;
+  margin: 0.5em 0 0.6em 2ch;
+  border-radius: 3px;
+  background: var(--ink);
+  fill: var(--signal-ink);
+}
 .term__live {
   color: var(--ink-soft);
 }
