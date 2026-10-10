@@ -8,11 +8,16 @@
       name="google-site-verification"
       content="xYNok-d_5Qa5ngPCHdip8kESA-GMNN0503mdkCk7x6w"
     />
-    <title>vrok — share files, folders and localhost, no upload</title>
+    <title>vrok: Free Open-Source File Sharing and ngrok Alternative</title>
     <meta
       name="description"
-      content="Free, open-source CLI that turns a file, folder or localhost server into a public URL straight from your machine. No upload, no account. The link expires."
+      content="Free, open-source CLI to share files, folders and localhost with a public link. A no-upload alternative to ngrok, WeTransfer and Send Anywhere. No account."
     />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1"
+    />
+    <meta name="author" content="Ali Jabbar" />
     <link rel="canonical" href="https://alijabbar034.github.io/vrok/" />
     <meta name="theme-color" content="#0c3a3f" />
     <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
@@ -37,12 +42,13 @@
     <meta property="og:site_name" content="vrok" />
     <meta
       property="og:title"
-      content="vrok — a URL for a file, a folder, or localhost"
+      content="vrok: free open-source file sharing and ngrok alternative"
     />
     <meta
       property="og:description"
-      content="Free and open source. One command turns a file, folder or localhost server into a public URL. Nothing is uploaded. The link expires."
+      content="Free and open source. One command turns a file, folder or localhost dev server into a public URL. Nothing is uploaded. The link expires."
     />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://alijabbar034.github.io/vrok/" />
     <meta
       property="og:image"
@@ -61,6 +67,7 @@
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
           "name": "vrok",
+          "alternateName": ["vrok CLI", "vrok share"],
           "url": "https://alijabbar034.github.io/vrok/",
           "description": "Free, open-source command-line tool that shares files, folders and localhost servers through a temporary public URL, straight from your machine. Nothing is uploaded and the link expires.",
           "applicationCategory": "DeveloperApplication",
@@ -81,15 +88,22 @@
           "author": {
             "@type": "Person",
             "name": "Ali Jabbar",
-            "url": "https://github.com/AliJabbar034"
+            "url": "https://github.com/AliJabbar034",
+            "sameAs": [
+              "https://github.com/AliJabbar034",
+              "https://www.linkedin.com/in/ali-jabbar-fullstack-developer"
+            ]
           },
-          "keywords": "share files, share folder, share localhost, expose localhost, ngrok alternative, send large files, temporary link, file sharing CLI, no upload"
+          "sameAs": ["https://github.com/AliJabbar034/vrok"],
+          "keywords": "vrok, vrok cli, open-source cli, share localhost, expose localhost, share local development environment, share files, share folder, ngrok alternative, send large files, temporary link, file sharing CLI, no upload"
         },
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "vrok",
-          "url": "https://alijabbar034.github.io/vrok/"
+          "alternateName": ["vrok CLI", "vrok — open-source sharing CLI"],
+          "url": "https://alijabbar034.github.io/vrok/",
+          "inLanguage": "en"
         },
         {
           "@context": "https://schema.org",
@@ -215,6 +229,15 @@
         <span class="wordmark__tag">straight from your machine</span>
       </a>
       <nav class="bar__nav" aria-label="Primary">
+        <a class="bar__gh" href="https://github.com/AliJabbar034/vrok">
+          <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+            />
+          </svg>
+          <span class="visually-hidden">GitHub</span>
+          <span class="bar__gh-count" data-star-count hidden></span>
+        </a>
         <button
           class="bar__toggle"
           type="button"
@@ -230,7 +253,6 @@
           <a href="#compare">Why vrok</a>
           <a href="#safety">Safety</a>
           <a href="guide.html">Guide</a>
-          <a href="https://github.com/AliJabbar034/vrok">Source</a>
           <a class="bar__cta" href="download.html">Download</a>
         </div>
       </nav>
@@ -246,13 +268,14 @@
             <span class="rivet rivet--br" aria-hidden="true"></span>
 
             <h1 class="plate__title" id="plate-title">
+              <span class="plate__kicker">vrok · free, open-source CLI</span>
               A URL for a file,<br />a folder, or<br />localhost
             </h1>
             <p class="plate__lede">
-              <strong>Stop uploading. Stop deploying.</strong> One command gives
-              your files, folders or local dev server a link anyone can open,
-              served straight from your machine. No account, no size limit, and
-              it's gone when you stop it.
+              <strong>Stop uploading. Stop deploying.</strong> vrok gives your
+              files, folders or local dev server a link anyone can open, served
+              straight from your machine. No account, no size limit, and it's
+              gone when you stop it.
             </p>
             <ul class="plate__proof" aria-label="At a glance">
               <li>No size limit</li>
@@ -824,7 +847,7 @@
                   <th scope="col">If you need</th>
                   <th scope="col">vrok</th>
                   <th scope="col">ngrok / tunnels</th>
-                  <th scope="col">WeTransfer / file hosts</th>
+                  <th scope="col">WeTransfer / Send Anywhere</th>
                 </tr>
               </thead>
               <tbody>
@@ -834,7 +857,7 @@
                   <td data-label="ngrok / tunnels" class="yes">
                     <span>Seconds</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="no">
+                  <td data-label="WeTransfer / Send Anywhere" class="no">
                     <span>After the upload finishes</span>
                   </td>
                 </tr>
@@ -846,7 +869,7 @@
                   <td data-label="ngrok / tunnels" class="no">
                     <span>Only if you run a file server</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="mid">
+                  <td data-label="WeTransfer / Send Anywhere" class="mid">
                     <span>Yes, by uploading a copy</span>
                   </td>
                 </tr>
@@ -858,7 +881,7 @@
                   <td data-label="ngrok / tunnels" class="yes">
                     <span>Yes — their main job</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="no">
+                  <td data-label="WeTransfer / Send Anywhere" class="no">
                     <span>No</span>
                   </td>
                 </tr>
@@ -870,7 +893,7 @@
                   <td data-label="ngrok / tunnels" class="mid">
                     <span>Not applicable</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="no">
+                  <td data-label="WeTransfer / Send Anywhere" class="no">
                     <span>Set by the plan</span>
                   </td>
                 </tr>
@@ -882,7 +905,7 @@
                   <td data-label="ngrok / tunnels" class="no">
                     <span>Up until you stop it</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="mid">
+                  <td data-label="WeTransfer / Send Anywhere" class="mid">
                     <span>After their retention period</span>
                   </td>
                 </tr>
@@ -892,7 +915,7 @@
                   <td data-label="ngrok / tunnels" class="no">
                     <span>Yes</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="mid">
+                  <td data-label="WeTransfer / Send Anywhere" class="mid">
                     <span>Depends on the service</span>
                   </td>
                 </tr>
@@ -904,7 +927,7 @@
                   <td data-label="ngrok / tunnels" class="no">
                     <span>No</span>
                   </td>
-                  <td data-label="WeTransfer / file hosts" class="yes">
+                  <td data-label="WeTransfer / Send Anywhere" class="yes">
                     <span>Yes — their main job</span>
                   </td>
                 </tr>
@@ -916,7 +939,11 @@
             file host when the recipient must still have the file after you
             switch off. Use vrok when someone needs what is on your machine
             <em>now</em>, and should not have it tomorrow.
-            <a href="ngrok-alternative.html">The full comparison</a>.
+            <a href="ngrok-alternative.html">The full comparison</a>. Sending
+            files instead?
+            <a href="send-anywhere-alternative.html"
+              >vrok vs Send Anywhere and WeTransfer</a
+            >.
           </p>
         </div>
       </section>
@@ -1122,6 +1149,7 @@
           <a href="share-localhost.html">Share localhost</a>
           <a href="send-large-files.html">Send large files</a>
           <a href="ngrok-alternative.html">ngrok alternative</a>
+          <a href="send-anywhere-alternative.html">Send Anywhere alternative</a>
           <a href="#watch">Watch it run</a>
           <a href="#use">Use cases</a>
           <a href="#compare">Why vrok</a>

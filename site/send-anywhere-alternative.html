@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Free ngrok alternative — vrok vs ngrok and WeTransfer</title>
+    <title>Free Send Anywhere and WeTransfer Alternative | vrok</title>
     <meta
       name="description"
-      content="A free ngrok and WeTransfer alternative: share files, folders and localhost with a temporary link. No account, no upload. An honest comparison."
+      content="A free Send Anywhere and WeTransfer alternative with no size limit, no monthly cap and no upload. Share files and folders from your computer. Open source."
     />
     <link
       rel="canonical"
-      href="https://alijabbar034.github.io/vrok/ngrok-alternative.html"
+      href="https://alijabbar034.github.io/vrok/send-anywhere-alternative.html"
     />
     <meta name="theme-color" content="#0c3a3f" />
     <link rel="icon" href="assets/mark.svg?v=b" type="image/svg+xml" />
@@ -34,15 +34,15 @@
     <meta property="og:site_name" content="vrok" />
     <meta
       property="og:title"
-      content="Free ngrok alternative — vrok vs ngrok and WeTransfer"
+      content="Free Send Anywhere and WeTransfer alternative — vrok"
     />
     <meta
       property="og:description"
-      content="A free ngrok and WeTransfer alternative: share files, folders and localhost with a temporary link. No account, no upload. An honest comparison."
+      content="No size limit, no monthly cap, no upload. Share files and folders straight from your computer with a link that expires. Free and open source."
     />
     <meta
       property="og:url"
-      content="https://alijabbar034.github.io/vrok/ngrok-alternative.html"
+      content="https://alijabbar034.github.io/vrok/send-anywhere-alternative.html"
     />
     <meta
       property="og:image"
@@ -60,10 +60,11 @@
         {
           "@context": "https://schema.org",
           "@type": "TechArticle",
-          "headline": "vrok vs ngrok and WeTransfer",
-          "description": "Looking for a free ngrok or WeTransfer alternative? vrok shares files, folders and localhost with a temporary link, no account and no upload. An honest comparison.",
-          "url": "https://alijabbar034.github.io/vrok/ngrok-alternative.html",
+          "headline": "vrok vs Send Anywhere and WeTransfer",
+          "description": "A free Send Anywhere and WeTransfer alternative: share files and folders from your computer with no size limit, no monthly cap and no upload.",
+          "url": "https://alijabbar034.github.io/vrok/send-anywhere-alternative.html",
           "image": "https://alijabbar034.github.io/vrok/assets/og-card.png",
+          "dateModified": "2026-10-10",
           "author": {
             "@type": "Person",
             "name": "Ali Jabbar",
@@ -88,8 +89,8 @@
             {
               "@type": "ListItem",
               "position": 2,
-              "name": "vrok vs ngrok and WeTransfer",
-              "item": "https://alijabbar034.github.io/vrok/ngrok-alternative.html"
+              "name": "vrok vs Send Anywhere and WeTransfer",
+              "item": "https://alijabbar034.github.io/vrok/send-anywhere-alternative.html"
             }
           ]
         },
@@ -99,34 +100,34 @@
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "Is vrok a free alternative to ngrok?",
+              "name": "Is vrok a free alternative to Send Anywhere?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "For sharing a localhost app with someone, yes: free, open source and no account. For long-lived production tunnels with reserved domains, ngrok is built for that."
+                "text": "Yes. vrok is free and open source (MIT) with no paid tier. Its links have no size limit and no monthly download cap, because the files are served from your own computer instead of a company's servers."
               }
             },
             {
               "@type": "Question",
-              "name": "Is vrok an alternative to WeTransfer?",
+              "name": "Is vrok a free alternative to WeTransfer?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "For sending files while you are online, yes, and without uploading them or any size limit. If the recipient needs the file after you go offline, use a file host."
+                "text": "For sending files while your computer is on, yes. There is no 3 GB limit, no limit on how many transfers you send, and nothing to upload first. If the recipient must download after you switch off, a file host like WeTransfer fits better."
               }
             },
             {
               "@type": "Question",
-              "name": "Does vrok use Cloudflare?",
+              "name": "Does the recipient need an app or an account?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "By default it opens a free Cloudflare quick tunnel, with no Cloudflare account. You can keep shares on your network with --local, or run your own relay."
+                "text": "No. They open the link in any browser, on a computer or a phone. Only the sender runs vrok."
               }
             },
             {
               "@type": "Question",
-              "name": "Is vrok open source?",
+              "name": "How fast is it?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes, MIT licensed, on GitHub."
+                "text": "The download starts the moment you send the link, with no upload step. The speed is limited by your internet upload speed and theirs, and an interrupted download resumes where it stopped."
               }
             }
           ]
@@ -197,103 +198,192 @@
         <article class="guide__body">
           <nav class="crumbs-nav" aria-label="Breadcrumb">
             <a href="./">vrok</a> <span aria-hidden="true">/</span>
-            <span aria-current="page">vrok vs ngrok and WeTransfer</span>
+            <span aria-current="page"
+              >vrok vs Send Anywhere and WeTransfer</span
+            >
           </nav>
           <header>
-            <h1>vrok vs ngrok and WeTransfer</h1>
+            <h1>A free Send Anywhere and WeTransfer alternative</h1>
             <p class="guide__lede">
-              ngrok exposes a port. WeTransfer uploads a copy. vrok gives
-              someone a temporary link to what is already on your machine: a
-              file, a folder or a running app. Here is when each one fits.
+              Send Anywhere and WeTransfer put your files on their servers, then
+              cap how much you can send for free. vrok serves the files straight
+              from your computer instead, so there is no size limit, no monthly
+              cap and no upload to wait for. It is free, open source and needs
+              no account.
             </p>
           </header>
+
           <section>
-            <h2>At a glance</h2>
+            <h2>Why people switch to vrok</h2>
+            <ul>
+              <li>
+                <strong>No size limit.</strong> A 50 GB folder works like a 5 MB
+                PDF. The only limit is your disk.
+              </li>
+              <li>
+                <strong>No monthly cap.</strong> Send as many files, as often as
+                you like. There is no transfer count and no download quota that
+                runs out halfway through the month.
+              </li>
+              <li>
+                <strong>No upload wait.</strong> The link works the moment you
+                run the command, and the other person starts downloading
+                straight away.
+              </li>
+              <li>
+                <strong>Free for good.</strong> MIT licensed, no paid tier, no
+                ads, no telemetry. Nothing is held back for a subscription.
+              </li>
+              <li>
+                <strong>No copy on someone else's server.</strong> Your files
+                stay on your machine. When the link ends, there is nothing left
+                anywhere to delete.
+              </li>
+              <li>
+                <strong>You set the expiry.</strong> Ten minutes, two days, one
+                download, a password, or until you press Ctrl+C. You can change
+                it while the share is running.
+              </li>
+              <li>
+                <strong>Better for the recipient.</strong> Videos, images, PDFs
+                and folders preview in the browser, interrupted downloads
+                resume, a folder downloads as one zip, and a file page shows its
+                SHA-256 so they can check their copy.
+              </li>
+              <li>
+                <strong>It also shares localhost.</strong> The same tool gives
+                your dev server a public URL with
+                <code>vrok localhost:3000</code>.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Side by side</h2>
             <div class="table-scroll">
               <table class="guide-table guide-table--wide">
                 <thead>
                   <tr>
-                    <th>If you need</th>
+                    <th>Free plan</th>
                     <th>vrok</th>
-                    <th>ngrok / tunnels</th>
-                    <th>WeTransfer / file hosts</th>
+                    <th>Send Anywhere (share link)</th>
+                    <th>WeTransfer</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Share a running localhost app</td>
-                    <td>Yes, <code>vrok localhost:3000</code></td>
-                    <td>Yes, their main job</td>
-                    <td>No</td>
+                    <td>Price</td>
+                    <td>Free, no paid tier</td>
+                    <td>Free tier, paid add-on</td>
+                    <td>Free tier, paid plans</td>
                   </tr>
                   <tr>
-                    <td>Share a file or folder directly</td>
-                    <td>Yes, with previews</td>
-                    <td>Only if you run a file server</td>
-                    <td>Yes, by uploading a copy</td>
+                    <td>Size per share</td>
+                    <td>No limit, only your disk</td>
+                    <td>Up to 10 GB</td>
+                    <td>Up to 3 GB</td>
                   </tr>
                   <tr>
-                    <td>No account</td>
+                    <td>Monthly limit</td>
+                    <td>None</td>
+                    <td>10 GB of downloads per month</td>
+                    <td>10 transfers or 3 GB per 30 days</td>
+                  </tr>
+                  <tr>
+                    <td>Upload before sharing</td>
+                    <td>No, served from your computer</td>
                     <td>Yes</td>
-                    <td>Account required</td>
-                    <td>Depends on the service</td>
+                    <td>Yes</td>
                   </tr>
                   <tr>
-                    <td>Link that expires or works once</td>
-                    <td>TTL, download limit, password</td>
-                    <td>Stays up until you stop it</td>
-                    <td>Expires after their retention period</td>
+                    <td>How long the link lasts</td>
+                    <td>You choose: time, downloads, or until you stop</td>
+                    <td>48 hours</td>
+                    <td>Up to 3 days</td>
                   </tr>
                   <tr>
-                    <td>Recipient can get it after you go offline</td>
-                    <td>No, by design</td>
+                    <td>One-time link and password</td>
+                    <td>Yes, both free</td>
+                    <td>Password is a paid add-on</td>
+                    <td>Password is free</td>
+                  </tr>
+                  <tr>
+                    <td>Share a whole folder</td>
+                    <td>Yes, browsable, with a zip download</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                  </tr>
+                  <tr>
+                    <td>Share a localhost app</td>
+                    <td>Yes</td>
                     <td>No</td>
-                    <td>Yes, their main job</td>
+                    <td>No</td>
+                  </tr>
+                  <tr>
+                    <td>Works after your computer is off</td>
+                    <td>No, by design</td>
+                    <td>Yes, until the link expires</td>
+                    <td>Yes, until the link expires</td>
+                  </tr>
+                  <tr>
+                    <td>Open source</td>
+                    <td>Yes, MIT</td>
+                    <td>No</td>
+                    <td>No</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <p>
+              Limits checked in October 2026 from the
+              <a
+                href="https://support.send-anywhere.com/hc/en-us/articles/360005223534-File-size-that-can-be-transferred-at-one-time"
+                >Send Anywhere help center</a
+              >
+              and
+              <a
+                href="https://wetransfer.com/help-center/subscriptions/plan-limits"
+                >WeTransfer plan limits</a
+              >. Send Anywhere's 6-digit key transfer is a separate method, for
+              up to 50 GB between two people who are both online.
+            </p>
           </section>
+
           <section>
-            <h2>Choose vrok when</h2>
+            <h2>Send a file in two steps</h2>
+            <ol>
+              <li>
+                Install vrok with one command, Homebrew, Scoop or a package from
+                the <a href="download.html">download page</a>.
+              </li>
+              <li>
+                Run <code>vrok ./video.mp4</code>, or a folder, and send the
+                link. The URL is copied for you.
+              </li>
+            </ol>
+            <p>
+              Add <code>--ttl 2h</code> to close it after two hours,
+              <code>--downloads 1</code> for a one-time link, or
+              <code>--password</code> to lock it.
+            </p>
+          </section>
+
+          <section>
+            <h2>When Send Anywhere or WeTransfer fits better</h2>
             <ul>
               <li>
-                Someone needs what is on your machine <em>now</em>, and should
-                not have it tomorrow.
-              </li>
-              <li>You want one tool for files, folders and localhost.</li>
-              <li>
-                You want a link in seconds: run <code>vrok localhost:3000</code>
-                and send it, with no signup or auth token to set up first.
+                The recipient must be able to download after your computer is
+                switched off. vrok serves from your machine, so the link works
+                only while it runs.
               </li>
               <li>
-                Your app uses WebSockets or hot reload. They keep working for
-                whoever opens the link.
+                You want an app with buttons, not a terminal. vrok is a
+                command-line tool.
               </li>
               <li>
-                You want control over the link: an expiry, a download limit or a
-                password, all free, and you can revoke it at any time.
-              </li>
-              <li>
-                You would rather not create an account or upload anything.
-              </li>
-              <li>
-                You want the code: vrok is MIT licensed, and you can run your
-                own relay.
-              </li>
-            </ul>
-          </section>
-          <section>
-            <h2>Choose something else when</h2>
-            <ul>
-              <li>
-                <strong>ngrok</strong> or another tunnel service: you need a
-                long-lived tunnel, a reserved domain, or request inspection and
-                traffic policies.
-              </li>
-              <li>
-                <strong>WeTransfer</strong> or a file host: the recipient must
-                still have the file after your computer is off.
+                Your upload speed is very slow and the recipient is in no hurry.
+                With vrok, their download runs at your connection's upload
+                speed.
               </li>
             </ul>
           </section>
@@ -302,34 +392,37 @@
             <h2>Questions</h2>
             <div class="faq__list faq__list--single">
               <details class="faq__item">
-                <summary>Is vrok a free alternative to ngrok?</summary>
+                <summary>Is vrok a free alternative to Send Anywhere?</summary>
                 <p>
-                  For sharing a localhost app with someone, yes: free, open
-                  source and no account. For long-lived production tunnels with
-                  reserved domains, ngrok is built for that.
+                  Yes. vrok is free and open source (MIT) with no paid tier. Its
+                  links have no size limit and no monthly download cap, because
+                  the files are served from your own computer instead of a
+                  company's servers.
                 </p>
               </details>
               <details class="faq__item">
-                <summary>Is vrok an alternative to WeTransfer?</summary>
+                <summary>Is vrok a free alternative to WeTransfer?</summary>
                 <p>
-                  For sending files while you are online, yes, and without
-                  uploading them or any size limit. If the recipient needs the
-                  file after you go offline, use a file host.
+                  For sending files while your computer is on, yes. There is no
+                  3 GB limit, no limit on how many transfers you send, and
+                  nothing to upload first. If the recipient must download after
+                  you switch off, a file host like WeTransfer fits better.
                 </p>
               </details>
               <details class="faq__item">
-                <summary>Does vrok use Cloudflare?</summary>
+                <summary>Does the recipient need an app or an account?</summary>
                 <p>
-                  By default it opens a free Cloudflare quick tunnel, with no
-                  Cloudflare account. You can keep shares on your network with
-                  <code>--local</code>, or run your own relay.
+                  No. They open the link in any browser, on a computer or a
+                  phone. Only the sender runs vrok.
                 </p>
               </details>
               <details class="faq__item">
-                <summary>Is vrok open source?</summary>
+                <summary>How fast is it?</summary>
                 <p>
-                  Yes, MIT licensed, on
-                  <a href="https://github.com/AliJabbar034/vrok">GitHub</a>.
+                  The download starts the moment you send the link, with no
+                  upload step. The speed is limited by your internet upload
+                  speed and theirs, and an interrupted download resumes where it
+                  stopped.
                 </p>
               </details>
             </div>
@@ -362,23 +455,18 @@
             <h2>More</h2>
             <ul>
               <li>
-                <a href="share-localhost.html"
-                  >Share your localhost with a public URL</a
-                >
-              </li>
-              <li>
                 <a href="send-large-files.html"
                   >Send large files without uploading them</a
                 >
               </li>
               <li>
-                <a href="ngrok-alternative.html"
-                  >vrok vs ngrok and WeTransfer</a
+                <a href="share-localhost.html"
+                  >Share your localhost with a public URL</a
                 >
               </li>
               <li>
-                <a href="send-anywhere-alternative.html"
-                  >vrok vs Send Anywhere and WeTransfer</a
+                <a href="ngrok-alternative.html"
+                  >vrok vs ngrok and WeTransfer</a
                 >
               </li>
             </ul>
