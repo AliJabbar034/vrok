@@ -161,6 +161,7 @@
             <li><a href="#commands">Commands</a></li>
             <li><a href="#flags">Flags</a></li>
             <li><a href="#large">Large files</a></li>
+            <li><a href="#receive">Receiving files</a></li>
             <li><a href="#manage">Managing shares</a></li>
             <li><a href="#doctor">When something breaks</a></li>
             <li><a href="#visitors">What visitors see</a></li>
@@ -191,7 +192,10 @@
               Visitors hit that URL; bytes are read from your disk — or proxied
               to <code>localhost</code> — while they wait.
             </p>
-            <p>That covers three different jobs with the same command:</p>
+            <p>
+              That covers three different jobs with the same command, and one
+              the other way round:
+            </p>
             <ul>
               <li>
                 A <strong>file</strong> — video with seeking, a PDF, an
@@ -205,6 +209,11 @@
                 A <strong>running server</strong> —
                 <code>vrok localhost:3000</code> reverse-proxies it, WebSockets
                 included, so hot reload still works for the other person.
+              </li>
+              <li>
+                <strong>Receiving</strong> — <code>vrok receive</code> gives the
+                other person an upload page, and the files you accept land in a
+                folder on your machine. <a href="#receive">How it works</a>.
               </li>
             </ul>
             <p>
@@ -507,6 +516,7 @@
 vrok ./playwright-report          # a whole directory
 vrok report.pdf shot.png a.mp4    # several files, one index
 vrok localhost:3000               # a local HTTP server
+vrok receive                      # let someone send you files
 vrok share ./x                    # same as vrok ./x</code></pre>
 
             <h3>A file</h3>
@@ -643,6 +653,15 @@ vrok share ./x                    # same as vrok ./x</code></pre>
               <code>x</code> stops. Each change keeps the same URL. Scripts and
               CI never see the hotkey bar.
             </p>
+            <p>
+              <code>vrok receive</code> takes <code>--ttl</code>,
+              <code>--password</code> and the reach flags above, plus
+              <code>--max-files N</code> to stop after N files and
+              <code>--yes</code> to accept every file without asking. Its
+              hotkeys are the same except <code>1</code>, with
+              <code>y</code> and <code>n</code> to answer someone who wants to
+              send you files.
+            </p>
           </section>
 
           <section id="large">
@@ -681,6 +700,68 @@ vrok share ./x                    # same as vrok ./x</code></pre>
               Speed is set by your upload bandwidth and the tunnel, not by vrok:
               every byte comes from your machine.
               <a href="./#watch">Watch a transfer on the homepage</a>.
+            </p>
+          </section>
+
+          <section id="receive">
+            <h2>Receiving files</h2>
+            <p>
+              <code>vrok receive</code> turns the link around. It opens an
+              upload page, and whatever is sent from it lands in a folder on
+              your machine: <code>~/Downloads/vrok</code> unless you name
+              another. It is the quickest way to get photos off a phone, or a
+              log file from a colleague, with no cloud drive in between.
+            </p>
+            <pre><code>vrok receive                         # into ~/Downloads/vrok
+vrok receive ./inbox                 # into a folder of your choice
+vrok receive --max-files 3 --ttl 1h  # stop after three files, or an hour
+vrok receive --password              # senders enter a password first
+vrok receive --yes                   # accept every file without asking</code></pre>
+            <p>
+              Nothing is written until you say so. When someone picks files, you
+              see their names and sizes, and press <kbd>y</kbd> to accept or
+              <kbd>n</kbd> to decline:
+            </p>
+            <pre><code>📥 Someone wants to send 2 files (1.2 GB)
+     IMG_2041.HEIC  3.1 MB
+     holiday.mov    1.2 GB
+   Accept? press y to accept, n to decline
+✓ Accepted 2 files
+✓ Received IMG_2041.HEIC (3.1 MB)
+✓ Received holiday.mov (1.2 GB)</code></pre>
+            <p>
+              Only the files you accepted, at the sizes shown, can be uploaded.
+              A question nobody answers is dropped after five minutes. Without a
+              terminal to ask in, vrok needs
+              <code>--yes</code>.
+            </p>
+            <ul>
+              <li>
+                <strong>Nothing is overwritten.</strong> A second
+                <code>photo.jpg</code> arrives as <code>photo (1).jpg</code>.
+                Names are cleaned of paths and characters your system does not
+                allow, so a sender cannot write outside the folder.
+              </li>
+              <li>
+                <strong>Large files survive a bad connection.</strong> The page
+                sends files in 8 MB pieces and carries on from the last one
+                after a drop. A file that never finishes is deleted, not left
+                half-written.
+              </li>
+              <li>
+                <strong>It checks your disk.</strong> An upload that would not
+                fit, with 512 MB to spare, is refused before the first byte.
+              </li>
+              <li>
+                <strong>Senders learn nothing about your machine.</strong> They
+                do not see the folder, the names already in it, or what their
+                file was saved as.
+              </li>
+            </ul>
+            <p>
+              The flags for who can open the link work as they do for sharing:
+              <code>--local</code>, <code>--tunnel</code>, <code>--qr</code> and
+              <code>--port</code>.
             </p>
           </section>
 
@@ -886,6 +967,13 @@ vrok doctor             # check this machine for common problems</code></pre>
                 <strong>No analytics.</strong> Download counts stay in your
                 terminal. Nothing is sent to a vrok server, because there isn’t
                 one on the default path.
+              </li>
+              <li>
+                <strong>Receiving asks first.</strong>
+                <code>vrok receive</code> writes nothing until you accept the
+                names and sizes. A sender cannot write outside the folder,
+                replace a file already in it, or swap in a bigger file than the
+                one you accepted.
               </li>
               <li>
                 <strong>Default reach is public</strong> via Cloudflare’s quick

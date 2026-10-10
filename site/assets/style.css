@@ -988,6 +988,39 @@ h3 {
   color: var(--ink-faint);
   padding-left: 2ch;
 }
+.term__note {
+  padding-left: 2ch;
+}
+.term__note strong {
+  font-weight: 700;
+  color: #fff;
+}
+.term__note .term__ok,
+.term__warn {
+  margin-right: 0.5ch;
+}
+.term__faint {
+  color: var(--ink-faint);
+}
+/* A request to send files: names, then sizes, as the CLI lines them up. */
+.term__files {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) auto;
+  justify-content: start;
+  gap: 0 2ch;
+  margin: 0;
+  padding-left: 7ch;
+}
+.term__files dt {
+  overflow-wrap: anywhere;
+}
+.term__files dd {
+  margin: 0;
+  color: var(--ink-faint);
+}
+.term__dim.term__ask {
+  padding-left: 5ch;
+}
 
 .term__rows {
   display: grid;
@@ -1314,7 +1347,12 @@ h3 {
 }
 @media (min-width: 40rem) {
   .watch__tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .watch__tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 .watch__tabs button {
@@ -1661,6 +1699,81 @@ h3 {
 }
 .browser__gate .mock__dl {
   justify-content: center;
+}
+
+/* The upload page a receive link opens, as the real viewer draws it. */
+.browser__drop {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  margin: 0.8rem 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--enamel-chip);
+  border-radius: 4px;
+  background: var(--enamel-deep);
+  text-align: center;
+}
+.browser__drop-icon {
+  font-size: 1.4rem;
+}
+.browser__drop strong {
+  font-size: 1.05rem;
+}
+.browser__drop p {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.browser__drop .mock__dl {
+  margin-top: 0.3rem;
+}
+.has-files .browser__drop p,
+.has-files .browser__drop-icon {
+  display: none;
+}
+.browser__uploads {
+  list-style: none;
+  margin: 0.6rem 1rem 0;
+  padding: 0;
+  font-size: 0.78rem;
+}
+.browser__uploads li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.8rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.browser__up-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.browser__up-meta {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.browser__up-track {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.browser__up-track span {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.browser__uploads li.is-done .browser__up-meta {
+  color: var(--ink);
+}
+.browser__uploads li.is-done .browser__up-meta::before {
+  content: "✓ ";
+  color: var(--signal);
 }
 
 /* The person's own app, proxied. Deliberately not vrok-styled: it is

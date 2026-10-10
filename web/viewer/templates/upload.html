@@ -1,0 +1,20 @@
+{{define "content"}}
+<section class="drop" data-upload data-api="{{.UploadURL}}" data-offer="{{.OfferURL}}">
+  <div class="drop__zone" data-zone>
+    <span class="drop__icon" aria-hidden="true">📥</span>
+    <h1 class="drop__title">Send files</h1>
+    <p class="drop__hint">The person who shared this link sees their names and sizes and accepts them first. Then they go straight to that computer, and nowhere else.</p>
+    {{if .FilesLeft}}<p class="drop__limit" data-left="{{.FilesLeft}}">This link accepts {{if eq .FilesLeft 1}}one more file{{else}}{{.FilesLeft}} more files{{end}}.</p>{{end}}
+
+    <label class="button button--wide drop__pick">
+      Choose files
+      <input class="drop__input" type="file" multiple data-input>
+    </label>
+    <p class="drop__or">or drop them anywhere on this page</p>
+    <noscript><p class="drop__error">Sending files needs JavaScript. Turn it on and reload this page.</p></noscript>
+  </div>
+
+  <ul class="uploads" data-list aria-live="polite"></ul>
+</section>
+<script src="{{.StaticBase}}/upload.js?v={{.ScriptVersion}}" defer></script>
+{{end}}

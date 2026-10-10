@@ -50,8 +50,8 @@ GET https://a82kd9.vrok.example.com/s/8kLmP3qR7wXz2vN4bYtJcA/screenshots/one.png
                               │
           ┌───────────────────┼───────────────────┐
           ▼                   ▼                   ▼
-   SingleFileHandler   DirectoryHandler     ProxyHandler
-   FileSetHandler      + PathResolver       → localhost:3000
+   SingleFileHandler   DirectoryHandler     ProxyHandler     ReceiveHandler
+   FileSetHandler      + PathResolver       → localhost:3000  → inbox.Inbox
           │                   │
           └─────────┬─────────┘
                     ▼
@@ -64,20 +64,21 @@ one kind of share, selected from a map keyed by `sharing.Kind`.
 
 ## Packages
 
-| Package             | Responsibility                                     | Depends on                                 |
-| ------------------- | -------------------------------------------------- | ------------------------------------------ |
-| `internal/sharing`  | The domain: what a share is, when it stops working | nothing                                    |
-| `internal/security` | Tokens, Argon2id, HMAC, path confinement           | nothing                                    |
-| `internal/preview`  | Which renderer presents which file                 | `humanize`                                 |
-| `internal/server`   | HTTP routing, file serving, reverse proxy          | `sharing`, `security`, `preview`, `viewer` |
-| `internal/tunnel`   | Publishing a local server publicly                 | `protocol`                                 |
-| `internal/protocol` | The CLI to relay wire format                       | nothing                                    |
-| `internal/relay`    | The relay server                                   | `protocol`, `security`                     |
-| `internal/control`  | One process inspecting another's shares            | nothing                                    |
-| `internal/config`   | Stored defaults                                    | nothing                                    |
-| `internal/ui`       | Terminal output                                    | `humanize`                                 |
-| `internal/cli`      | Command wiring                                     | everything                                 |
-| `web/viewer`        | Embedded HTML and CSS                              | nothing                                    |
+| Package             | Responsibility                                     | Depends on                                          |
+| ------------------- | -------------------------------------------------- | --------------------------------------------------- |
+| `internal/sharing`  | The domain: what a share is, when it stops working | nothing                                             |
+| `internal/security` | Tokens, Argon2id, HMAC, path confinement           | nothing                                             |
+| `internal/inbox`    | Writing uploaded files into the receive folder     | nothing                                             |
+| `internal/preview`  | Which renderer presents which file                 | `humanize`                                          |
+| `internal/server`   | HTTP routing, file serving, proxy, uploads         | `sharing`, `security`, `preview`, `viewer`, `inbox` |
+| `internal/tunnel`   | Publishing a local server publicly                 | `protocol`                                          |
+| `internal/protocol` | The CLI to relay wire format                       | nothing                                             |
+| `internal/relay`    | The relay server                                   | `protocol`, `security`                              |
+| `internal/control`  | One process inspecting another's shares            | nothing                                             |
+| `internal/config`   | Stored defaults                                    | nothing                                             |
+| `internal/ui`       | Terminal output                                    | `humanize`                                          |
+| `internal/cli`      | Command wiring                                     | everything                                          |
+| `web/viewer`        | Embedded HTML and CSS                              | nothing                                             |
 
 `internal/cli` is the only package that depends on all the others. It is the
 composition root: it builds the object graph and nothing else builds it.
@@ -168,6 +169,47 @@ see docs/security.md), and `BeginTransfer`/`EndTransfer` let the reaper wait for
 the last permitted download to finish instead of stopping the process under
 it.
 
+## Receiving
+
+`vrok receive` is a share of kind `KindReceive` whose entry is the folder files
+go into. It runs through the same dispatcher, so the token, the password gate,
+the expiry and `vrok list` work exactly as they do for a file. Only the handler
+differs: it serves an upload page instead of a file.
+
+A send is two steps, and nothing is written until the owner says yes:
+
+```
+page                         vrok                               owner
+ │ POST _offer {names,sizes} │                                   │
+ │──────────────────────────▶│ check file limit and disk space   │
+ │                           │──── 📥 4 files (421 MB) ─────────▶│
+ │ GET _offer/{id} (poll)    │                                   │
+ │◀──────── accepted ────────│◀──────────── y ───────────────────│
+ │ POST begin {offer,name,size}, then 8 MiB chunks               │
+ │──────────────────────────▶│ inbox: part file, rename on finish│
+```
+
+An offer is the list of names and sizes the page wants to send. It waits for
+`y` or `n` for up to five minutes, and at most three wait at once. An accepted
+offer is a set of permits: each `begin` must name the offer and a name and size
+that were in it, and spends that permit. A sender cannot accept a small file and
+then upload a large one, or add files the owner never saw. `--yes` accepts every
+offer as it arrives, for unattended use.
+
+The page sends one file at a time in 8 MiB chunks, because a Cloudflare tunnel
+refuses a request body over 100 MB. A chunk that fails is retried on its own,
+and a dropped connection resumes from the byte the inbox reports.
+
+`internal/inbox` owns the folder. Every operation goes through an `os.Root`, so
+no name, symlink or `../` can write outside it. A file arrives as a hidden
+`.vrok-*.part` file and is renamed into place only when complete, to the first
+free name: a second `photo.jpg` becomes `photo (1).jpg`, and an existing file is
+never replaced. Part files of unfinished uploads are deleted when vrok stops;
+finished files stay.
+
+`--max-files` reuses the download counter: each file claims one unit before it
+starts, and gives it back if it fails.
+
 ## Cross-process management
 
 `vrok list` has to show shares that live in another process's memory. Each
@@ -207,3 +249,6 @@ clients are bounded by the read header timeout and the idle timeout instead.
   connection. Separate QUIC streams are the real fix.
 - `--downloads` is ignored for HTTP shares, where every asset request would
   count against it. The CLI says so rather than silently misbehaving.
+- A receive share asks its owner about each batch in the terminal, so it needs
+  one. Without a terminal, `vrok receive` refuses to start unless `--yes` says
+  to accept everything.

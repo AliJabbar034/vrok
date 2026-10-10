@@ -4,7 +4,9 @@
 
 A single-binary CLI that shares local files, folders and development servers
 through temporary public URLs. Nothing is uploaded and nothing is stored:
-requests are served from the user's own machine while the command runs.
+requests are served from the user's own machine while the command runs. It
+also works the other way round: `vrok receive` gives a link that lets someone
+send files straight into a folder on the user's machine.
 
 ```
 $ vrok ./video.mp4
@@ -47,6 +49,10 @@ The proof is the actual terminal banner, not a description of it.
 - Works for any file type, whole directories, several files at once, and
   `localhost:PORT` as a reverse proxy with WebSocket/hot-reload support.
 - Range requests, video seeking and resumable downloads are supported.
+- `vrok receive` opens an upload page; files land in `~/Downloads/vrok` by
+  default. The owner sees each batch's names and sizes and presses `y` before
+  anything is written. Existing files are never overwritten, uploads resume,
+  and there is no size limit beyond free disk space.
 - Runs on macOS, Linux and Windows, amd64 and arm64.
 - Install: shell one-liner, PowerShell one-liner, `go install`, or a release
   archive. Homebrew/Scoop/winget exist once the tap repos are created.

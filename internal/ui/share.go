@@ -41,16 +41,31 @@ type ShareView struct {
 	Interactive bool
 	// Update, when set, adds a new-release line to the banner.
 	Update *UpdateNotice
+	// Receiving marks a receive share: visitors send files into Folder,
+	// and MaxDownloads and Downloads count files received.
+	Receiving bool
+	Folder    string
+	// AcceptAll is set when a receive share takes every file without asking
+	// first, which the owner should not be able to forget.
+	AcceptAll bool
 }
 
 // HotkeyBar is the live command strip shown under a share, in the same
 // compact style as Vite and Expo.
 const HotkeyBar = "c copy · q QR code · p add password · e change expiry · 1 one-time link · x stop"
 
+// ReceiveHotkeyBar is the strip under a receive share, which has no
+// one-time link: its limit is a number of files.
+const ReceiveHotkeyBar = "c copy · q QR code · p add password · e change expiry · x stop"
+
 // Started prints the share banner: URL first, then who can open it, then
 // the hotkeys (or Ctrl+C when there is no terminal).
 func (p *Printer) Started(v ShareView) {
-	p.Success("Sharing %s", p.Bold(v.Name))
+	if v.Receiving {
+		p.Success("Receiving files into %s", p.Bold(v.Folder))
+	} else {
+		p.Success("Sharing %s", p.Bold(v.Name))
+	}
 	p.Blank()
 
 	copied := ""
@@ -74,15 +89,19 @@ func (p *Printer) Started(v ShareView) {
 		p.Blank()
 	}
 	if v.Interactive {
-		p.Keys()
+		p.Keys(v.Receiving)
 	} else {
 		p.Info("  %s", p.Dim("Press Ctrl+C to stop"))
 	}
 }
 
-// Keys prints the live hotkey bar.
-func (p *Printer) Keys() {
-	p.Info("  %s", p.Dim(HotkeyBar))
+// Keys prints the live hotkey bar for a share, or for a receive share.
+func (p *Printer) Keys(receiving bool) {
+	bar := HotkeyBar
+	if receiving {
+		bar = ReceiveHotkeyBar
+	}
+	p.Info("  %s", p.Dim(bar))
 }
 
 // StatusLine is the compact "Expires in 1h 59m · anyone with the link" row.
@@ -96,7 +115,12 @@ func StatusLine(v ShareView) string {
 	if v.Reach != "" {
 		parts = append(parts, v.Reach)
 	}
-	if v.MaxDownloads == 1 {
+	if v.Receiving {
+		parts = append(parts, fileLimit(v.MaxDownloads, v.Downloads)...)
+		if v.AcceptAll {
+			parts = append(parts, "accepts every file without asking")
+		}
+	} else if v.MaxDownloads == 1 {
 		parts = append(parts, "one-time link")
 	} else if v.MaxDownloads > 0 && v.MaxDownloads-v.Downloads == 1 {
 		parts = append(parts, "one download left")
@@ -109,6 +133,18 @@ func StatusLine(v ShareView) string {
 	return strings.Join(parts, " · ")
 }
 
+func fileLimit(limit, used int) []string {
+	switch {
+	case limit == 0:
+		return nil
+	case limit == 1:
+		return []string{"one file only"}
+	case limit-used == 1:
+		return []string{"one file left"}
+	}
+	return []string{fmt.Sprintf("up to %d files", limit)}
+}
+
 // Stats is the local usage summary shown when a share ends. vrok reports no
 // statistics anywhere else: these numbers are counted in this process and
 // printed here, and that is all that happens to them.
@@ -118,11 +154,20 @@ type Stats struct {
 	Bytes      int64
 	LastAccess time.Time
 	Expired    bool
+	// Receiving switches the summary to a receive share: Files were taken
+	// in completely, into Folder.
+	Receiving bool
+	Folder    string
+	Files     int
 }
 
 // Stopped prints the closing summary.
 func (p *Printer) Stopped(s Stats) {
 	p.Blank()
+	if s.Receiving {
+		p.stoppedReceiving(s)
+		return
+	}
 	if s.Expired {
 		p.Info("%s %s", p.style(yellow, "⌛"), fmt.Sprintf("%s expired", p.Bold(s.Name)))
 	} else {
@@ -131,4 +176,82 @@ func (p *Printer) Stopped(s Stats) {
 	p.Detail("Downloads", fmt.Sprintf("%d", s.Downloads))
 	p.Detail("Transferred", humanize.Bytes(s.Bytes))
 	p.Detail("Last access", humanize.ClockTime(s.LastAccess))
+}
+
+func (p *Printer) stoppedReceiving(s Stats) {
+	if s.Expired {
+		p.Info("%s %s", p.style(yellow, "⌛"), "The receive link expired")
+	} else {
+		p.Info("%s %s", p.style(dim, "■"), fmt.Sprintf("Stopped receiving into %s", p.Bold(s.Folder)))
+	}
+	p.Detail("Files", fmt.Sprintf("%d", s.Files))
+	p.Detail("Received", humanize.Bytes(s.Bytes))
+	p.Detail("Last access", humanize.ClockTime(s.LastAccess))
+}
+
+// Received is the permanent line left when a file has arrived:
+//
+//	✓ Received holiday.mov (1.2 GB)
+func (p *Printer) Received(name string, size int64) string {
+	return fmt.Sprintf("%s Received %s %s", p.style(green, "✓"), p.Bold(name), p.Dim("("+humanize.Bytes(size)+")"))
+}
+
+// OfferFile is one file someone asks to send.
+type OfferFile struct {
+	Name string
+	Size int64
+}
+
+// maxOfferLines is how many files an offer lists before summing up the rest.
+const maxOfferLines = 8
+
+// Offer is the question shown when someone asks to send files:
+//
+//	📥 Someone wants to send 3 files (1.2 GB)
+//	     holiday.mov   1.2 GB
+//	     notes.txt     8 B
+//	   Accept? press y to accept, n to decline
+func (p *Printer) Offer(files []OfferFile, total int64) []string {
+	lines := []string{fmt.Sprintf("%s %s", p.style(yellow, "📥"),
+		p.Bold(fmt.Sprintf("Someone wants to send %s (%s)", fileCount(len(files)), humanize.Bytes(total))))}
+
+	width := 0
+	for i, f := range files {
+		if i == maxOfferLines {
+			break
+		}
+		width = max(width, len([]rune(f.Name)))
+	}
+	width = min(width, 48)
+	for i, f := range files {
+		if i == maxOfferLines {
+			lines = append(lines, p.Dim(fmt.Sprintf("     … and %d more", len(files)-maxOfferLines)))
+			break
+		}
+		name := Fit(f.Name, width+1)
+		lines = append(lines, fmt.Sprintf("     %-*s  %s", width, name, p.Dim(humanize.Bytes(f.Size))))
+	}
+	lines = append(lines, fmt.Sprintf("   %s %s %s %s %s", p.Bold("Accept?"),
+		p.Dim("press"), p.style(cyan, "y"), p.Dim("to accept,"), p.style(cyan, "n")+p.Dim(" to decline")))
+	return lines
+}
+
+// OfferAnswered is the line left once an offer is accepted or declined.
+func (p *Printer) OfferAnswered(count int, accepted bool) string {
+	if accepted {
+		return fmt.Sprintf("%s Accepted %s", p.style(green, "✓"), fileCount(count))
+	}
+	return fmt.Sprintf("%s Declined %s", p.style(dim, "✗"), fileCount(count))
+}
+
+// OfferExpired is the line left when nobody answered an offer in time.
+func (p *Printer) OfferExpired(count int) string {
+	return fmt.Sprintf("%s %s", p.style(yellow, "⌛"), p.Dim("No answer, so the request to send "+fileCount(count)+" was dropped"))
+}
+
+func fileCount(n int) string {
+	if n == 1 {
+		return "1 file"
+	}
+	return fmt.Sprintf("%d files", n)
 }

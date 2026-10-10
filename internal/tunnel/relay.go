@@ -206,9 +206,17 @@ func (t *RelayTunnel) run(ctx context.Context) {
 				t.logger.Warn("bad request message", slog.String("error", err.Error()))
 				continue
 			}
+			// The body frames follow the request on this same loop, so the
+			// stream that collects them is registered here, before they can
+			// arrive and be dropped as belonging to no stream.
+			var body *protocol.BodyStream
+			if msg.HasBody {
+				body = protocol.NewBodyStream()
+				t.addStream(msg.Stream, body)
+			}
 			// One goroutine per request: a large download must not stop the
 			// loop from reading the next request or a cancellation.
-			go t.serve(ctx, msg)
+			go t.serve(ctx, msg, body)
 		case envelope.Type == protocol.TypeCancel:
 			msg, err := protocol.Payload[protocol.Cancel](*envelope)
 			if err == nil {
@@ -222,18 +230,16 @@ func (t *RelayTunnel) run(ctx context.Context) {
 }
 
 // serve answers one proxied request from the local share server.
-func (t *RelayTunnel) serve(ctx context.Context, msg protocol.Request) {
+func (t *RelayTunnel) serve(ctx context.Context, msg protocol.Request, stream *protocol.BodyStream) {
+	var body io.Reader
+	if stream != nil {
+		defer t.closeStream(msg.Stream, nil)
+		body = stream
+	}
+
 	conn := t.connection()
 	if conn == nil {
 		return
-	}
-
-	var body io.Reader
-	if msg.HasBody {
-		stream := protocol.NewBodyStream()
-		t.addStream(msg.Stream, stream)
-		defer t.closeStream(msg.Stream, nil)
-		body = stream
 	}
 
 	t.mu.Lock()

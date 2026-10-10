@@ -23,6 +23,7 @@ type dispatcher struct {
 	resolver  sharing.Resolver
 	guards    sharing.Guard
 	downloads downloadSessions
+	uploads   *receivers
 	clock     sharing.Clock
 	gate      *Gate
 	pages     *pages
@@ -43,7 +44,7 @@ func (d *dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !methodAllowed(r, sr) {
-		w.Header().Set("Allow", "GET, HEAD")
+		w.Header().Set("Allow", allowedMethods(sr.Spec.Kind))
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -75,7 +76,10 @@ func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest
 		return nil, false
 	}
 
-	if err := d.guards.Check(snap, now); err != nil && !d.continuesDownload(r, err, snap.Spec, rel) {
+	if err := d.guards.Check(snap, now); err != nil && !d.continuesDownload(r, err, snap.Spec, rel) && !d.continuesUpload(err, snap.Spec, rel) {
+		if snap.Kind == sharing.KindReceive && errors.Is(err, sharing.ErrDownloadLimit) {
+			err = errInboxFull
+		}
 		d.pages.gone(w, r, err)
 		return nil, false
 	}
@@ -104,6 +108,15 @@ func (d *dispatcher) continuesDownload(r *http.Request, err error, spec sharing.
 		return false
 	}
 	return d.downloads.Holds(r, spec, rel)
+}
+
+// continuesUpload is the receiving counterpart: once a receive share has
+// accepted its last file it refuses new uploads, but the uploads it already
+// accepted must be able to send their remaining chunks and finish.
+func (d *dispatcher) continuesUpload(err error, spec sharing.Spec, rel string) bool {
+	return spec.Kind == sharing.KindReceive &&
+		errors.Is(err, sharing.ErrDownloadLimit) &&
+		d.uploads.continues(spec.ID, rel)
 }
 
 // strays proxies requests that arrive outside any share prefix but were
@@ -138,10 +151,18 @@ func (d *dispatcher) strays(w http.ResponseWriter, r *http.Request) {
 }
 
 // methodAllowed restricts file shares to reads. HTTP shares pass everything
-// through, because the application behind them decides what it accepts.
+// through, because the application behind them decides what it accepts, and
+// a receive share takes the methods of its upload API.
 func methodAllowed(r *http.Request, sr *shareRequest) bool {
-	if sr.Spec.Kind == sharing.KindHTTP {
+	switch sr.Spec.Kind {
+	case sharing.KindHTTP:
 		return true
+	case sharing.KindReceive:
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodDelete:
+			return true
+		}
+		return false
 	}
 	switch r.Method {
 	case http.MethodGet, http.MethodHead:
@@ -152,6 +173,13 @@ func methodAllowed(r *http.Request, sr *shareRequest) bool {
 	default:
 		return false
 	}
+}
+
+func allowedMethods(kind sharing.Kind) string {
+	if kind == sharing.KindReceive {
+		return "GET, HEAD, POST, PUT, DELETE"
+	}
+	return "GET, HEAD"
 }
 
 // relativePath normalises the visitor-supplied remainder of a share URL into a

@@ -23,6 +23,19 @@ type Transfer struct {
 // rate is in bytes per second; zero leaves the speed out rather than
 // claiming a stall.
 func ProgressLine(transfers []Transfer, rate float64) string {
+	return transferLine("↓", "downloads", "sent", transfers, rate)
+}
+
+// ReceiveLine is the live status while files are being sent to a receive
+// share:
+//
+//	↑ 1.2 GB / 4.0 GB · 30% · 3.1 MB/s · 18m left
+//	↑ 3 uploads · 9.4 MB/s · 4.5 GB received
+func ReceiveLine(transfers []Transfer, rate float64) string {
+	return transferLine("↑", "uploads", "received", transfers, rate)
+}
+
+func transferLine(arrow, many, moved string, transfers []Transfer, rate float64) string {
 	var parts []string
 	speed := func() {
 		if rate > 0 {
@@ -33,12 +46,12 @@ func ProgressLine(transfers []Transfer, rate float64) string {
 	if len(transfers) == 1 {
 		t := transfers[0]
 		if t.Total <= 0 {
-			parts = append(parts, "↓ "+humanize.Bytes(t.Sent))
+			parts = append(parts, arrow+" "+humanize.Bytes(t.Sent))
 			speed()
 			return strings.Join(parts, " · ")
 		}
 		parts = append(parts,
-			fmt.Sprintf("↓ %s / %s", humanize.Bytes(t.Sent), humanize.Bytes(t.Total)),
+			fmt.Sprintf("%s %s / %s", arrow, humanize.Bytes(t.Sent), humanize.Bytes(t.Total)),
 			fmt.Sprintf("%d%%", percent(t.Sent, t.Total)))
 		speed()
 		if left := t.Total - t.Sent; rate > 0 && left > 0 {
@@ -51,9 +64,9 @@ func ProgressLine(transfers []Transfer, rate float64) string {
 	for _, t := range transfers {
 		sent += t.Sent
 	}
-	parts = append(parts, fmt.Sprintf("↓ %d downloads", len(transfers)))
+	parts = append(parts, fmt.Sprintf("%s %d %s", arrow, len(transfers), many))
 	speed()
-	parts = append(parts, humanize.Bytes(sent)+" sent")
+	parts = append(parts, humanize.Bytes(sent)+" "+moved)
 	return strings.Join(parts, " · ")
 }
 

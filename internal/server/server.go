@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/AliJabbar034/vrok/internal/checksum"
+	"github.com/AliJabbar034/vrok/internal/inbox"
 	"github.com/AliJabbar034/vrok/internal/preview"
 	"github.com/AliJabbar034/vrok/internal/security"
 	"github.com/AliJabbar034/vrok/internal/sharing"
@@ -49,6 +50,13 @@ type Options struct {
 	// Checksums works out the SHA-256 shown on file pages. Defaults to a
 	// new cache.
 	Checksums *checksum.Cache
+	// OnReceived, when set, is told about every file a receive share has
+	// taken in completely.
+	OnReceived func(sharing.Spec, inbox.Received)
+	// OnOffer, when set, asks the owner whether a batch of files may be
+	// sent to a receive share; it answers with Offer.Accept or Decline.
+	// When nil, every batch is accepted.
+	OnOffer func(sharing.Spec, *Offer)
 }
 
 // Server owns the listener and the HTTP handler for a set of shares.
@@ -58,6 +66,7 @@ type Server struct {
 	listener net.Listener
 	addr     string
 	roots    *rootCache
+	inboxes  *receivers
 	sums     *checksum.Cache
 	logger   *slog.Logger
 }
@@ -114,11 +123,13 @@ func New(opts Options) (*Server, error) {
 		checksums: opts.Checksums,
 	}
 	roots := newRootCache()
+	inboxes := newReceivers(opts.Clock, opts.OnReceived, opts.OnOffer)
 
 	d := &dispatcher{
 		resolver:  opts.Resolver,
 		guards:    opts.Guards,
 		downloads: downloads,
+		uploads:   inboxes,
 		clock:     opts.Clock,
 		gate:      NewGate(opts.Hasher, opts.Signer, pageRenderer, opts.Logger),
 		pages:     pageRenderer,
@@ -128,6 +139,7 @@ func New(opts Options) (*Server, error) {
 			sharing.KindFiles:     FileSetHandler{assets},
 			sharing.KindDirectory: DirectoryHandler{assetServer: assets, roots: roots},
 			sharing.KindHTTP:      NewProxyHandler(pageRenderer, opts.Logger),
+			sharing.KindReceive:   ReceiveHandler{receivers: inboxes, pages: pageRenderer},
 		},
 	}
 
@@ -154,10 +166,11 @@ func New(opts Options) (*Server, error) {
 			IdleTimeout:       120 * time.Second,
 			ErrorLog:          slog.NewLogLogger(opts.Logger.Handler(), slog.LevelDebug),
 		},
-		addr:   addr,
-		roots:  roots,
-		sums:   opts.Checksums,
-		logger: opts.Logger,
+		addr:    addr,
+		roots:   roots,
+		inboxes: inboxes,
+		sums:    opts.Checksums,
+		logger:  opts.Logger,
 	}, nil
 }
 
@@ -200,6 +213,9 @@ func (s *Server) Serve() error {
 // Shutdown stops accepting connections and waits for in-flight requests, up to
 // the deadline carried by ctx.
 func (s *Server) Shutdown(ctx context.Context) error {
+	// Unfinished uploads are discarded once no request can still be writing
+	// them, so no half-received file is left in an inbox.
+	defer s.inboxes.closeAll()
 	err := s.http.Shutdown(ctx)
 	if errors.Is(err, context.DeadlineExceeded) {
 		// Downloads in progress are not a reason to hang on exit: the share
@@ -225,4 +241,7 @@ func (s *Server) Warm(spec sharing.Spec) {
 }
 
 // Forget releases cached per-share state. Call it when a share is revoked.
-func (s *Server) Forget(shareID string) { s.roots.Forget(shareID) }
+func (s *Server) Forget(shareID string) {
+	s.roots.Forget(shareID)
+	s.inboxes.forget(shareID)
+}

@@ -818,6 +818,8 @@ function wireNav() {
 
 const KEYS =
   "c copy · q QR code · p add password · e change expiry · 1 one-time link · x stop";
+const RECEIVE_KEYS =
+  "c copy · q QR code · p add password · e change expiry · x stop";
 const PUBLIC = "anyone with the link";
 const TOKEN = "Xr4kQ9mT2vLp8sWnBcYd7A";
 
@@ -881,7 +883,9 @@ const QR_CODES = {
   "amber-tiles-orbit-cedar":
     "1fcc046e7f82c107da0dd3ad98576e9cca68bb75092ee5d8248d3f20ff555555fc0109f5e015419520125435b1a70b50fd001bea223b94555f47a98c36dee8cce1c57c67429c34da316a7457438ee9546144f82bf2c33428e059ddd82487959bbc0f004c4e74876857749e8077991201729509c95131be6b5c5e8c075ed45bb3dfa375a788df000ac88c8dff33212d6e09fe5b23575e00a1faba430481b5d73244c6e0855f7b65fd3c9b903",
   "silver-docks-meadow-relay":
-    "1fc98f207f82dcbf7a0dd0dd55d76e8cac88bb754cb665d826cb9da0ff555555fc0045dde01545d70f12ad8bda2f4a35ac265feb68b3dea49637899eb7872ae861814622169ef38e5f8a5ae84088caf07944c24fd3936748ff4ad7f825ecc89f8c0cdd4e88f5edd616019e34fbf7ea646ab7304b092fa9ae1d5a6d076bda0ebdbd511c67b9bf200d68ef8dff32630d6e098e77235754e0adfbba755cf9b5d41337e4e0885918e5fd0199f83"
+    "1fc98f207f82dcbf7a0dd0dd55d76e8cac88bb754cb665d826cb9da0ff555555fc0045dde01545d70f12ad8bda2f4a35ac265feb68b3dea49637899eb7872ae861814622169ef38e5f8a5ae84088caf07944c24fd3936748ff4ad7f825ecc89f8c0cdd4e88f5edd616019e34fbf7ea646ab7304b092fa9ae1d5a6d076bda0ebdbd511c67b9bf200d68ef8dff32630d6e098e77235754e0adfbba755cf9b5d41337e4e0885918e5fd0199f83",
+  "copper-reeds-north-lantern":
+    "1fcbdc367f82ad3f120dd2fd95176e9224eebb75616ee5d825dd51a0ff555555fc00ed91e015484c8212ed3f02e62bb0725459e362d778a53c888e9c3ec8aacc61e58023169ea54bfb826262f53c4b5c61cbee4d571c046bff33b5bcc48f47b9ac8d174ac8b59d2f66529ed05e7bea45d4a0a8cb386f58da5d5c530410d31ed113272ef189bf200b0e8b8dff33160d6e0929b7a31759d721fbba45ac7195d4ad5767e09c39ff75fda799d83"
 };
 
 function qrCode(slug) {
@@ -998,6 +1002,17 @@ function makeTerminal(root, parts, instant, wait) {
     },
     dim(text, cls) {
       add(el("p", `term__dim${cls ? ` ${cls}` : ""}`, text));
+    },
+    // A permanent line vrok leaves under the banner, such as a received file.
+    note(...children) {
+      add(el("p", "term__note", ...children));
+    },
+    // The names and sizes in a request to send files.
+    files(pairs) {
+      const dl = add(el("dl", "term__files"));
+      for (const [name, size] of pairs) {
+        dl.append(el("dt", null, name), el("dd", null, size));
+      }
     },
     // The QR code vrok prints under the banner in a terminal.
     qr(slug) {
@@ -1229,6 +1244,59 @@ function gatePage() {
   );
 }
 
+function uploadPage() {
+  return el(
+    "div",
+    null,
+    vrokBar(),
+    el(
+      "div",
+      "browser__drop",
+      el("span", "browser__drop-icon", "📥"),
+      el("strong", null, "Send files"),
+      el(
+        "p",
+        null,
+        "The person who shared this link sees their names and sizes and accepts them first."
+      ),
+      el("span", "mock__dl browser__pick", "Choose files")
+    ),
+    el("ul", "browser__uploads")
+  );
+}
+
+// One file in the upload page's list, with its status and progress bar.
+function uploadRow(list, name, size) {
+  const meta = el(
+    "span",
+    "browser__up-meta",
+    `${bytes(size)} · waiting for the receiver to accept`
+  );
+  const bar = el("span");
+  const li = el(
+    "li",
+    null,
+    el("span", "browser__up-name", name),
+    meta,
+    el("span", "browser__up-track", bar)
+  );
+  list.append(li);
+  return {
+    status(text) {
+      meta.textContent = text;
+    },
+    progress(sent) {
+      bar.style.transform = `scaleX(${sent / size})`;
+      meta.textContent = `${bytes(sent)} of ${bytes(size)} · ${Math.floor((sent * 100) / size)}%`;
+    },
+    done() {
+      li.classList.add("is-done");
+      bar.style.transform = "scaleX(1)";
+      meta.textContent = `${bytes(size)} · sent`;
+    }
+  };
+}
+
 function unreachablePage(host) {
   return el(
     "div",
@@ -1288,6 +1356,50 @@ async function transfer({ t, b, wait }, name, total, rate, known) {
   t.dim(
     `  ↓ Sent ${bytes(total)} in ${elapsed(seconds)} · ${bytes(total / seconds)}/s average`
   );
+}
+
+function receiveBanner(t, slug) {
+  t.head("✓", "term__ok", "Receiving files into", "~/Downloads/vrok");
+  t.rows([
+    [
+      "URL:",
+      [urlFor(slug), el("span", "term__copied", "(copied to clipboard)")],
+      "term__url"
+    ]
+  ]);
+  t.dim(`Expires when stopped · ${PUBLIC}`);
+  t.dim(RECEIVE_KEYS, "term__gap-s");
+  t.qr(slug);
+}
+
+/* One file arriving, a frame per second as the CLI redraws its upward
+   progress line, ending in the line vrok leaves for a received file. */
+async function upload({ t, wait }, row, name, size, rate) {
+  let sent = 0;
+  let shown = 0;
+  while (sent < size) {
+    const sample = rate * (0.9 + Math.random() * 0.2);
+    sent = Math.min(size, sent + sample);
+    shown = shown ? 0.3 * sample + 0.7 * shown : sample;
+    const parts = [
+      `↑ ${bytes(sent)} / ${bytes(size)}`,
+      `${Math.floor((sent * 100) / size)}%`,
+      `${bytes(shown)}/s`
+    ];
+    if (size > sent) parts.push(`${duration((size - sent) / shown)} left`);
+    t.live(parts.join(" · "));
+    row.progress(sent);
+    await wait(60);
+  }
+  t.endLive();
+  row.done();
+  t.note(
+    el("span", "term__ok", "✓"),
+    "Received ",
+    el("strong", null, name),
+    el("span", "term__faint", ` (${bytes(size)})`)
+  );
+  await wait(250);
 }
 
 const SCENES = {
@@ -1403,10 +1515,86 @@ const SCENES = {
     await t.key("1");
     t.dim(`Expires when stopped · ${PUBLIC} · one download left · same URL`);
     t.dim(KEYS);
+  },
+
+  async receive(ctx) {
+    const { t, b, say, wait } = ctx;
+    const slug = "copper-reeds-north-lantern";
+    const files = [
+      ["IMG_2041.HEIC", 3.1 * 1024 ** 2],
+      ["IMG_2042.HEIC", 2.8 * 1024 ** 2],
+      ["IMG_2043.HEIC", 3.4 * 1024 ** 2],
+      ["beach-day.mov", 412 * 1024 ** 2]
+    ];
+    const total = files.reduce((n, [, size]) => n + size, 0);
+
+    say("The photos are on their phone. You run one command.");
+    await t.command("vrok receive");
+    await wait(450);
+    receiveBanner(t, slug);
+    say(
+      "They scan the QR code with their camera and an upload page opens. No app, no account."
+    );
+    await wait(1200);
+    b.who("Them · scanned the QR code");
+    const page = uploadPage();
+    await b.open(page, urlFor(slug).slice(8));
+    await wait(1500);
+
+    await b.click(".browser__pick");
+    b.hideCursor();
+    page.classList.add("has-files");
+    const list = page.querySelector(".browser__uploads");
+    const rows = files.map(([name, size]) => uploadRow(list, name, size));
+    say(
+      "They pick three photos and a video. Nothing is sent yet: your terminal shows the names and sizes and asks first."
+    );
+    t.note(
+      el("span", "term__warn", "📥"),
+      el("strong", null, `Someone wants to send 4 files (${bytes(total)})`)
+    );
+    t.files(files.map(([name, size]) => [name, bytes(size)]));
+    t.dim("Accept? press y to accept, n to decline", "term__ask");
+    await wait(2800);
+
+    say("You press y. Only these four files, at these sizes, may now be sent.");
+    await t.key("y");
+    t.note(el("span", "term__ok", "✓"), "Accepted 4 files");
+    for (const row of rows) row.status("accepted");
+    await wait(700);
+
+    t.speed(true);
+    for (const [i, [name, size]] of files.entries()) {
+      await upload(ctx, rows[i], name, size, 11 * 1024 ** 2);
+    }
+    t.speed(false);
+    say(
+      "Each file lands in ~/Downloads/vrok as it finishes. A name already there is never overwritten."
+    );
+    await wait(2600);
+
+    say(
+      "You press x. The link stops working, and no copy was kept anywhere along the way."
+    );
+    await t.key("x");
+    t.head(
+      "■",
+      "term__stop",
+      "Stopped receiving into",
+      "~/Downloads/vrok",
+      true
+    );
+    t.rows([
+      ["Files:", "4"],
+      ["Received:", bytes(total)],
+      ["Last access:", clock()]
+    ]);
+    await wait(900);
+    await b.open(unreachablePage(`${slug}.trycloudflare.com`));
   }
 };
 
-const ORDER = ["file", "app", "folder"];
+const ORDER = ["file", "app", "folder", "receive"];
 
 function wireWatch() {
   const section = document.querySelector(".watch");

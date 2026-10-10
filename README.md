@@ -26,6 +26,10 @@ Nothing is uploaded. Nothing is stored anywhere. Requests are served from your
 machine while the command runs, and the URL stops working the moment the share
 expires, hits its download limit, or you press Ctrl+C.
 
+It works the other way round too: `vrok receive` gives you a link that lets
+someone send files straight into a folder on your machine, after you accept
+them. See [Receiving files](#receiving-files).
+
 Every banner says who can open the URL, so you always know what you are about
 to paste into a chat. To keep a share off the internet, see
 [Staying private](#staying-private).
@@ -121,6 +125,7 @@ vrok ./playwright-report         # a whole directory, browsable
 vrok report.pdf shot.png a.mp4   # several files behind one index page
 vrok localhost:3000              # a local HTTP server, reverse-proxied
 vrok -i ./demo.mp4               # decide first, then prints the flags
+vrok receive                     # the other way round: let someone send you files
 ```
 
 `vrok share ./x` and `vrok ./x` are the same command.
@@ -142,7 +147,9 @@ vrok -i ./demo.mp4               # decide first, then prints the flags
 
 While a share is running, `c` copies the URL, `q` prints a QR code, `p` adds a
 password, `e` changes the expiry, `1` makes it one-time, and `x` stops. Each
-change keeps the same URL. Scripts and CI never see the hotkey bar.
+change keeps the same URL. Scripts and CI never see the hotkey bar. A receive
+share has the same keys except `1`, and adds `y` and `n` to answer someone who
+wants to send you files.
 
 ### Large files
 
@@ -168,6 +175,54 @@ a summary is left behind when it finishes:
 
 Speed is set by your upload bandwidth and the tunnel, not by vrok: every byte
 comes from your machine.
+
+### Receiving files
+
+`vrok receive` turns the link around. It opens an upload page, and whatever is
+sent from it lands in a folder on your machine, `~/Downloads/vrok` unless you
+name another. It is the quickest way to get photos off a phone or a log file
+from a colleague without a cloud drive in between.
+
+```console
+$ vrok receive
+✓ Receiving files into ~/Downloads/vrok
+
+  URL:   https://….trycloudflare.com/s/Qm8x…/   (copied to clipboard)
+  Expires when stopped · anyone with the link
+
+  c copy · q QR code · p add password · e change expiry · x stop
+  📥 Someone wants to send 2 files (1.2 GB)
+       IMG_2041.HEIC  3.1 MB
+       holiday.mov    1.2 GB
+     Accept? press y to accept, n to decline
+  ✓ Accepted 2 files
+  ✓ Received IMG_2041.HEIC (3.1 MB)
+  ✓ Received holiday.mov (1.2 GB)
+```
+
+```sh
+vrok receive ./inbox                 # into a folder of your choice
+vrok receive --max-files 3 --ttl 1h  # stop after three files, or an hour
+vrok receive --password              # senders must enter a password first
+vrok receive --yes                   # accept every file without asking
+```
+
+- **You say yes first.** Before a single byte is written, you see the names
+  and sizes of what someone wants to send, and press `y` or `n`. Only the
+  files you accepted, at the sizes shown, can be uploaded. A question nobody
+  answers is dropped after five minutes. Without a terminal to ask in, vrok
+  needs `--yes`.
+
+- **Nothing is overwritten.** A second `photo.jpg` arrives as
+  `photo (1).jpg`. File names are cleaned of paths and characters your system
+  does not allow, so a sender cannot write outside the folder.
+- **Large files survive a bad connection.** The page sends files in 8 MB
+  pieces and carries on from the last one after a drop. A file that never
+  finishes is deleted rather than left half-written.
+- **It checks your disk.** An upload that would not fit, with 512 MB to spare,
+  is refused before the first byte is sent.
+- **Senders learn nothing about your machine.** They do not see the folder,
+  the names already in it, or what their file was saved as.
 
 ### Managing shares
 
@@ -345,6 +400,9 @@ See [docs/protocol.md](docs/protocol.md) for the wire format.
 - Passwords are stored as Argon2id digests and never written to disk.
 - Expired, revoked, used-up and non-existent shares all answer identically, so
   a URL cannot be probed for which of those it is.
+- `vrok receive` writes nothing until you accept the names and sizes. Sent
+  names cannot leave the folder or replace a file in it, and uploads must carry
+  a header a cross-site form cannot set.
 
 [docs/security.md](docs/security.md) describes the model and its limits.
 

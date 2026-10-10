@@ -58,6 +58,11 @@ loudly:
 | `TestDownloadLimitedShareOutlivesItsLastTransfer`     | The last permitted download is not cut off                  |
 | `TestUnavailableSharesReportTheSameWay`               | Expired, revoked, used-up and unknown are indistinguishable |
 | `TestPasswordGate`                                    | Content is withheld, and the cookie carries no password     |
+| `TestSafeNameKeepsUploadsInsideAndVisible`            | No sent name lands outside the receive folder, or hidden    |
+| `TestSymlinkInInboxCannotRedirectAWrite`              | A symlink in the receive folder cannot redirect a write     |
+| `TestExistingFilesAreNeverOverwritten`                | A received file never replaces one already there            |
+| `TestReceiveRefusesFilesNobodyAccepted`               | Nothing is written until the owner accepts it               |
+| `TestReceiveRequiresTheUploadHeader`                  | A cross-site form cannot upload                             |
 | `TestPreviewsEscapeFileContent`                       | A shared file cannot inject markup                          |
 | `TestRelayCarriesAShareEndToEnd`                      | Bytes and `Range` survive the tunnel                        |
 | `TestShareDisappearsWhenRevoked`                      | Revoking is the same thing as the URL ceasing to exist      |
@@ -215,7 +220,7 @@ that belongs on a laptop's `PATH`.
 
 ### Platform-specific code
 
-Four files, all small, all named for what they cover:
+Seven files, all small, all named for what they cover:
 
 | File                                   | Why                                               |
 | -------------------------------------- | ------------------------------------------------- |
@@ -223,6 +228,9 @@ Four files, all small, all named for what they cover:
 | `internal/tunnel/terminate_windows.go` | Windows rejects every signal except Kill          |
 | `internal/control/statedir_unix.go`    | `~/.local/state`, per the XDG spec                |
 | `internal/control/statedir_windows.go` | `%LOCALAPPDATA%`, which is not roamed             |
+| `internal/inbox/freespace_unix.go`     | Free disk space from `statfs`                     |
+| `internal/inbox/freespace_windows.go`  | Free disk space from `GetDiskFreeSpaceEx`         |
+| `internal/inbox/freespace_other.go`    | Unknown elsewhere, so the check is skipped        |
 
 `make cross` vets every released platform, and it runs before every release.
 Compiling is not the same as working, though: the Windows legs of the release

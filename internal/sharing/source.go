@@ -141,6 +141,31 @@ func fileEntry(path string) (Entry, error) {
 	return Entry{Name: filepath.Base(real), Path: real, Size: info.Size()}, nil
 }
 
+// Inbox returns the Source for receiving files into dir, creating the folder
+// if it does not exist yet. The path is resolved once, here, so a symlink
+// swapped in later cannot redirect uploads somewhere the user did not choose.
+func Inbox(dir string) (Source, error) {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return Source{}, fmt.Errorf("sharing: resolve %q: %w", dir, err)
+	}
+	if err := os.MkdirAll(abs, 0o755); err != nil {
+		return Source{}, fmt.Errorf("sharing: create %s: %w", abs, err)
+	}
+	real, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return Source{}, fmt.Errorf("sharing: resolve %q: %w", dir, err)
+	}
+	info, err := os.Stat(real)
+	if err != nil {
+		return Source{}, fmt.Errorf("sharing: inspect %q: %w", dir, err)
+	}
+	if !info.IsDir() {
+		return Source{}, fmt.Errorf("%s is a file, not a folder. Give a folder for the received files to go in", dir)
+	}
+	return Source{Kind: KindReceive, Root: real, Name: filepath.Base(real)}, nil
+}
+
 // ParseHTTPTarget normalises the accepted shorthands for a local HTTP service
 // into an absolute origin URL:
 //

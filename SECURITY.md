@@ -43,6 +43,10 @@ short, vrok is meant to guarantee:
   plaintext, and never written to disk or logs.
 - **No silent exposure.** The listener binds loopback. Reaching it from
   elsewhere is always a tunnel's job, and the banner states who can reach it.
+- **Receiving is confined and consensual.** With `vrok receive`, nothing is
+  written until the owner accepts the names and sizes. A sender cannot write
+  outside the chosen folder, replace a file in it, or send files or sizes that
+  were not accepted.
 
 A break in any of those is a vulnerability. Please report it.
 
@@ -60,3 +64,6 @@ A break in any of those is a vulnerability. Please report it.
   Cloudflare. How vrok fetches and runs it is in scope.
 - **Anything requiring local access to the sharing machine.** A user who can
   read your filesystem or your process memory has already won.
+- **The content of received files.** vrok checks names and sizes, not what a
+  file contains. A file you accept is as trustworthy as the person who sent
+  it.

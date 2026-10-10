@@ -9,8 +9,10 @@
 package e2e_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -57,6 +59,9 @@ func newStack(t *testing.T) *stack {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// On Windows a folder cannot be deleted while an inbox holds it open,
+	// so the server is shut down before t.TempDir removes it.
+	t.Cleanup(func() { srv.Shutdown(context.Background()) })
 
 	ts := httptest.NewServer(srv.Handler())
 	t.Cleanup(ts.Close)
@@ -370,6 +375,103 @@ func TestRelayCarriesAShareEndToEnd(t *testing.T) {
 		}
 		t.Error("the share was still routable after the tunnel stopped")
 	})
+}
+
+func TestRelayCarriesAnUploadIntoAnInbox(t *testing.T) {
+	// The receiving direction over the public path: visitor -> relay ->
+	// tunnel -> agent -> local server -> file in the inbox. The 8 MiB chunk
+	// is the size upload.js sends.
+	dir := t.TempDir()
+	s := newStack(t)
+	source, err := sharing.Inbox(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	share, err := s.factory.Create(source, sharing.Options{TTL: time.Hour})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.registry.Add(share); err != nil {
+		t.Fatal(err)
+	}
+
+	const domain = "vrok.test"
+	relayServer, err := relay.New(relay.Options{Domain: domain, Scheme: "http"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	relayHTTP := httptest.NewServer(relayServer.Handler())
+	defer relayHTTP.Close()
+
+	agent, err := tunnel.Open("relay", tunnel.Config{
+		RelayURL:   relayHTTP.URL,
+		Label:      share.ID(),
+		ShareToken: share.Token(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	public, err := agent.Start(ctx, s.server.URL)
+	if err != nil {
+		t.Fatalf("start tunnel: %v", err)
+	}
+	defer agent.Stop(context.Background())
+
+	client := relayClient(relayHTTP.Listener.Addr().String())
+	api := public.Join(server.SharePath(share.Token())) + "_upload"
+	call := func(method, url string, body []byte) (int, string) {
+		t.Helper()
+		req, _ := http.NewRequest(method, url, bytes.NewReader(body))
+		req.Header.Set("X-Vrok-Upload", "1")
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("%s %s: %v", method, url, err)
+		}
+		defer resp.Body.Close()
+		raw, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, string(raw)
+	}
+
+	content := randomBytes(t, 9<<20)
+	offerURL := public.Join(server.SharePath(share.Token())) + "_offer"
+	status, raw := call(http.MethodPost, offerURL, []byte(fmt.Sprintf(`{"files":[{"name":"clip.mp4","size":%d}]}`, len(content))))
+	if status != http.StatusCreated {
+		t.Fatalf("offer: status %d, body %s", status, raw)
+	}
+	var offered struct{ ID string }
+	if err := json.Unmarshal([]byte(raw), &offered); err != nil {
+		t.Fatal(err)
+	}
+	status, raw = call(http.MethodPost, api, []byte(fmt.Sprintf(`{"offer":%q,"name":"clip.mp4","size":%d}`, offered.ID, len(content))))
+	if status != http.StatusCreated {
+		t.Fatalf("begin: status %d, body %s", status, raw)
+	}
+	var begun struct{ ID string }
+	if err := json.Unmarshal([]byte(raw), &begun); err != nil {
+		t.Fatal(err)
+	}
+	upload := api + "/" + begun.ID
+
+	const chunk = 8 << 20
+	if status, raw := call(http.MethodPut, upload+"?offset=0", content[:chunk]); status != http.StatusOK {
+		t.Fatalf("first chunk: status %d, body %s", status, raw)
+	}
+	if status, raw := call(http.MethodPut, fmt.Sprintf("%s?offset=%d", upload, chunk), content[chunk:]); status != http.StatusOK {
+		t.Fatalf("second chunk: status %d, body %s", status, raw)
+	}
+	if status, raw := call(http.MethodPost, upload, nil); status != http.StatusOK {
+		t.Fatalf("finish: status %d, body %s", status, raw)
+	}
+
+	got, err := os.ReadFile(filepath.Join(dir, "clip.mp4"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, content) {
+		t.Errorf("the file saved through the relay differs from the one sent (%d bytes, want %d)", len(got), len(content))
+	}
 }
 
 func TestLocalTunnelReportsAReachableAddress(t *testing.T) {

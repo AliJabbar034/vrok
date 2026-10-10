@@ -22,6 +22,10 @@ const (
 	KindDirectory
 	// KindHTTP is a local HTTP service, reverse-proxied as-is.
 	KindHTTP
+	// KindReceive is an inbox folder that visitors upload files into. It
+	// reuses the download counters: each file received claims one unit of
+	// the allowance, so MaxDownloads caps how many files it accepts.
+	KindReceive
 )
 
 // String implements fmt.Stringer.
@@ -35,6 +39,8 @@ func (k Kind) String() string {
 		return "directory"
 	case KindHTTP:
 		return "http"
+	case KindReceive:
+		return "receive"
 	default:
 		return "unknown"
 	}
@@ -65,7 +71,8 @@ type Spec struct {
 	Name string `json:"name"`
 	// Kind selects which handler serves the share.
 	Kind Kind `json:"kind"`
-	// Root is the confined directory for KindDirectory.
+	// Root is the confined directory for KindDirectory, and the inbox that
+	// uploads are written into for KindReceive.
 	Root string `json:"root,omitempty"`
 	// Entries lists the files for KindFile and KindFiles.
 	Entries []Entry `json:"entries,omitempty"`
@@ -291,6 +298,18 @@ func (s *Share) BeginTransfer() *Transfer {
 	return &Transfer{share: s, id: s.nextID}
 }
 
+// Resume records that sent bytes of this transfer were delivered earlier,
+// by a previous connection. It moves the progress without counting them
+// again in the share's total, so a resumed upload neither restarts its
+// progress bar at zero nor inflates the bytes transferred.
+func (t *Transfer) Resume(sent int64) {
+	t.share.mu.Lock()
+	if p, ok := t.share.transfers[t.id]; ok {
+		p.Sent = sent
+	}
+	t.share.mu.Unlock()
+}
+
 // SetTotal records the expected body size once the response headers say it.
 func (t *Transfer) SetTotal(n int64) {
 	t.share.mu.Lock()
@@ -340,7 +359,7 @@ func (s *Share) Describe() string {
 	switch spec.Kind {
 	case KindHTTP:
 		return spec.Target
-	case KindDirectory:
+	case KindDirectory, KindReceive:
 		return spec.Root
 	case KindFile:
 		if len(spec.Entries) == 1 {

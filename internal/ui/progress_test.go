@@ -47,3 +47,14 @@ func TestFit(t *testing.T) {
 		t.Errorf("Fit = %q", got)
 	}
 }
+
+func TestReceiveLine(t *testing.T) {
+	got := ReceiveLine([]Transfer{{Sent: 1 << 30, Total: 4 << 30}}, 10<<20)
+	if !strings.HasPrefix(got, "↑ 1.0 GB / 4.0 GB") {
+		t.Errorf("ReceiveLine = %q, want an upward arrow and progress", got)
+	}
+	got = ReceiveLine([]Transfer{{Sent: 1 << 20, Total: 2 << 20}, {Sent: 1 << 20, Total: 2 << 20}}, 0)
+	if !strings.Contains(got, "2 uploads") || !strings.Contains(got, "2.0 MB received") {
+		t.Errorf("ReceiveLine = %q", got)
+	}
+}

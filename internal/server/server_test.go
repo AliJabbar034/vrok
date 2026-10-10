@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,7 +39,7 @@ type fixture struct {
 	client *http.Client
 }
 
-func newFixture(t *testing.T, spec sharing.Spec) *fixture {
+func newFixture(t *testing.T, spec sharing.Spec, configure ...func(*server.Options)) *fixture {
 	t.Helper()
 
 	if spec.ID == "" {
@@ -61,14 +62,21 @@ func newFixture(t *testing.T, spec sharing.Spec) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv, err := server.New(server.Options{
+	opts := server.Options{
 		Resolver: registry,
 		Hasher:   testHasher{},
 		Signer:   security.NewHMACSigner(key),
-	})
+	}
+	for _, c := range configure {
+		c(&opts)
+	}
+	srv, err := server.New(opts)
 	if err != nil {
 		t.Fatalf("build server: %v", err)
 	}
+	// On Windows a folder cannot be deleted while an inbox holds it open,
+	// so the server is shut down before t.TempDir removes it.
+	t.Cleanup(func() { srv.Shutdown(context.Background()) })
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		srv.Handler().ServeHTTP(w, r)

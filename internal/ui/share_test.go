@@ -82,3 +82,102 @@ func TestStatusLineNamesOneTimeAndPassword(t *testing.T) {
 		}
 	}
 }
+
+func TestStartedForAReceiveShare(t *testing.T) {
+	var out bytes.Buffer
+	p := New(&out, &out)
+	p.SetColor(false)
+
+	p.Started(ShareView{
+		Name:         "vrok",
+		Folder:       "~/Downloads/vrok",
+		URL:          "https://example.trycloudflare.com/s/TyEg/",
+		Reach:        "anyone with the link",
+		MaxDownloads: 3,
+		Interactive:  true,
+		Receiving:    true,
+	})
+
+	got := out.String()
+	for _, want := range []string{"✓ Receiving files into ~/Downloads/vrok", "up to 3 files", "x stop"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("banner missing %q:\n%s", want, got)
+		}
+	}
+	for _, unwanted := range []string{"Sharing", "downloads max", "one-time link"} {
+		if strings.Contains(got, unwanted) {
+			t.Errorf("receive banner says %q:\n%s", unwanted, got)
+		}
+	}
+}
+
+func TestStatusLineCountsFilesForAReceiveShare(t *testing.T) {
+	cases := []struct {
+		limit, used int
+		want        string
+	}{
+		{1, 0, "one file only"},
+		{3, 2, "one file left"},
+		{5, 1, "up to 5 files"},
+	}
+	for _, c := range cases {
+		got := StatusLine(ShareView{Receiving: true, MaxDownloads: c.limit, Downloads: c.used})
+		if !strings.Contains(got, c.want) {
+			t.Errorf("limit %d, used %d: StatusLine = %q, want %q", c.limit, c.used, got, c.want)
+		}
+	}
+	if got := StatusLine(ShareView{Receiving: true}); strings.Contains(got, "file") {
+		t.Errorf("an unlimited receive share mentions a file limit: %q", got)
+	}
+}
+
+func TestStatusLineWarnsWhenEveryFileIsAccepted(t *testing.T) {
+	got := StatusLine(ShareView{Receiving: true, AcceptAll: true})
+	if !strings.Contains(got, "accepts every file without asking") {
+		t.Errorf("StatusLine = %q, want it to say files are accepted without asking", got)
+	}
+}
+
+func TestStoppedForAReceiveShare(t *testing.T) {
+	var out bytes.Buffer
+	p := New(&out, &out)
+	p.SetColor(false)
+
+	p.Stopped(Stats{Receiving: true, Folder: "~/Downloads/vrok", Files: 2, Bytes: 3 << 20})
+	got := out.String()
+	for _, want := range []string{"Stopped receiving into ~/Downloads/vrok", "Files:", "2", "3.0 MB"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("summary missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Downloads:") {
+		t.Errorf("receive summary counts downloads:\n%s", got)
+	}
+}
+
+func TestReceived(t *testing.T) {
+	p := New(&bytes.Buffer{}, &bytes.Buffer{})
+	p.SetColor(false)
+	if got := p.Received("holiday.mov", 3<<20); got != "✓ Received holiday.mov (3.0 MB)" {
+		t.Errorf("Received = %q", got)
+	}
+}
+
+func TestOfferListsFilesAndAsks(t *testing.T) {
+	p := New(&bytes.Buffer{}, &bytes.Buffer{})
+	p.SetColor(false)
+
+	files := make([]OfferFile, 10)
+	for i := range files {
+		files[i] = OfferFile{Name: "photo.jpg", Size: 1 << 20}
+	}
+	got := strings.Join(p.Offer(files, 10<<20), "\n")
+	for _, want := range []string{"Someone wants to send 10 files (10 MB)", "photo.jpg", "1.0 MB", "… and 2 more", "press y to accept, n to decline"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("offer missing %q:\n%s", want, got)
+		}
+	}
+	if n := strings.Count(got, "photo.jpg"); n != maxOfferLines {
+		t.Errorf("offer lists %d files, want %d before summing up", n, maxOfferLines)
+	}
+}

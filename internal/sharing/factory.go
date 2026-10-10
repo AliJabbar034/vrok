@@ -106,6 +106,10 @@ func validate(src Source) error {
 		if src.Root == "" {
 			return fmt.Errorf("sharing: directory share requires a root")
 		}
+	case KindReceive:
+		if src.Root == "" {
+			return fmt.Errorf("sharing: receive share requires an inbox folder")
+		}
 	case KindFile, KindFiles:
 		if len(src.Entries) == 0 {
 			return fmt.Errorf("sharing: file share requires at least one file")
