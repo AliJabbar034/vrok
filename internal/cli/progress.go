@@ -34,6 +34,8 @@ type liveLine struct {
 	printer *ui.Printer
 	shown   bool
 	paused  bool
+	// held keeps notices that arrived while a prompt had the terminal.
+	held []string
 }
 
 // show replaces the line with text. Nothing is drawn while a prompt has the
@@ -62,6 +64,19 @@ func (l *liveLine) print(text string) {
 	fmt.Fprint(l.out, "  "+l.printer.Dim(text)+"\r\n")
 }
 
+// notify leaves a permanent line that must not be lost: one that arrives
+// while a prompt is open is held and printed when the prompt closes.
+func (l *liveLine) notify(text string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.paused {
+		l.held = append(l.held, text)
+		return
+	}
+	l.clear()
+	fmt.Fprint(l.out, "  "+text+"\r\n")
+}
+
 // hide removes the line.
 func (l *liveLine) hide() {
 	l.mu.Lock()
@@ -80,8 +95,12 @@ func (l *liveLine) pause() {
 
 func (l *liveLine) resume() {
 	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.paused = false
-	l.mu.Unlock()
+	for _, text := range l.held {
+		fmt.Fprint(l.out, "  "+text+"\r\n")
+	}
+	l.held = nil
 }
 
 func (l *liveLine) clear() {
@@ -92,7 +111,7 @@ func (l *liveLine) clear() {
 }
 
 // watchTransfers samples the share once a tick. It keeps the machine awake
-// while anything is downloading and, when line is not nil, draws live
+// while anything is downloading or uploading and, when line is not nil, draws live
 // progress. It returns when ctx ends, with the line hidden and the machine
 // allowed to sleep.
 func (s *sharer) watchTransfers(ctx context.Context, share *sharing.Share, line *liveLine) {
@@ -134,7 +153,7 @@ func (s *sharer) watchTransfers(ctx context.Context, share *sharing.Share, line 
 				burstStart, burstBase = lastAt, lastBytes
 			case !busy && !burstStart.IsZero():
 				took := now.Sub(burstStart)
-				if line != nil && took >= minBurst {
+				if line != nil && took >= minBurst && !s.opts.receive {
 					line.print(ui.BurstLine(snap.BytesTransferred-burstBase, took))
 				}
 				burstStart, rate = time.Time{}, 0
@@ -152,7 +171,11 @@ func (s *sharer) watchTransfers(ctx context.Context, share *sharing.Share, line 
 			for i, t := range snap.Transfers {
 				transfers[i] = ui.Transfer{Sent: t.Sent, Total: t.Total}
 			}
-			line.show(ui.ProgressLine(transfers, rate))
+			if s.opts.receive {
+				line.show(ui.ReceiveLine(transfers, rate))
+			} else {
+				line.show(ui.ProgressLine(transfers, rate))
+			}
 		}
 	}
 }

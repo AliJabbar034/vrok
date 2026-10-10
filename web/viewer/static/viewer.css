@@ -563,6 +563,132 @@ a:hover {
   outline-offset: -1px;
 }
 
+/* ---------- receive: the upload page ---------- */
+
+.drop {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding-top: 4vh;
+}
+
+.drop__zone {
+  padding: 32px 28px;
+  border: 1px dashed var(--enamel-chip);
+  border-radius: 6px;
+  background: var(--enamel-deep);
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.drop__zone.is-over {
+  border-color: var(--signal);
+  background: var(--enamel-lit);
+}
+.drop__icon {
+  font-size: 32px;
+}
+.drop__title {
+  margin: 12px 0 6px;
+  font-size: 20px;
+}
+.drop__hint,
+.drop__or,
+.drop__limit {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.drop__limit {
+  color: var(--ink);
+}
+.drop__or {
+  margin-top: 10px;
+  color: var(--ink-faint);
+}
+.drop__error {
+  color: var(--danger);
+  font-size: 13px;
+}
+.drop__pick {
+  position: relative;
+  min-height: 48px;
+  font-size: 14px;
+}
+/* The real input covers the button, so a tap anywhere on it opens the
+   picker, on a phone the photo library, and the input stays focusable. */
+.drop__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.drop__pick:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.uploads {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+}
+.upload__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.upload__meta {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.upload__track {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.upload__bar {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s linear;
+}
+.upload.is-done .upload__meta {
+  color: var(--ink);
+}
+.upload.is-done .upload__meta::before {
+  content: "✓ ";
+  color: var(--signal);
+}
+.upload.is-failed .upload__meta {
+  color: var(--danger);
+  text-align: left;
+  grid-column: 1 / -1;
+}
+.upload.is-failed .upload__track {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop__zone,
+  .upload__bar {
+    transition: none;
+  }
+}
+
 .gone {
   padding-top: 10vh;
   text-align: center;

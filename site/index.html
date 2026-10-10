@@ -11,7 +11,7 @@
     <title>vrok: Free Open-Source File Sharing and ngrok Alternative</title>
     <meta
       name="description"
-      content="Free, open-source CLI to share files, folders and localhost with a public link. A no-upload alternative to ngrok, WeTransfer and Send Anywhere. No account."
+      content="Free, open-source CLI to share files, folders and localhost with a public link, or receive files straight to your computer. A no-upload alternative to ngrok, WeTransfer and Send Anywhere. No account."
     />
     <meta
       name="robots"
@@ -46,7 +46,7 @@
     />
     <meta
       property="og:description"
-      content="Free and open source. One command turns a file, folder or localhost dev server into a public URL. Nothing is uploaded. The link expires."
+      content="Free and open source. One command turns a file, folder or localhost dev server into a public URL, or gives someone a link to send you files. Nothing is uploaded to a cloud. The link expires."
     />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://alijabbar034.github.io/vrok/" />
@@ -69,7 +69,7 @@
           "name": "vrok",
           "alternateName": ["vrok CLI", "vrok share"],
           "url": "https://alijabbar034.github.io/vrok/",
-          "description": "Free, open-source command-line tool that shares files, folders and localhost servers through a temporary public URL, straight from your machine. Nothing is uploaded and the link expires.",
+          "description": "Free, open-source command-line tool that shares files, folders and localhost servers through a temporary public URL, straight from your machine, and receives files into a folder you choose. Nothing is uploaded to a cloud and the link expires.",
           "applicationCategory": "DeveloperApplication",
           "applicationSubCategory": "File sharing and localhost tunnelling",
           "operatingSystem": "macOS, Linux, Windows, FreeBSD",
@@ -163,6 +163,14 @@
               "acceptedAnswer": {
                 "@type": "Answer",
                 "text": "No. They open the link in any browser, or scan the QR code vrok prints with a phone camera. Only the person sharing runs vrok."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can someone send me files with vrok?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Run vrok receive and send them the link, or let them scan the QR code. They pick files on an upload page, you see the names and sizes in your terminal and press y, and the files land in ~/Downloads/vrok. Nothing is written before you accept, and a file already there is never replaced."
               }
             },
             {
@@ -275,7 +283,8 @@
               <strong>Stop uploading. Stop deploying.</strong> vrok gives your
               files, folders or local dev server a link anyone can open, served
               straight from your machine. No account, no size limit, and it's
-              gone when you stop it.
+              gone when you stop it. Need files sent to you instead?
+              <code>vrok receive</code>.
             </p>
             <ul class="plate__proof" aria-label="At a glance">
               <li>No size limit</li>
@@ -417,8 +426,9 @@
                     </button>
                   </div>
                   <p class="step__aside">
-                    Or a folder, several files, or
-                    <code>vrok localhost:3000</code> for a running app.
+                    Or a folder, several files,
+                    <code>vrok localhost:3000</code> for a running app, or
+                    <code>vrok receive</code> to get files sent to you.
                     <a href="guide.html#commands">Every command</a>
                   </p>
                 </div>
@@ -517,8 +527,8 @@
               <h2 class="watch__h" id="watch-h">Watch it run</h2>
               <p class="watch__lede">
                 The whole round trip, replayed from vrok's real output: you run
-                one command, they open the link, they download, and your
-                terminal shows it happening.
+                one command, they open the link, files move, and your terminal
+                shows it happening. Both ways.
               </p>
             </div>
 
@@ -554,6 +564,17 @@
                 tabindex="-1"
               >
                 <span class="watch__tab-n">C</span> A whole folder
+              </button>
+              <button
+                role="tab"
+                type="button"
+                id="scene-tab-receive"
+                aria-selected="false"
+                aria-controls="watch-stage"
+                data-scene="receive"
+                tabindex="-1"
+              >
+                <span class="watch__tab-n">D</span> Files from a phone
               </button>
             </div>
           </div>
@@ -693,7 +714,7 @@
           </div>
 
           <p class="watch__note">
-            Replayed from vrok's real output. Downloads are shown faster than
+            Replayed from vrok's real output. Transfers are shown faster than
             they ran; the numbers are what the terminal printed.
           </p>
         </div>
@@ -727,19 +748,21 @@
               <span class="unit__key" aria-hidden="true"></span>
               <h3>Hand QA the test report</h3>
               <p>
-                A Playwright report or a built site opens as the real thing, not
-                a pile of files.
+                A Playwright report or a built site opens as the real thing. Any
+                other folder is browsable, previewable, and one zip away.
               </p>
               <code>vrok ./playwright-report</code>
             </li>
             <li class="unit">
               <span class="unit__key" aria-hidden="true"></span>
-              <h3>Pass along a folder</h3>
+              <h3>Get photos off a phone</h3>
               <p>
-                A browsable listing, every file previewable, and the whole
-                folder as one zip.
+                The other way round: scan the code, pick files, and once you
+                accept them they land in a folder on your computer. No cloud
+                drive in between.
+                <a href="guide.html#receive">Receiving files</a>
               </p>
-              <code>vrok ./assets</code>
+              <code>vrok receive</code>
             </li>
           </ul>
         </div>
@@ -1097,6 +1120,18 @@
               <p>
                 No. They open the link in any browser, or scan the QR code vrok
                 prints with a phone camera. Only the person sharing runs vrok.
+              </p>
+            </details>
+            <details class="faq__item">
+              <summary>Can someone send me files with vrok?</summary>
+              <p>
+                Yes. Run <code>vrok receive</code> and send them the link, or
+                let them scan the QR code. They pick files on an upload page,
+                you see the names and sizes in your terminal and press
+                <code>y</code>, and the files land in
+                <code>~/Downloads/vrok</code>. Nothing is written before you
+                accept, and a file already there is never replaced.
+                <a href="guide.html#receive">Receiving files</a>.
               </p>
             </details>
             <details class="faq__item">

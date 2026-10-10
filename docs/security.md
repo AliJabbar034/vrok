@@ -31,6 +31,8 @@ What vrok defends against:
 - Offline cracking of a share password.
 - A shared file injecting markup or script into the viewer page.
 - A share outliving the process that created it.
+- A sender writing outside the receive folder, replacing a file in it, or
+  sending files the owner did not accept.
 
 What vrok does not defend against:
 
@@ -42,6 +44,8 @@ What vrok does not defend against:
   vrok relay. Share accordingly.
 - Traffic analysis. A relay sees request sizes and timing even though it never
   sees a file at rest.
+- What a received file contains. vrok checks names and sizes, not content. Treat
+  a received file like any other download from someone you gave the link to.
 
 ## URLs
 
@@ -244,6 +248,57 @@ scripts. The exposure is bounded: a script in a shared page is already inside
 that share's origin, the unlock cookie is `HttpOnly`, and reaching another share
 would require its 128-bit token.
 
+## Receiving files
+
+`vrok receive` is the one mode where a visitor writes to your disk, so it has
+its own rules on top of everything above.
+
+**You accept before anything is written.** The upload page first sends the
+names and sizes it wants to send. vrok prints them and waits for `y` or `n`.
+Declining, or not answering within five minutes, writes nothing. An accepted
+batch is a list of permits, one per name and size, each spent by one upload: a
+sender cannot swap in a bigger file, add files you never saw, or reuse a permit.
+At most three batches wait at once, so a sender cannot flood the terminal.
+`--yes` skips the question and accepts everything; it is meant for unattended
+use and the banner says so.
+
+**Names are sanitised, then confined.** `inbox.SafeName` keeps only the last
+path element, drops control characters and the invisible characters that
+reorder text (so `evil‮gpj.exe` cannot pose as a picture), replaces characters
+Windows forbids,
+strips leading dots so nothing lands hidden, and prefixes Windows device names
+such as `CON`. The result is then opened through an `os.Root` for the folder,
+so even a name that survived sanitising cannot follow a symlink or `../` out
+of it.
+
+**Nothing is overwritten.** A file is written to a hidden `.vrok-*.part` file
+and renamed only when every declared byte has arrived. The final name is
+reserved by creating it exclusively first, so a name that is taken, even by a
+file that appeared a moment ago from somewhere else, becomes `photo (1).jpg`
+instead. A part file can never be mistaken for a finished file, because
+sanitised names never start with a dot.
+
+**Sizes are enforced.** An upload declares its size. One byte more than that is
+an error, and the excess never reaches the file. Before you are asked, the batch
+must fit on the disk with 512 MiB to spare, and each file is checked again when
+it starts. `--max-files` is claimed per file under the same lock as
+`--downloads`, so concurrent senders cannot exceed it.
+
+**Resources are bounded.** One chunk is at most 16 MiB, an offer at most 500
+files, at most 64 offers are held at once, and at most 64 uploads are open at
+once. Sizes are checked by subtraction, so a declared size near the 64-bit
+limit cannot wrap around and pass the disk check.
+
+**The page is locked down.** Upload requests must carry an `X-Vrok-Upload`
+header. A cross-site form cannot set one, and a cross-site script cannot send
+one without a CORS preflight that vrok never approves. The page is served with
+a strict Content-Security-Policy (`default-src 'none'`, scripts and styles only
+from vrok itself, `frame-ancestors 'none'`).
+
+Received files are created with mode `0644` less your umask, like any other
+download. When vrok stops, unfinished part files are deleted and finished files
+stay where they are.
+
 ## Network exposure
 
 The HTTP server binds `127.0.0.1` unless `--local` or `--listen` explicitly
@@ -299,7 +354,8 @@ use `--tunnel local`.
 
 Reaching a session socket is enough to revoke someone's shares, which is why
 both the directory and the sockets are owner-only. No share data, token or
-password is ever written to disk.
+password is ever written to disk. The only files vrok writes for a share are
+the ones you accept into a receive folder.
 
 ## The relay
 
@@ -321,4 +377,5 @@ browsers: there is no cookie that a cross-site request could abuse.
 ## Reporting
 
 Open an issue for anything that lets a URL reach bytes outside its share, lets
-one share reach another, or makes a stopped share keep answering.
+one share reach another, makes a stopped share keep answering, or lets a sender
+write a file the receiver did not accept.

@@ -38,7 +38,7 @@ type fixture struct {
 	client *http.Client
 }
 
-func newFixture(t *testing.T, spec sharing.Spec) *fixture {
+func newFixture(t *testing.T, spec sharing.Spec, configure ...func(*server.Options)) *fixture {
 	t.Helper()
 
 	if spec.ID == "" {
@@ -61,11 +61,15 @@ func newFixture(t *testing.T, spec sharing.Spec) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv, err := server.New(server.Options{
+	opts := server.Options{
 		Resolver: registry,
 		Hasher:   testHasher{},
 		Signer:   security.NewHMACSigner(key),
-	})
+	}
+	for _, c := range configure {
+		c(&opts)
+	}
+	srv, err := server.New(opts)
 	if err != nil {
 		t.Fatalf("build server: %v", err)
 	}

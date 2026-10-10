@@ -126,6 +126,12 @@ zero-length body ends.
 Both directions use the same format: relay to agent for request bodies, agent
 to relay for response bodies.
 
+A request with `has_body: true` is followed at once by its body frames, with no
+wait for a reply. The agent therefore registers the stream in the same loop
+that reads the `request` message, before handing it to a handler, so a frame
+that arrives a moment later always has somewhere to go. This is what carries an
+upload to a `vrok receive` share.
+
 ## A download, start to finish
 
 ```

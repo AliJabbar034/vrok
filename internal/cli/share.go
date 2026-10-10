@@ -14,12 +14,14 @@ import (
 
 	"github.com/AliJabbar034/vrok/internal/config"
 	"github.com/AliJabbar034/vrok/internal/control"
+	"github.com/AliJabbar034/vrok/internal/inbox"
 	"github.com/AliJabbar034/vrok/internal/security"
 	"github.com/AliJabbar034/vrok/internal/server"
 	"github.com/AliJabbar034/vrok/internal/sharing"
 	"github.com/AliJabbar034/vrok/internal/tunnel"
 	"github.com/AliJabbar034/vrok/internal/ui"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // defaultLocalPort is the port used by --local. A fixed, memorable port makes
@@ -45,6 +47,11 @@ type shareOptions struct {
 	domain      string
 	listenAddr  string
 	interactive bool
+	// receive turns the session into a receive share: the one argument is
+	// the folder visitors send files into.
+	receive bool
+	// yes accepts every file sent to a receive share without asking.
+	yes bool
 }
 
 // sharer runs one sharing session: it owns the registry, the HTTP server and
@@ -60,6 +67,15 @@ type sharer struct {
 	server     *server.Server
 	publicURL  string
 	tunnelKind string
+
+	// line is the live progress line, or nil when there is no terminal to
+	// draw it on.
+	line *liveLine
+
+	mu       sync.Mutex
+	received int
+	// offers waits on the owner's answer, the one being asked about first.
+	offers []*server.Offer
 
 	stopOnce sync.Once
 	stop     context.CancelFunc
@@ -111,6 +127,13 @@ func bindShareFlags(cmd *cobra.Command, opts *shareOptions) {
 	f.IntVar(&opts.downloads, "downloads", 0, "stop sharing after this many downloads (0 for unlimited)")
 	f.BoolVar(&opts.password, "password", false, "ask for a password that visitors must enter")
 	f.StringVar(&opts.name, "name", "", "display name for the share")
+	bindReachFlags(f, opts)
+	f.BoolVarP(&opts.interactive, "interactive", "i", false, "ask who can open it, how long it lasts, and the download limit")
+}
+
+// bindReachFlags declares how a session is published, which is the same
+// whether files are being shared or received.
+func bindReachFlags(f *pflag.FlagSet, opts *shareOptions) {
 	f.Var(&opts.qr, "qr", "print a QR code for the share URL (default: on in a terminal; --qr=false to hide)")
 	f.Lookup("qr").NoOptDefVal = "true"
 	f.BoolVar(&opts.local, "local", false, "serve on the local network only, with no public tunnel")
@@ -120,7 +143,6 @@ func bindShareFlags(cmd *cobra.Command, opts *shareOptions) {
 	f.StringVar(&opts.relayToken, "relay-token", "", "credential for a private relay")
 	f.StringVar(&opts.domain, "domain", "", "custom domain to request, where the provider supports it")
 	f.StringVar(&opts.listenAddr, "listen", "", "explicit listen address, e.g. 127.0.0.1:9000")
-	f.BoolVarP(&opts.interactive, "interactive", "i", false, "ask who can open it, how long it lasts, and the download limit")
 }
 
 func joinProviders() string { return strings.Join(tunnel.Available(), ", ") }
@@ -139,7 +161,7 @@ func (s *sharer) run(parent context.Context, args []string) error {
 		return err
 	}
 
-	source, err := sharing.Classify(args)
+	source, err := s.source(args)
 	if err != nil {
 		return err
 	}
@@ -170,6 +192,13 @@ func (s *sharer) run(parent context.Context, args []string) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	// Live progress needs the terminal to itself; with --verbose the request
+	// log is already writing to it. The line exists before the server so a
+	// file that arrives straight away has somewhere to be reported.
+	if hasTerminal() && !s.app.verbose {
+		s.line = &liveLine{out: s.app.printer.Out(), printer: s.app.printer}
 	}
 
 	s.registry = sharing.NewRegistry()
@@ -205,12 +234,7 @@ func (s *sharer) run(parent context.Context, args []string) error {
 	s.server.Warm(share.Spec())
 
 	raw := newRawTerminal()
-	// Live progress needs the terminal to itself; with --verbose the request
-	// log is already writing to it.
-	var line *liveLine
-	if hasTerminal() && !s.app.verbose {
-		line = &liveLine{out: s.app.printer.Out(), printer: s.app.printer}
-	}
+	line := s.line
 	watched := make(chan struct{})
 	go func() {
 		defer close(watched)
@@ -243,6 +267,10 @@ func (s *sharer) startServer(hasher security.Hasher) error {
 		Hasher:   hasher,
 		Signer:   security.NewHMACSigner(signingKey),
 		Logger:   s.app.logger(),
+		OnReceived: func(_ sharing.Spec, got inbox.Received) {
+			s.onReceived(got)
+		},
+		OnOffer: s.offerHandler(),
 	})
 	if err != nil {
 		return err
@@ -400,6 +428,135 @@ func firstHostedProvider() string {
 	return "cloudflare"
 }
 
+// source builds what is being shared from the arguments; for a receive
+// share that is the inbox folder.
+func (s *sharer) source(args []string) (sharing.Source, error) {
+	if s.opts.receive {
+		return sharing.Inbox(args[0])
+	}
+	return sharing.Classify(args)
+}
+
+// onReceived reports a file that has arrived completely.
+func (s *sharer) onReceived(got inbox.Received) {
+	s.mu.Lock()
+	s.received++
+	s.mu.Unlock()
+
+	text := s.app.printer.Received(got.Name, got.Size)
+	if s.line != nil {
+		s.line.notify(text)
+		return
+	}
+	s.app.printer.Info("  %s", text)
+}
+
+// say leaves a permanent line under the banner.
+func (s *sharer) say(text string) {
+	if s.line != nil {
+		s.line.notify(text)
+		return
+	}
+	s.app.printer.Info("  %s", text)
+}
+
+// offerHandler is how the owner is asked about files: nil, which accepts
+// everything, with --yes.
+func (s *sharer) offerHandler() func(sharing.Spec, *server.Offer) {
+	if !s.opts.receive || s.opts.yes {
+		return nil
+	}
+	return func(_ sharing.Spec, o *server.Offer) { s.onOffer(o) }
+}
+
+// onOffer queues a request to send files. Questions are asked one at a
+// time, so y and n always answer the one on screen.
+func (s *sharer) onOffer(o *server.Offer) {
+	s.mu.Lock()
+	s.offers = append(s.offers, o)
+	first := len(s.offers) == 1
+	s.mu.Unlock()
+	if first {
+		s.ask(o)
+	}
+
+	go func() {
+		<-o.Decided()
+		if !o.Expired() {
+			return
+		}
+		next, wasAsked := s.dropOffer(o)
+		s.say(s.app.printer.OfferExpired(len(o.Files)))
+		if wasAsked && next != nil {
+			s.ask(next)
+		}
+	}()
+}
+
+func (s *sharer) ask(o *server.Offer) {
+	files := make([]ui.OfferFile, len(o.Files))
+	for i, f := range o.Files {
+		files[i] = ui.OfferFile{Name: f.Name, Size: f.Size}
+	}
+	for _, line := range s.app.printer.Offer(files, o.Total) {
+		s.say(line)
+	}
+}
+
+// answerOffer accepts or declines the offer on screen, then asks about the
+// next one waiting. It reports whether there was anything to answer.
+func (s *sharer) answerOffer(accept bool) bool {
+	s.mu.Lock()
+	if len(s.offers) == 0 {
+		s.mu.Unlock()
+		return false
+	}
+	o := s.offers[0]
+	s.mu.Unlock()
+
+	if accept {
+		o.Accept()
+	} else {
+		o.Decline()
+	}
+	if o.State() == "expired" {
+		// The answer came too late; the expiry watcher reports it.
+		return true
+	}
+	next, _ := s.dropOffer(o)
+	// The share may have closed and declined it first, so report what
+	// actually happened rather than the key pressed.
+	s.say(s.app.printer.OfferAnswered(len(o.Files), o.State() == "accepted"))
+	if next != nil {
+		s.ask(next)
+	}
+	return true
+}
+
+// dropOffer removes o from the queue. It returns the offer to ask about
+// next, and whether o was the one on screen.
+func (s *sharer) dropOffer(o *server.Offer) (next *server.Offer, wasAsked bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, queued := range s.offers {
+		if queued != o {
+			continue
+		}
+		s.offers = append(s.offers[:i:i], s.offers[i+1:]...)
+		if i == 0 && len(s.offers) > 0 {
+			return s.offers[0], true
+		}
+		return nil, i == 0
+	}
+	return nil, false
+}
+
+func (s *sharer) receivedFiles() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.received
+}
+
 func (s *sharer) shareView(share *sharing.Share, publicURL string) ui.ShareView {
 	spec := share.Spec()
 	view := ui.ShareView{
@@ -409,6 +566,11 @@ func (s *sharer) shareView(share *sharing.Share, publicURL string) ui.ShareView 
 		Downloads:    share.Snapshot().Downloads,
 		Protected:    spec.Protected(),
 		Tunnel:       s.tunnelKind,
+		Receiving:    s.opts.receive,
+	}
+	if s.opts.receive {
+		view.Folder = displayPath(spec.Root)
+		view.AcceptAll = s.opts.yes
 	}
 	if !spec.ExpiresAt.IsZero() {
 		view.TTL = time.Until(spec.ExpiresAt)
@@ -482,6 +644,19 @@ func (s *sharer) watchExpiry(ctx context.Context, share *sharing.Share) {
 
 func (s *sharer) reportStats(share *sharing.Share) {
 	snap := share.Snapshot()
+	if s.opts.receive {
+		// The file limit counts uploads as they start, so reaching it is not
+		// an expiry; only the lifetime running out is.
+		s.app.printer.Stopped(ui.Stats{
+			Receiving:  true,
+			Folder:     displayPath(snap.Root),
+			Files:      s.receivedFiles(),
+			Bytes:      snap.BytesTransferred,
+			LastAccess: snap.LastAccess,
+			Expired:    sharing.NotExpired().Check(snap, time.Now()) != nil,
+		})
+		return
+	}
 	s.app.printer.Stopped(ui.Stats{
 		Name:       snap.Name,
 		Downloads:  snap.Downloads,

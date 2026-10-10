@@ -63,6 +63,8 @@ func (p *pages) gone(w http.ResponseWriter, r *http.Request, reason error) {
 	switch {
 	case errors.Is(reason, sharing.ErrExpired):
 		heading, message, icon = "Share expired", "This link has passed its expiry time. Ask the sender for a new one.", "⌛"
+	case errors.Is(reason, errInboxFull):
+		heading, message, icon = "Not accepting files", "This link has received all the files it was set to accept. Ask the person who sent it to you for a new one.", "📥"
 	case errors.Is(reason, sharing.ErrDownloadLimit):
 		heading, message, icon = "Share expired", "This link reached its download limit. Ask the sender for a new one.", "⛔"
 	case errors.Is(reason, sharing.ErrRevoked):

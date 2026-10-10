@@ -5,7 +5,9 @@ package viewer
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -24,6 +26,7 @@ const (
 	pageIndex    = "index.html"
 	pagePassword = "password.html"
 	pageGone     = "gone.html"
+	pageUpload   = "upload.html"
 )
 
 // Meta is the chrome shared by every page. Each page struct embeds it, which
@@ -107,17 +110,35 @@ type GonePage struct {
 	Message string
 }
 
+// UploadPage lets a visitor send files into a receive share.
+type UploadPage struct {
+	Meta
+	// UploadURL is the base of the chunked upload API.
+	UploadURL string
+	// OfferURL is where the page asks the owner to accept a batch of files.
+	OfferURL string
+	// FilesLeft is how many more files the share accepts, or zero when
+	// there is no limit.
+	FilesLeft int
+	// ScriptVersion is filled in by Upload.
+	ScriptVersion string
+}
+
 // Renderer renders the viewer pages. It is safe for concurrent use: templates
 // are parsed once at construction and never mutated afterwards.
 type Renderer struct {
 	pages map[string]*template.Template
+	// uploadJS fingerprints upload.js. Static assets are cached at a URL
+	// shared by every vrok version, and an old script cannot talk to a new
+	// server, so its URL changes whenever its contents do.
+	uploadJS string
 }
 
 // New parses the embedded templates and returns a Renderer. It fails only if
 // the embedded assets are corrupt, which means a broken build rather than a
 // runtime condition.
 func New() (*Renderer, error) {
-	names := []string{pageFile, pageIndex, pagePassword, pageGone}
+	names := []string{pageFile, pageIndex, pagePassword, pageGone, pageUpload}
 	pages := make(map[string]*template.Template, len(names))
 
 	for _, name := range names {
@@ -130,7 +151,12 @@ func New() (*Renderer, error) {
 		}
 		pages[name] = t
 	}
-	return &Renderer{pages: pages}, nil
+	script, err := staticFS.ReadFile("static/upload.js")
+	if err != nil {
+		return nil, fmt.Errorf("viewer: read upload.js: %w", err)
+	}
+	sum := sha256.Sum256(script)
+	return &Renderer{pages: pages, uploadJS: hex.EncodeToString(sum[:6])}, nil
 }
 
 // File renders the single-file page.
@@ -151,6 +177,12 @@ func (r *Renderer) Password(w http.ResponseWriter, status int, data PasswordPage
 // Gone renders a terminal state page.
 func (r *Renderer) Gone(w http.ResponseWriter, status int, data GonePage) error {
 	return r.render(w, status, pageGone, data)
+}
+
+// Upload renders the page that sends files into a receive share.
+func (r *Renderer) Upload(w http.ResponseWriter, status int, data UploadPage) error {
+	data.ScriptVersion = r.uploadJS
+	return r.render(w, status, pageUpload, data)
 }
 
 // render executes a page into memory before touching the response, so a

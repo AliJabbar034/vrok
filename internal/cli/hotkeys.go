@@ -156,23 +156,29 @@ func (s *sharer) handleKey(b byte, live liveShare) (stop bool) {
 	case 26: // Ctrl+Z
 		live.cooked(func() {
 			suspend()
-			s.app.printer.Keys()
+			s.app.printer.Keys(s.opts.receive)
 		})
 	case 'c', 'C':
 		live.cooked(func() { s.copyURL(live.publicURL) })
 	case 'q', 'Q':
 		live.cooked(func() {
 			s.app.printer.QR(live.publicURL)
-			s.app.printer.Keys()
+			s.app.printer.Keys(s.opts.receive)
 		})
 	case 'p', 'P':
 		live.cooked(func() { s.livePassword(live) })
 	case 'e', 'E':
 		live.cooked(func() { s.liveExpiry(live) })
 	case '1':
-		live.cooked(func() { s.liveOneTime(live) })
+		if !s.opts.receive {
+			live.cooked(func() { s.liveOneTime(live) })
+		}
+	case 'y', 'Y', 'n', 'N':
+		if s.opts.receive {
+			s.answerOffer(b == 'y' || b == 'Y')
+		}
 	case 'h', 'H':
-		live.cooked(func() { s.app.printer.Keys() })
+		live.cooked(func() { s.app.printer.Keys(s.opts.receive) })
 	}
 	return false
 }
@@ -240,5 +246,5 @@ func (s *sharer) liveOneTime(live liveShare) {
 func (s *sharer) confirmLive(live liveShare) {
 	view := s.shareView(live.share, live.publicURL)
 	s.app.printer.Info("  %s", s.app.printer.Dim(ui.StatusLine(view)+" · same URL"))
-	s.app.printer.Keys()
+	s.app.printer.Keys(s.opts.receive)
 }

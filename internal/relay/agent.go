@@ -178,19 +178,25 @@ func (a *Agent) Forward(w http.ResponseWriter, r *http.Request) {
 	if hasBody {
 		// Upload in the background so the response can start flowing before
 		// the request body has finished arriving.
+		body := &requestBody{r: r.Body}
 		uploaded := make(chan struct{})
 		go func() {
 			defer close(uploaded)
-			if err := a.conn.Copy(s.id, r.Body); err != nil {
+			if err := a.conn.Copy(s.id, body); err != nil {
 				a.logger.Debug("request body upload failed", slog.String("error", err.Error()))
 			}
 		}()
 		// net/http forbids reading a request body once the handler has
-		// returned. When the response finishes first (an early 401, a
-		// timeout), expiring the read deadline unblocks the upload so it can
-		// be waited for instead of racing the server's own cleanup.
+		// returned, so the upload is stopped and waited for.
 		defer func() {
-			_ = http.NewResponseController(w).SetReadDeadline(time.Now())
+			if body.blocked() {
+				// The response finished first (an early 401, a timeout) with
+				// a read parked on the network: only expiring the deadline
+				// unblocks it. A body already read to the end must not get
+				// one, because net/http's own background read on the
+				// connection would fail and cancel every later request on it.
+				_ = http.NewResponseController(w).SetReadDeadline(time.Now())
+			}
 			<-uploaded
 		}()
 	}
@@ -203,6 +209,43 @@ func (a *Agent) Forward(w http.ResponseWriter, r *http.Request) {
 	copyHeader(w.Header(), response.Header)
 	w.WriteHeader(response.Status)
 	a.streamBodyTo(w, r, s)
+}
+
+// errBodyStopped ends an upload whose response has already been sent.
+var errBodyStopped = errors.New("relay: request body no longer needed")
+
+// requestBody is a visitor's request body as the upload goroutine reads it.
+// It knows whether a read is in progress, which is what decides how Forward
+// may stop the upload.
+type requestBody struct {
+	// mu is held for the length of each Read.
+	mu   sync.Mutex
+	r    io.Reader
+	done bool
+}
+
+func (b *requestBody) Read(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.done {
+		return 0, errBodyStopped
+	}
+	n, err := b.r.Read(p)
+	if err != nil {
+		b.done = true
+	}
+	return n, err
+}
+
+// blocked stops further reads and reports whether one is in progress right
+// now, in which case it is waiting on the network.
+func (b *requestBody) blocked() bool {
+	if !b.mu.TryLock() {
+		return true
+	}
+	b.done = true
+	b.mu.Unlock()
+	return false
 }
 
 // awaitResponse blocks until the agent returns headers, the visitor goes away
