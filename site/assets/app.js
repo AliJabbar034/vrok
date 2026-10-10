@@ -869,6 +869,53 @@ function el(tag, cls, ...children) {
   return node;
 }
 
+/* The QR codes vrok prints under each demo banner, for the exact URL that
+   banner shows: rsc.io/qr at level M, as the CLI's qrterminal uses, packed
+   one bit per module, row by row. Drawn as SVG rather than block characters
+   so no font leaves hairline gaps that stop a phone reading it. */
+const QR_SIZE = 37;
+const QR_QUIET = 2;
+const QR_CODES = {
+  "quiet-harbor-lamps-tuesday":
+    "1fc3dc367f828f5d520dd1dc94176e8206ecbb75756aa5d8254dd920ff555555fc00add7c015486ca212657f06e629b1627759f26bd7f02485009f9e38928acca1f58c27129ea10bfde26640f51e4b5465cbee4d170c077bfe3335b4451fc7b9bc8955eae8758d2f62569e547e1fea41f4a0a8cb302f5c9a5d1d530600d01e511a2726a589bf20082eaa8dff37120d6e0929f7a31759d521fbba41ac6195d4bd47c7e094b9f775fd7799d83",
+  "amber-tiles-orbit-cedar":
+    "1fcc046e7f82c107da0dd3ad98576e9cca68bb75092ee5d8248d3f20ff555555fc0109f5e015419520125435b1a70b50fd001bea223b94555f47a98c36dee8cce1c57c67429c34da316a7457438ee9546144f82bf2c33428e059ddd82487959bbc0f004c4e74876857749e8077991201729509c95131be6b5c5e8c075ed45bb3dfa375a788df000ac88c8dff33212d6e09fe5b23575e00a1faba430481b5d73244c6e0855f7b65fd3c9b903",
+  "silver-docks-meadow-relay":
+    "1fc98f207f82dcbf7a0dd0dd55d76e8cac88bb754cb665d826cb9da0ff555555fc0045dde01545d70f12ad8bda2f4a35ac265feb68b3dea49637899eb7872ae861814622169ef38e5f8a5ae84088caf07944c24fd3936748ff4ad7f825ecc89f8c0cdd4e88f5edd616019e34fbf7ea646ab7304b092fa9ae1d5a6d076bda0ebdbd511c67b9bf200d68ef8dff32630d6e098e77235754e0adfbba755cf9b5d41337e4e0885918e5fd0199f83"
+};
+
+function qrCode(slug) {
+  const bits = [...QR_CODES[slug]]
+    .map((h) => parseInt(h, 16).toString(2).padStart(4, "0"))
+    .join("")
+    .slice(-QR_SIZE * QR_SIZE);
+  let d = "";
+  for (let y = 0; y < QR_SIZE; y++) {
+    for (let x = 0; x < QR_SIZE; ) {
+      if (bits[y * QR_SIZE + x] !== "1") {
+        x++;
+        continue;
+      }
+      let run = 0;
+      while (x + run < QR_SIZE && bits[y * QR_SIZE + x + run] === "1") run++;
+      d += `M${x + QR_QUIET} ${y + QR_QUIET}h${run}v1h-${run}z`;
+      x += run;
+    }
+  }
+  const NS = "http://www.w3.org/2000/svg";
+  const n = QR_SIZE + 2 * QR_QUIET;
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "term__qr");
+  svg.setAttribute("viewBox", `0 0 ${n} ${n}`);
+  svg.setAttribute("shape-rendering", "crispEdges");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", `QR code for ${urlFor(slug)}`);
+  const path = document.createElementNS(NS, "path");
+  path.setAttribute("d", d);
+  svg.append(path);
+  return svg;
+}
+
 /* Thrown to unwind a scene when another one starts. */
 class Cancelled extends Error {}
 
@@ -952,6 +999,11 @@ function makeTerminal(root, parts, instant, wait) {
     dim(text, cls) {
       add(el("p", `term__dim${cls ? ` ${cls}` : ""}`, text));
     },
+    // The QR code vrok prints under the banner in a terminal.
+    qr(slug) {
+      add(el("p", "term__dim term__gap-s", "Scan to open:"));
+      add(qrCode(slug));
+    },
     // The one line vrok redraws in place while downloads run.
     live(text) {
       if (!live) live = add(el("p", "term__live"));
@@ -974,7 +1026,12 @@ function makeBrowser(parts, instant, wait) {
   const shelfTrack = shelfBar.parentElement;
 
   const browser = {
+    // Names who is looking, such as someone who scanned the QR code.
+    who(text) {
+      if (parts.who) parts.who.textContent = text;
+    },
     blank() {
+      browser.who("Them");
       address.textContent = "";
       view.replaceChildren(el("div", "browser__blank", "New tab"));
       shelf.hidden = true;
@@ -1198,6 +1255,7 @@ function banner(t, name, slug) {
   ]);
   t.dim(`Expires when stopped · ${PUBLIC}`);
   t.dim(KEYS, "term__gap-s");
+  t.qr(slug);
 }
 
 /* Simulates the CLI's once-a-second redraw. Each frame is one second of the
@@ -1241,7 +1299,7 @@ const SCENES = {
     await wait(450);
     banner(t, "launch-cut.mov", slug);
     say(
-      "The URL is already on your clipboard. You send it; they paste it into their browser."
+      "The URL is on your clipboard and a QR code is printed under it. You send the link; they paste it into their browser."
     );
     await wait(1200);
     await b.open(filePage(), urlFor(slug).slice(8));
@@ -1281,9 +1339,10 @@ const SCENES = {
     await wait(450);
     banner(t, "http://localhost:3000", slug);
     say(
-      "They open the link and see your running app, live from your laptop. Hot reload reaches them too."
+      "They point their phone camera at the QR code and your running app opens, live from your laptop. Hot reload reaches them too."
     );
     await wait(900);
+    b.who("Them · scanned the QR code");
     await b.open(appPage(), urlFor(slug).slice(8));
     await wait(2400);
 
@@ -1363,6 +1422,7 @@ function wireWatch() {
   };
   const browserParts = {
     frame: section.querySelector(".browser"),
+    who: section.querySelector(".browser__who"),
     view: section.querySelector("[data-view]"),
     address: section.querySelector("[data-address]"),
     loading: section.querySelector("[data-loading]"),

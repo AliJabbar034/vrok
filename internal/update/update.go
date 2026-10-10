@@ -1,8 +1,9 @@
 // Package update finds the newest vrok release and, for installs that vrok
 // owns, replaces the running binary with it.
 //
-// It only ever runs because the user typed `vrok update` or `vrok doctor`:
-// vrok never checks for updates in the background. An install that belongs to
+// Besides `vrok update` and `vrok doctor`, the only automatic contact is the
+// once-a-day check behind the update notice (see State), which reads the
+// latest release tag and nothing else. An install that belongs to
 // a package manager is left to that package manager, because replacing a
 // binary Homebrew or Scoop tracks would leave the manager believing an old
 // version is installed.

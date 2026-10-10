@@ -290,8 +290,12 @@ func equivalentCommand(args []string, opts shareOptions, defaultTTL time.Duratio
 	if opts.password {
 		parts = append(parts, "--password")
 	}
-	if opts.qr {
-		parts = append(parts, "--qr")
+	if opts.qr.set {
+		if opts.qr.value {
+			parts = append(parts, "--qr")
+		} else {
+			parts = append(parts, "--qr=false")
+		}
 	}
 	if opts.name != "" {
 		parts = append(parts, "--name", shellQuote(opts.name))

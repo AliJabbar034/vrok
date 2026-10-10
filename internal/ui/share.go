@@ -39,6 +39,8 @@ type ShareView struct {
 	// Interactive is true when the process is attached to a terminal, so the
 	// hotkey bar is worth printing. Scripts and CI see "Press Ctrl+C" instead.
 	Interactive bool
+	// Update, when set, adds a new-release line to the banner.
+	Update *UpdateNotice
 }
 
 // HotkeyBar is the live command strip shown under a share, in the same
@@ -61,6 +63,9 @@ func (p *Printer) Started(v ShareView) {
 
 	if v.LocalURL != "" && v.LocalURL != v.URL {
 		p.Detail("Local", p.Dim(v.LocalURL))
+	}
+	if v.Update != nil {
+		p.Info("  %s %s", p.style(yellow, UpdateLine(*v.Update)), p.Dim("· run")+" "+p.style(cyan, v.Update.Command))
 	}
 
 	p.Blank()

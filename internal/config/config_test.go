@@ -114,7 +114,8 @@ func TestLoadAndSaveRoundTrip(t *testing.T) {
 
 	loaded.TTL = config.Duration(30 * time.Minute)
 	loaded.Tunnel = "cloudflare"
-	loaded.QR = true
+	qr := false
+	loaded.QR = &qr
 	if err := config.Save(loaded); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -123,7 +124,9 @@ func TestLoadAndSaveRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if time.Duration(again.TTL) != 30*time.Minute || again.Tunnel != "cloudflare" || !again.QR {
+	// false is the value worth round-tripping: it must survive as an explicit
+	// "off", not collapse back to the unset terminal default.
+	if time.Duration(again.TTL) != 30*time.Minute || again.Tunnel != "cloudflare" || again.QR == nil || *again.QR {
 		t.Errorf("round trip lost settings: %+v", again)
 	}
 }

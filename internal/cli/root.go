@@ -18,6 +18,11 @@ import (
 // the share flags and arguments directly, because the shortest useful thing a
 // user can type should be the thing that works.
 func NewRootCommand(version string) *cobra.Command {
+	root, _ := newRootCommand(version)
+	return root
+}
+
+func newRootCommand(version string) (*cobra.Command, *app) {
 	a := newApp()
 	share, runner := newShareCommand(a)
 
@@ -52,7 +57,7 @@ machine while the command runs. Stop the process and the URL stops working.`,
 	bindShareFlags(root, &runner.opts)
 	root.AddCommand(share, newListCommand(a), newRevokeCommand(a), newStopCommand(a), newConfigCommand(a),
 		newUpdateCommand(a, version), newDoctorCommand(a, version))
-	return root
+	return root, a
 }
 
 // Execute runs vrok and returns the process exit code.
@@ -63,15 +68,23 @@ func Execute(version string) int {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	root := NewRootCommand(version)
-	if err := root.ExecuteContext(ctx); err != nil {
-		if errors.Is(err, context.Canceled) {
-			return 0
-		}
+	root, a := newRootCommand(version)
+	notifier := newUpdateNotifier(version)
+	a.notifier = notifier
+	// The hook runs only once a command is really about to execute, so
+	// --help, --version and flag errors never start a check.
+	root.PersistentPreRun = func(cmd *cobra.Command, _ []string) { notifier.start(cmd) }
+
+	code := 0
+	if err := root.ExecuteContext(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		fmt.Fprintf(os.Stderr, "vrok: %v\n", err)
-		return 1
+		code = 1
 	}
-	return 0
+	if a.noColor {
+		a.printer.SetColor(false)
+	}
+	notifier.finish(a.printer)
+	return code
 }
 
 // BuildInfo returns a version string for --version.

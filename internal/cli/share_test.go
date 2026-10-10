@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/AliJabbar034/vrok/internal/config"
+	"github.com/spf13/cobra"
 )
 
 // A loopback URL looks exactly as shareable as a public one. Describing the
@@ -124,5 +125,43 @@ func TestUnknownSettingNamesTheRealOnes(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "relay_url") {
 		t.Errorf("error %q does not list the available settings", err)
+	}
+}
+
+// The QR code defaults on at a terminal, so an explicit --qr=false has to be
+// told apart from not passing the flag at all, and bare --qr must still work.
+func TestQRFlagRemembersWhetherItWasGiven(t *testing.T) {
+	cases := []struct {
+		args      []string
+		wantSet   bool
+		wantValue bool
+	}{
+		{args: []string{"file.txt"}, wantSet: false},
+		{args: []string{"--qr", "file.txt"}, wantSet: true, wantValue: true},
+		{args: []string{"--qr=false", "file.txt"}, wantSet: true, wantValue: false},
+	}
+	for _, tc := range cases {
+		var opts shareOptions
+		cmd := &cobra.Command{Use: "share", RunE: func(*cobra.Command, []string) error { return nil }}
+		bindShareFlags(cmd, &opts)
+		cmd.SetArgs(tc.args)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("%v: %v", tc.args, err)
+		}
+		if opts.qr.set != tc.wantSet || opts.qr.value != tc.wantValue {
+			t.Errorf("%v: got set=%v value=%v", tc.args, opts.qr.set, opts.qr.value)
+		}
+	}
+}
+
+func TestStoredQRSettingBeatsTheTerminalDefault(t *testing.T) {
+	off := false
+	s := &sharer{app: &app{config: config.Config{QR: &off}}}
+	if s.wantsQR() {
+		t.Error("qr=false in config still printed a QR code")
+	}
+	s.opts.qr = optionalBool{value: true, set: true}
+	if !s.wantsQR() {
+		t.Error("--qr did not override qr=false in config")
 	}
 }

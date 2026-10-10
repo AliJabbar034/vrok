@@ -39,8 +39,10 @@ If vrok was installed with Homebrew, Scoop or go install, it prints the
 command for that tool instead, so the package manager stays in charge of
 what it installed.
 
-This is the only time vrok checks for a new version: it never does so in the
-background.`,
+Separately, at most once a day in a terminal, vrok checks for a newer release
+in the background and mentions it once, in the share banner or after the
+command. Turn that off with
+VROK_NO_UPDATE_NOTIFIER=1 or ` + "`vrok config set update-check false`" + `.`,
 		Example:       "  vrok update\n  vrok update --check\n  vrok update --version v0.6.0",
 		Args:          cobra.NoArgs,
 		SilenceUsage:  true,

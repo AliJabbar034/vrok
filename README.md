@@ -133,7 +133,7 @@ vrok -i ./demo.mp4               # decide first, then prints the flags
 | `--ttl 30m`            | How long the share lives. Accepts `45s`, `30m`, `2h`, `1d`, `1w`. Default: until you stop it.     |
 | `--downloads 5`        | Stop sharing after five downloads.                                                                |
 | `--password`           | Ask for a password that visitors must enter. Also reads `VROK_PASSWORD`.                          |
-| `--qr`                 | Print a QR code for the URL.                                                                      |
+| `--qr`                 | Print a QR code for the URL. On by default in a terminal; `--qr=false` hides it.                  |
 | `--local`              | Serve on the local network only, with no public tunnel.                                           |
 | `--tunnel <name>`      | `auto` (default), `local`, `cloudflare` or `relay`.                                               |
 | `--name client-report` | Display name for the share.                                                                       |
@@ -364,7 +364,13 @@ vrok collects nothing. There is no telemetry and no usage reporting; download
 counts live in the running process and are printed in your terminal when the
 share ends. The CLI connects only to the tunnel or relay you use, to GitHub
 once to fetch `cloudflared` if it is missing, and to GitHub and Cloudflare when
-you run `vrok update` or `vrok doctor`. It never checks for updates on its own.
+you run `vrok update` or `vrok doctor`.
+
+The one automatic request is the update notice: at most once a day, when vrok
+runs in a terminal, it asks GitHub which release is newest (a single request
+that sends nothing about you or your files) and, if yours is older, says so
+once: in the share banner, or after any other command. It is skipped in CI and scripts. Turn it off
+with `VROK_NO_UPDATE_NOTIFIER=1` or `vrok config set update-check false`.
 
 ### Responsible use
 

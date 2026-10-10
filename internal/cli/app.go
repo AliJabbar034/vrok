@@ -22,6 +22,8 @@ type app struct {
 	verbose bool
 	// noColor disables styling regardless of terminal detection.
 	noColor bool
+	// notifier is the new-release notice, nil when vrok runs without one.
+	notifier *updateNotifier
 }
 
 func newApp() *app {

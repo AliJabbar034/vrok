@@ -36,7 +36,7 @@ type shareOptions struct {
 	downloads   int
 	password    bool
 	name        string
-	qr          bool
+	qr          optionalBool
 	local       bool
 	port        int
 	tunnelName  string
@@ -111,7 +111,8 @@ func bindShareFlags(cmd *cobra.Command, opts *shareOptions) {
 	f.IntVar(&opts.downloads, "downloads", 0, "stop sharing after this many downloads (0 for unlimited)")
 	f.BoolVar(&opts.password, "password", false, "ask for a password that visitors must enter")
 	f.StringVar(&opts.name, "name", "", "display name for the share")
-	f.BoolVar(&opts.qr, "qr", false, "print a QR code for the share URL")
+	f.Var(&opts.qr, "qr", "print a QR code for the share URL (default: on in a terminal; --qr=false to hide)")
+	f.Lookup("qr").NoOptDefVal = "true"
 	f.BoolVar(&opts.local, "local", false, "serve on the local network only, with no public tunnel")
 	f.IntVar(&opts.port, "port", 0, "local port to listen on (default: a free port, or 8080 with --local)")
 	f.StringVar(&opts.tunnelName, "tunnel", "", "tunnel provider: "+joinProviders()+" (default "+config.DefaultTunnel+")")
@@ -427,12 +428,49 @@ func (s *sharer) announce(share *sharing.Share, publicURL string) {
 			view.Copied = true
 		}
 	}
+	if notice, ok := s.app.notifier.claim(); ok {
+		view.Update = &notice
+	}
 
 	s.app.printer.Started(view)
-	if s.opts.qr || s.app.config.QR {
+	if s.wantsQR() {
 		s.app.printer.QR(publicURL)
 	}
 }
+
+// wantsQR decides whether the share opens with a QR code. An explicit --qr
+// wins, then the stored setting; otherwise a person at a terminal gets one,
+// since pointing a phone at the screen is the quickest way to open the link,
+// while scripts and piped output get none.
+func (s *sharer) wantsQR() bool {
+	if s.opts.qr.set {
+		return s.opts.qr.value
+	}
+	if s.app.config.QR != nil {
+		return *s.app.config.QR
+	}
+	return hasTerminal()
+}
+
+// optionalBool is a boolean flag that remembers whether it was given, so an
+// explicit --qr=false can override a default that is on.
+type optionalBool struct {
+	value bool
+	set   bool
+}
+
+func (b *optionalBool) Set(text string) error {
+	parsed, err := strconv.ParseBool(text)
+	if err != nil {
+		return err
+	}
+	b.value, b.set = parsed, true
+	return nil
+}
+
+func (b *optionalBool) String() string { return strconv.FormatBool(b.value) }
+
+func (b *optionalBool) Type() string { return "bool" }
 
 // watchExpiry ends the process when the share expires or runs out of
 // downloads, so a `--ttl 30m` share does not leave a terminal occupied.

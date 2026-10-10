@@ -218,8 +218,12 @@
           <section id="update">
             <h2>Updating</h2>
             <p>
-              vrok never checks for updates in the background. When you want the
-              newest release, ask for it:
+              When a newer release is out, vrok says so once: in the share
+              banner, or after any other command. It checks at most once a day
+              and only in a terminal. Turn it off with
+              <code>vrok config set update-check false</code> or
+              <code>VROK_NO_UPDATE_NOTIFIER=1</code>. To install the newest
+              release:
             </p>
             <div class="cmd">
               <code class="cmd__text">vrok update</code>
@@ -583,7 +587,12 @@ vrok share ./x                    # same as vrok ./x</code></pre>
                 </tr>
                 <tr>
                   <td><code>--qr</code></td>
-                  <td>Print a QR code next to the URL.</td>
+                  <td>
+                    Print a QR code next to the URL. On by default in a
+                    terminal; turn it off with
+                    <code>--qr=false</code> or
+                    <code>vrok config set qr false</code>.
+                  </td>
                 </tr>
                 <tr>
                   <td><code>--local</code></td>
@@ -623,12 +632,16 @@ vrok share ./x                    # same as vrok ./x</code></pre>
               </tbody>
             </table>
             <p>
+              In a terminal, a QR code is printed under the URL: point a phone
+              camera at it and the link opens, with nothing to type.
+            </p>
+            <p>
               While a share is running,
-              <code>c</code> copies the URL, <code>q</code> prints a QR code,
-              <code>p</code> adds a password, <code>e</code> changes the expiry,
-              <code>1</code> makes it one-time, and <code>x</code> stops. Each
-              change keeps the same URL. Scripts and CI never see the hotkey
-              bar.
+              <code>c</code> copies the URL, <code>q</code> prints the QR code
+              again, <code>p</code> adds a password, <code>e</code> changes the
+              expiry, <code>1</code> makes it one-time, and
+              <code>x</code> stops. Each change keeps the same URL. Scripts and
+              CI never see the hotkey bar.
             </p>
           </section>
 
@@ -968,7 +981,10 @@ vrok doctor             # check this machine for common problems</code></pre>
               connects only to the tunnel or relay you use, to GitHub once to
               fetch <code>cloudflared</code> if it is missing, and to GitHub and
               Cloudflare when you run <code>vrok update</code> or
-              <code>vrok doctor</code>. It never checks for updates on its own.
+              <code>vrok doctor</code>. The one automatic request is the update
+              notice: at most once a day, in a terminal, it asks GitHub which
+              release is newest, sending nothing about you or your files. Turn
+              it off with <code>vrok config set update-check false</code>.
             </p>
             <p>
               <strong>This site sets no cookies.</strong> It counts visits with
