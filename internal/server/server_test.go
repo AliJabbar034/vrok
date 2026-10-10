@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -73,6 +74,9 @@ func newFixture(t *testing.T, spec sharing.Spec, configure ...func(*server.Optio
 	if err != nil {
 		t.Fatalf("build server: %v", err)
 	}
+	// On Windows a folder cannot be deleted while an inbox holds it open,
+	// so the server is shut down before t.TempDir removes it.
+	t.Cleanup(func() { srv.Shutdown(context.Background()) })
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		srv.Handler().ServeHTTP(w, r)

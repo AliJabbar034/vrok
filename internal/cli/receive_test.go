@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -101,6 +102,9 @@ func offerOf(t *testing.T, name string) *server.Offer {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// On Windows a folder cannot be deleted while an inbox holds it open,
+	// so the server is shut down before t.TempDir removes it.
+	t.Cleanup(func() { srv.Shutdown(context.Background()) })
 	ts := httptest.NewServer(srv.Handler())
 	t.Cleanup(ts.Close)
 
