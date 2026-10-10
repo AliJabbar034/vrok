@@ -319,6 +319,58 @@ h3 {
   color: var(--signal);
   border-bottom-color: var(--signal);
 }
+/* Outside the menu so it stays visible beside the toggle on small screens.
+   On wide screens the links box dissolves into the nav row, so the button
+   can sit between the last link and Download. */
+@media (min-width: 64.0625rem) {
+  .bar__nav {
+    gap: clamp(0.85rem, 2.2vw, 1.6rem);
+  }
+  .bar__links {
+    display: contents;
+  }
+  .bar__gh {
+    order: 1;
+  }
+  .bar__cta {
+    order: 2;
+  }
+}
+.bar__gh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-stretch: 85%;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--ink-soft);
+}
+.bar__gh:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+.bar__gh svg {
+  flex: none;
+  fill: currentColor;
+}
+.bar__gh-count {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid rgb(255 196 0 / 0.45);
+  border-radius: 999px;
+  background: rgb(255 196 0 / 0.08);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+.bar__gh:hover .bar__gh-count {
+  border-color: var(--signal);
+}
+.bar__gh-count::before {
+  content: "★ ";
+  color: var(--signal);
+}
 .bar__cta {
   display: inline-flex;
   align-items: center;
@@ -390,8 +442,10 @@ h3 {
     justify-content: center;
     border-bottom: 0 !important;
   }
+  .bar__gh {
+    margin-right: 0.35rem;
+  }
 }
-
 /* ---------- hero ---------- */
 
 .hero {
@@ -488,6 +542,15 @@ h3 {
   font-stretch: 74%;
   letter-spacing: -0.035em;
   text-transform: uppercase;
+}
+.plate__kicker {
+  display: block;
+  margin-bottom: 0.55rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-stretch: 100%;
+  letter-spacing: 0.08em;
+  color: var(--signal-ink);
 }
 .plate__lede {
   margin: 1rem 0 0;

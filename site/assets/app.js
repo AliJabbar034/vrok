@@ -266,26 +266,61 @@ async function wireRelease() {
 /* ---------- proof ---------- */
 
 // A star count only helps once it is big enough to read as interest; "3
-// GitHub stars" argues against the project, so below this the row stays
-// hidden.
+// GitHub stars" argues against the project, so below this the homepage proof
+// row stays hidden.
 const STARS_WORTH_SHOWING = 25;
+// Every page's header asks for the count, and unauthenticated GitHub API
+// calls are capped at 60 an hour per visitor, so one answer serves a session.
+const STARS_CACHE = "vrok-stars";
+const STARS_CACHE_MS = 60 * 60 * 1000;
 
-async function wireStars() {
-  const row = document.querySelector("[data-stars-row]");
-  const count = document.querySelector("[data-stars]");
-  if (!row || !count) return;
+async function fetchStars() {
+  try {
+    const cached = JSON.parse(storeGet(sessionStorage, STARS_CACHE) || "null");
+    if (cached && Date.now() - cached.at < STARS_CACHE_MS) return cached.stars;
+  } catch {
+    /* fall through to the network */
+  }
   try {
     const response = await fetch(`https://api.github.com/repos/${REPO}`, {
       headers: { Accept: "application/vnd.github+json" }
     });
-    if (!response.ok) return;
+    if (!response.ok) return null;
     const stars = (await response.json()).stargazers_count;
-    if (!Number.isFinite(stars) || stars < STARS_WORTH_SHOWING) return;
-    count.textContent =
-      stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars);
-    row.hidden = false;
+    if (!Number.isFinite(stars)) return null;
+    storeSet(
+      sessionStorage,
+      STARS_CACHE,
+      JSON.stringify({ stars, at: Date.now() })
+    );
+    return stars;
   } catch {
-    // Offline or rate-limited: the row simply stays hidden.
+    // Offline or rate-limited: every star count simply stays hidden.
+    return null;
+  }
+}
+
+async function wireStars() {
+  const row = document.querySelector("[data-stars-row]");
+  const count = document.querySelector("[data-stars]");
+  const badges = document.querySelectorAll("[data-star-count]");
+  if (!(row && count) && !badges.length) return;
+  const stars = await fetchStars();
+  if (stars === null) return;
+  const label =
+    stars >= 1000
+      ? `${(stars / 1000).toFixed(1).replace(/\.0$/, "")}k`
+      : String(stars);
+  // The header badge is small, conventional and always shown; the proof
+  // tile is a headline number, so it waits for the threshold.
+  if (row && count && stars >= STARS_WORTH_SHOWING) {
+    count.textContent = label;
+    row.hidden = false;
+  }
+  for (const badge of badges) {
+    badge.textContent = label;
+    badge.hidden = false;
+    badge.closest("a")?.setAttribute("aria-label", `GitHub, ${stars} stars`);
   }
 }
 
