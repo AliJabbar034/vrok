@@ -141,7 +141,7 @@ func (g *Gate) verify(r *http.Request, password, encoded string) error {
 func (g *Gate) cookie(r *http.Request, sr *shareRequest) *http.Cookie {
 	// Scoped to this share's path. An HTTP share is the exception: the app
 	// behind it may load "/assets/app.js", which the router attributes to the
-	// share by Referer, and a cookie limited to /s/<token>/ would never reach
+	// share by Referer, and a cookie limited to /<token>/ would never reach
 	// it. Widening the path does not widen access: the name carries the share
 	// id, the value signs this share's token, and the proxy strips vrok's
 	// cookies before anything reaches the upstream app.

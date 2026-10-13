@@ -16,7 +16,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
+
+	"github.com/AliJabbar034/vrok/internal/humanize"
 )
 
 // cloudflaredRelease is the asset set vrok fetches when cloudflared is not
@@ -120,6 +123,9 @@ type provisioner struct {
 	// notify reports progress to the user's terminal. The CLI supplies it;
 	// when nil, provisioning is silent.
 	notify func(format string, args ...any)
+	// status redraws one line while the download is in progress. Nil means
+	// the start and finish lines are the only indication.
+	status func(line string)
 }
 
 // executable returns a path to a runnable cloudflared, fetching it if needed.
@@ -150,7 +156,7 @@ func (p *provisioner) executable(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("tunnel: create %s: %w", dir, err)
 	}
 
-	p.announce("Setting up the tunnel provider (one-time, ~40 MB)...")
+	p.announce("Downloading the tunnel provider, about 40 MB. This happens once.")
 	if err := p.fetch(ctx, asset, tarred, target); err != nil {
 		return "", err
 	}
@@ -162,6 +168,63 @@ func (p *provisioner) announce(format string, args ...any) {
 	if p.notify != nil {
 		p.notify(format, args...)
 	}
+}
+
+// track redraws a download line until stop is called. The first paint happens
+// immediately, so the terminal moves before the first byte arrives.
+func (p *provisioner) track(read, total *atomic.Int64) func() {
+	if p.status == nil {
+		return func() {}
+	}
+	done := make(chan struct{})
+	finished := make(chan struct{})
+	start := time.Now()
+	go func() {
+		defer close(finished)
+		p.status(downloadLine(read.Load(), total.Load(), 0))
+		tick := time.NewTicker(200 * time.Millisecond)
+		defer tick.Stop()
+		for {
+			select {
+			case <-done:
+				p.status("")
+				return
+			case <-tick.C:
+				p.status(downloadLine(read.Load(), total.Load(), time.Since(start)))
+			}
+		}
+	}()
+	return func() {
+		close(done)
+		<-finished
+	}
+}
+
+// downloadLine is the single status line shown while cloudflared is fetched.
+func downloadLine(read, total int64, elapsed time.Duration) string {
+	clock := elapsed.Round(time.Second).String()
+	if total > 0 {
+		pct := read * 100 / total
+		if pct > 100 {
+			pct = 100
+		}
+		return fmt.Sprintf("Downloading tunnel provider · %s / %s · %d%% · %s", humanize.Bytes(read), humanize.Bytes(total), pct, clock)
+	}
+	return fmt.Sprintf("Downloading tunnel provider · %s · %s", humanize.Bytes(read), clock)
+}
+
+// countingReader counts bytes as they are read.
+type countingReader struct {
+	r io.Reader
+	n *atomic.Int64
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	if n > 0 && c.n != nil {
+		c.n.Add(int64(n))
+	}
+	return n, err
 }
 
 // fetch downloads the asset, verifies it against its pinned digest and only
@@ -201,8 +264,17 @@ func (p *provisioner) fetch(ctx context.Context, asset string, tarred bool, targ
 	defer os.Remove(download.Name())
 	defer download.Close()
 
+	read := &atomic.Int64{}
+	total := &atomic.Int64{}
+	if resp.ContentLength > 0 {
+		total.Store(resp.ContentLength)
+	}
+	stop := p.track(read, total)
+	defer stop()
+
+	body := &countingReader{r: io.LimitReader(resp.Body, maxDownloadSize), n: read}
 	digest := sha256.New()
-	if _, err := io.Copy(io.MultiWriter(download, digest), io.LimitReader(resp.Body, maxDownloadSize)); err != nil {
+	if _, err := io.Copy(io.MultiWriter(download, digest), body); err != nil {
 		return fmt.Errorf("tunnel: download cloudflared: %w", err)
 	}
 	if got := hex.EncodeToString(digest.Sum(nil)); got != want {

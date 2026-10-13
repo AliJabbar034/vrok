@@ -821,7 +821,6 @@ const KEYS =
 const RECEIVE_KEYS =
   "c copy · q QR code · p add password · e change expiry · x stop";
 const PUBLIC = "anyone with the link";
-const TOKEN = "Xr4kQ9mT2vLp8sWnBcYd7A";
 
 function bytes(n) {
   if (n < 1024) return `${Math.round(n)} B`;
@@ -875,17 +874,17 @@ function el(tag, cls, ...children) {
    banner shows: rsc.io/qr at level M, as the CLI's qrterminal uses, packed
    one bit per module, row by row. Drawn as SVG rather than block characters
    so no font leaves hairline gaps that stop a phone reading it. */
-const QR_SIZE = 37;
+const QR_SIZE = 33;
 const QR_QUIET = 2;
 const QR_CODES = {
   "quiet-harbor-lamps-tuesday":
-    "1fc3dc367f828f5d520dd1dc94176e8206ecbb75756aa5d8254dd920ff555555fc00add7c015486ca212657f06e629b1627759f26bd7f02485009f9e38928acca1f58c27129ea10bfde26640f51e4b5465cbee4d170c077bfe3335b4451fc7b9bc8955eae8758d2f62569e547e1fea41f4a0a8cb302f5c9a5d1d530600d01e511a2726a589bf20082eaa8dff37120d6e0929f7a31759d521fbba41ac6195d4bd47c7e094b9f775fd7799d83",
+    "1fc5eef7f82abbf20dd0f31176e83f8cbb7575de5d8217ff20ff55555fc00bd7a0154d8b812f566c4f0d76d5519e853f9ea0bdf559c9b83beae6f166d16ff755bb6f5568ea9c0cc4c8cb187ed2321de03e35640e623beb11cd0ce3dfe90110d35159e45661d99fb00f66f8dff3614d5e08599a23752d5df9ba25ec08dd59d7e56098b32a5fda6bb9b",
   "amber-tiles-orbit-cedar":
-    "1fcc046e7f82c107da0dd3ad98576e9cca68bb75092ee5d8248d3f20ff555555fc0109f5e015419520125435b1a70b50fd001bea223b94555f47a98c36dee8cce1c57c67429c34da316a7457438ee9546144f82bf2c33428e059ddd82487959bbc0f004c4e74876857749e8077991201729509c95131be6b5c5e8c075ed45bb3dfa375a788df000ac88c8dff33212d6e09fe5b23575e00a1faba430481b5d73244c6e0855f7b65fd3c9b903",
+    "1fcc6277f82955f20dd2c08d76e87504bb75b00e5d82640720ff55555fc007b3801541bb8120de28af0dd022239e10067624ed1028eb84f954e4fb283028f821554a4275d99c8dc44c4f0ffce1371fa4d19967bd6959ca35c7b8e7cbcddd57d70fbbe217673abf100f8a98dff2a22d5608967a2775ee19f9ba1b500cdd4e00866088d7625fdd9fb13",
   "silver-docks-meadow-relay":
-    "1fc98f207f82dcbf7a0dd0dd55d76e8cac88bb754cb665d826cb9da0ff555555fc0045dde01545d70f12ad8bda2f4a35ac265feb68b3dea49637899eb7872ae861814622169ef38e5f8a5ae84088caf07944c24fd3936748ff4ad7f825ecc89f8c0cdd4e88f5edd616019e34fbf7ea646ab7304b092fa9ae1d5a6d076bda0ebdbd511c67b9bf200d68ef8dff32630d6e098e77235754e0adfbba755cf9b5d41337e4e0885918e5fd0199f83",
+    "1fca6627f82ed5da0dd14c0176e9350cbb7520825d821e6120ff55555fc007bb60154dabf12b92084f19bfa23694d1c61321ce9219c8146550e2b5540068ea085fac50da1a8c869324cb0dd931061e535b9ee07f517fc91d19eca1d52dd05ddd633b6e30682b9f900f2898dff1222d5e09aa1225756619faba7d480cdd6e0204608051e25fd919bdb",
   "copper-reeds-north-lantern":
-    "1fcbdc367f82ad3f120dd2fd95176e9224eebb75616ee5d825dd51a0ff555555fc00ed91e015484c8212ed3f02e62bb0725459e362d778a53c888e9c3ec8aacc61e58023169ea54bfb826262f53c4b5c61cbee4d571c046bff33b5bcc48f47b9ac8d174ac8b59d2f66529ed05e7bea45d4a0a8cb386f58da5d5c530410d31ed113272ef189bf200b0e8b8dff33160d6e0929b7a31759d721fbba45ac7195d4ad5767e09c39ff75fda799d83"
+    "1fc0eea7f82a3bfa0dd0771176e8df8cbb753dd65d821bb920ff55555fc005572015439bd1280dec4f1f7fd5159c37bf9ca775c759c92197aae29359e06cf75cbbef46c3ba8c0c522aef0b37d2761f378675618fc219eb21b14ce3dd4f3310d915d16c547dd99fb00be6c8dff3650d5e0945fa25753b5dfbba41ec88dd64c485609b33aa5fd43bb9b"
 };
 
 function qrCode(slug) {
@@ -1309,7 +1308,7 @@ function unreachablePage(host) {
 /* ----- the scenes ----- */
 
 function urlFor(slug) {
-  return `https://${slug}.trycloudflare.com/s/${TOKEN}/`;
+  return `https://${slug}.trycloudflare.com`;
 }
 
 function banner(t, name, slug) {

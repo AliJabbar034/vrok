@@ -52,9 +52,9 @@ What vrok does not defend against:
 A share URL has two parts:
 
 ```
-https://a82kd9.vrok.example.com/s/8kLmP3qR7wXz2vN4bYtJcA/
-        ───┬──            ──────────┬───────────
-         40-bit id            128-bit token
+https://a82kd9.vrok.example.com/8kLmP3qR7wXz2vN4bYtJcA/
+        ───┬──            ─────────┬──────────
+         40-bit id           128-bit token
 ```
 
 The **token** is 16 bytes from `crypto/rand`, base64url encoded. It is the
@@ -66,6 +66,17 @@ paste, and being read aloud. It is a routing key and a management handle, never
 an authorisation. On a relay it becomes a hostname label, so the relay
 validates it against `^[a-z0-9][a-z0-9-]{3,62}$` rather than trusting the agent.
 
+A Cloudflare quick tunnel is a different shape. Cloudflare assigns the
+hostname, and that hostname is the whole public link:
+
+```
+https://avi-downtown-justin-postings.trycloudflare.com
+```
+
+Nothing is appended. The hostname is the capability, the same way an ngrok
+link is. The token path still answers on that server, and it is what a
+`--local` link and a relay link use, because those hosts are not secrets.
+
 There are no sequential ids anywhere. `/share/1` does not exist and never did.
 
 ## The visitor never names a file
@@ -73,7 +84,7 @@ There are no sequential ids anywhere. `/share/1` does not exist and never did.
 This is the structural protection, and it matters more than any check:
 
 ```
-GET /s/8kLmP3qR7wXz2vN4bYtJcA
+GET /8kLmP3qR7wXz2vN4bYtJcA
        │
        ▼
    registry lookup  →  Share{Entries: [{Name: "video.mp4", Path: "/Users/ali/video.mp4"}]}
@@ -107,7 +118,7 @@ ln -s /Users/ali/.ssh ~/public/keys
 vrok ~/public
 ```
 
-`GET /s/<token>/keys/id_rsa` contains no `..` and cleans to a path inside the
+`GET /<token>/keys/id_rsa` contains no `..` and cleans to a path inside the
 root. Only resolving the link and re-checking containment catches it.
 
 The root itself is canonicalised once, when the share is created, and cached.
@@ -154,7 +165,7 @@ A successful unlock is remembered with a cookie containing
   cannot use it. `Secure` when the visitor is on HTTPS. No expiry, so closing
   the browser forgets it.
 
-The cookie is scoped to the share's path, `/s/<token>/`. A protected HTTP share
+The cookie is scoped to the share's path, `/<token>/`. A protected HTTP share
 is the exception and uses `/`, because the app behind it may load absolute
 paths like `/assets/app.js` that only reach the share through the Referer
 fallback. That widens where the cookie is sent, not what it unlocks, and the

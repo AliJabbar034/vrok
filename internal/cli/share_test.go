@@ -22,35 +22,35 @@ func TestReachDescribesWhoCanOpenTheURL(t *testing.T) {
 		{
 			name:       "default binds loopback",
 			tunnelKind: "local",
-			url:        "http://127.0.0.1:51182/s/token/",
+			url:        "http://127.0.0.1:51182/token/",
 			wantReach:  "this machine only",
 			wantHint:   true,
 		},
 		{
 			name:       "localhost by name is still loopback",
 			tunnelKind: "local",
-			url:        "http://localhost:8080/s/token/",
+			url:        "http://localhost:8080/token/",
 			wantReach:  "this machine only",
 			wantHint:   true,
 		},
 		{
 			name:       "IPv6 loopback is still loopback",
 			tunnelKind: "local",
-			url:        "http://[::1]:8080/s/token/",
+			url:        "http://[::1]:8080/token/",
 			wantReach:  "this machine only",
 			wantHint:   true,
 		},
 		{
 			name:       "a LAN address reaches the network",
 			tunnelKind: "local",
-			url:        "http://192.168.18.66:8080/s/token/",
+			url:        "http://192.168.18.66:8080/token/",
 			wantReach:  "your local network",
 			wantHint:   true,
 		},
 		{
 			name:       "a tunnel reaches the internet",
 			tunnelKind: "cloudflare",
-			url:        "https://calm-wave-1234.trycloudflare.com/s/token/",
+			url:        "https://calm-wave-1234.trycloudflare.com/token/",
 			wantReach:  "anyone with the link",
 			wantHint:   false,
 		},
@@ -80,7 +80,7 @@ func TestReachDescribesWhoCanOpenTheURL(t *testing.T) {
 func TestReachReportsTheAddressBoundNotTheFlag(t *testing.T) {
 	s := &sharer{tunnelKind: "local"}
 
-	reach, _ := s.reach("http://127.0.0.1:8080/s/token/")
+	reach, _ := s.reach("http://127.0.0.1:8080/token/")
 	if !strings.Contains(reach, "this machine only") {
 		t.Errorf("reach = %q, want it to admit the loopback fallback", reach)
 	}

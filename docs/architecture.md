@@ -32,7 +32,7 @@ anyone is handed a link that cannot work.
 ## Request path
 
 ```
-GET https://a82kd9.vrok.example.com/s/8kLmP3qR7wXz2vN4bYtJcA/screenshots/one.png
+GET https://a82kd9.vrok.example.com/8kLmP3qR7wXz2vN4bYtJcA/screenshots/one.png
                               │
                     ┌─────────▼─────────┐
                     │  relay (optional) │  internal/relay

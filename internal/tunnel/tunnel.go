@@ -82,6 +82,10 @@ type Config struct {
 	// needs to fetch something tells them so through this rather than
 	// appearing to hang. Optional.
 	Notify func(format string, args ...any)
+	// Status redraws a single line while a long step is in progress. An empty
+	// line clears it. Optional; a nil Status means setup is announced with
+	// Notify only.
+	Status func(line string)
 }
 
 // Factory builds a provider from a Config.

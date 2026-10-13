@@ -89,7 +89,30 @@ func (p *Printer) Info(format string, args ...any) {
 // so a one-time download does not look like the tool hanging. It goes to the
 // error stream to keep it out of a piped URL.
 func (p *Printer) Step(format string, args ...any) {
+	p.Status("")
 	fmt.Fprintf(p.err, "%s %s\n", p.style(dim, "→"), fmt.Sprintf(format, args...))
+}
+
+// Status redraws one line on the error stream. A download or a tunnel that
+// is still starting calls it every fraction of a second, so the terminal
+// shows that work is happening. An empty line clears it. On a pipe it does
+// nothing: a log should not be full of carriage returns.
+func (p *Printer) Status(line string) {
+	if !p.interactive() {
+		return
+	}
+	if line == "" {
+		fmt.Fprint(p.err, "\r\033[2K")
+		return
+	}
+	fmt.Fprintf(p.err, "\r\033[2K%s %s", p.style(dim, "→"), line)
+}
+
+// interactive reports whether the error stream is a terminal that can redraw
+// a line in place.
+func (p *Printer) interactive() bool {
+	file, ok := p.err.(*os.File)
+	return ok && term.IsTerminal(int(file.Fd()))
 }
 
 // Detail prints an indented secondary line.

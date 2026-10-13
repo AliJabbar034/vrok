@@ -14,7 +14,7 @@ func TestStartedPutsTheURLFirst(t *testing.T) {
 
 	p.Started(ShareView{
 		Name:         "dumy.dump",
-		URL:          "https://example.trycloudflare.com/s/TyEg/",
+		URL:          "https://example.trycloudflare.com/TyEg/",
 		TTL:          2*time.Hour - time.Minute,
 		Reach:        "anyone with the link",
 		Copied:       true,
@@ -50,7 +50,7 @@ func TestStartedHidesHotkeysAndCopyWithoutATerminal(t *testing.T) {
 
 	p.Started(ShareView{
 		Name:        "dumy.dump",
-		URL:         "https://example.trycloudflare.com/s/TyEg/",
+		URL:         "https://example.trycloudflare.com/TyEg/",
 		TTL:         2 * time.Hour,
 		Reach:       "anyone with the link",
 		Copied:      false,
@@ -91,7 +91,7 @@ func TestStartedForAReceiveShare(t *testing.T) {
 	p.Started(ShareView{
 		Name:         "vrok",
 		Folder:       "~/Downloads/vrok",
-		URL:          "https://example.trycloudflare.com/s/TyEg/",
+		URL:          "https://example.trycloudflare.com/TyEg/",
 		Reach:        "anyone with the link",
 		MaxDownloads: 3,
 		Interactive:  true,

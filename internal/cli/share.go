@@ -332,6 +332,7 @@ func (s *sharer) startTunnel(ctx context.Context, share *sharing.Share) (string,
 		Domain:     firstNonEmpty(s.opts.domain, s.app.config.Domain),
 		Auth:       firstNonEmpty(s.opts.relayToken, s.app.config.RelayToken),
 		Notify:     s.app.printer.Step,
+		Status:     s.app.printer.Status,
 	})
 	if err != nil {
 		return "", nil, err
@@ -346,8 +347,13 @@ func (s *sharer) startTunnel(ctx context.Context, share *sharing.Share) (string,
 	// banner has to name the real one.
 	s.tunnelKind = provider.Name()
 
-	// The tunnel only publishes an origin; the share's own path is appended
-	// here so that one tunnel could serve several shares.
+	// A Cloudflare quick tunnel's hostname is already unguessable, so the
+	// public link is that hostname alone, the way an ngrok link is. Local
+	// and relay hosts are not secrets, so those links keep the token path.
+	if provider.Name() == "cloudflare" {
+		s.server.ServeAtOrigin()
+		return strings.TrimRight(base.String(), "/"), provider, nil
+	}
 	return base.Join(server.SharePath(share.Token())), provider, nil
 }
 

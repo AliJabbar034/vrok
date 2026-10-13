@@ -12,7 +12,7 @@ send files straight into a folder on the user's machine.
 $ vrok ./video.mp4
 ✓ Sharing video.mp4
 
-  URL:         https://avi-downtown-justin-postings.trycloudflare.com/s/8kLmP3qR7wXz2vN4bYtJcA/
+  URL:         https://avi-downtown-justin-postings.trycloudflare.com
   Reachable:   anyone with the link
   Expires:     2h
   Tunnel:      cloudflare

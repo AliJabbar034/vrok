@@ -59,14 +59,14 @@ func TestShareBannerCarriesTheUpdateLine(t *testing.T) {
 	var out bytes.Buffer
 	p := New(&out, &bytes.Buffer{})
 	p.SetColor(false)
-	p.Started(ShareView{Name: "report.pdf", URL: "https://example.test/s/x", Update: &notice})
+	p.Started(ShareView{Name: "report.pdf", URL: "https://example.test/x", Update: &notice})
 
 	if !strings.Contains(out.String(), "↑ Update available: 0.6.1 → 0.7.0 · run vrok update") {
 		t.Errorf("banner has no update line:\n%s", out.String())
 	}
 
 	out.Reset()
-	p.Started(ShareView{Name: "report.pdf", URL: "https://example.test/s/x"})
+	p.Started(ShareView{Name: "report.pdf", URL: "https://example.test/x"})
 	if strings.Contains(out.String(), "Update available") {
 		t.Errorf("banner mentioned an update with none known:\n%s", out.String())
 	}

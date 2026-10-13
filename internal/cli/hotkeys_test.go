@@ -30,7 +30,7 @@ func newKeyTest(t *testing.T) (*sharer, liveShare, *bytes.Buffer, *bool) {
 	share := sharing.New(sharing.Spec{ID: "id", Token: "tok", Name: "a.txt"})
 	live := liveShare{
 		share:     share,
-		publicURL: "http://127.0.0.1:8080/s/tok/",
+		publicURL: "http://127.0.0.1:8080/tok/",
 		cooked:    func(fn func()) { fn() },
 	}
 	return s, live, &out, &stopped
