@@ -18,6 +18,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -238,7 +239,7 @@ func TestProxyingALocalApplication(t *testing.T) {
 		defer resp.Body.Close()
 
 		for _, cookie := range resp.Cookies() {
-			if cookie.Name == "session" && !strings.HasPrefix(cookie.Path, "/s/") {
+			if cookie.Name == "session" && !strings.HasPrefix(cookie.Path, server.SharePath(tokenOf(url))) {
 				t.Errorf("cookie path = %q, want it scoped to the share", cookie.Path)
 			}
 		}
@@ -518,8 +519,12 @@ func relayClient(addr string) *http.Client {
 }
 
 func tokenOf(shareURL string) string {
-	_, rest, _ := strings.Cut(shareURL, "/s/")
-	token, _, _ := strings.Cut(rest, "/")
+	u, err := url.Parse(shareURL)
+	if err != nil {
+		return ""
+	}
+	path := strings.Trim(u.Path, "/")
+	token, _, _ := strings.Cut(path, "/")
 	return token
 }
 

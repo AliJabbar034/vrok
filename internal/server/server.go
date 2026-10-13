@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/AliJabbar034/vrok/internal/checksum"
@@ -57,18 +58,23 @@ type Options struct {
 	// sent to a receive share; it answers with Offer.Accept or Decline.
 	// When nil, every batch is accepted.
 	OnOffer func(sharing.Spec, *Offer)
+	// AtOrigin serves the single registered share at / as well as under its
+	// token. A Cloudflare quick tunnel sets this, because the hostname is
+	// already the secret and the public link has no path.
+	AtOrigin bool
 }
 
 // Server owns the listener and the HTTP handler for a set of shares.
 type Server struct {
-	http     *http.Server
-	handler  http.Handler
-	listener net.Listener
-	addr     string
-	roots    *rootCache
-	inboxes  *receivers
-	sums     *checksum.Cache
-	logger   *slog.Logger
+	http        *http.Server
+	handler     http.Handler
+	listener    net.Listener
+	addr        string
+	roots       *rootCache
+	inboxes     *receivers
+	sums        *checksum.Cache
+	logger      *slog.Logger
+	serveOrigin *atomic.Bool
 }
 
 // New validates the options and assembles the handler graph.
@@ -125,15 +131,19 @@ func New(opts Options) (*Server, error) {
 	roots := newRootCache()
 	inboxes := newReceivers(opts.Clock, opts.OnReceived, opts.OnOffer)
 
+	origin := &atomic.Bool{}
+	origin.Store(opts.AtOrigin)
+
 	d := &dispatcher{
-		resolver:  opts.Resolver,
-		guards:    opts.Guards,
-		downloads: downloads,
-		uploads:   inboxes,
-		clock:     opts.Clock,
-		gate:      NewGate(opts.Hasher, opts.Signer, pageRenderer, opts.Logger),
-		pages:     pageRenderer,
-		logger:    opts.Logger,
+		resolver:    opts.Resolver,
+		serveOrigin: origin,
+		guards:      opts.Guards,
+		downloads:   downloads,
+		uploads:     inboxes,
+		clock:       opts.Clock,
+		gate:        NewGate(opts.Hasher, opts.Signer, pageRenderer, opts.Logger),
+		pages:       pageRenderer,
+		logger:      opts.Logger,
 		handlers: map[sharing.Kind]ShareHandler{
 			sharing.KindFile:      SingleFileHandler{assets},
 			sharing.KindFiles:     FileSetHandler{assets},
@@ -166,12 +176,22 @@ func New(opts Options) (*Server, error) {
 			IdleTimeout:       120 * time.Second,
 			ErrorLog:          slog.NewLogLogger(opts.Logger.Handler(), slog.LevelDebug),
 		},
-		addr:    addr,
-		roots:   roots,
-		inboxes: inboxes,
-		sums:    opts.Checksums,
-		logger:  opts.Logger,
+		addr:        addr,
+		roots:       roots,
+		inboxes:     inboxes,
+		sums:        opts.Checksums,
+		logger:      opts.Logger,
+		serveOrigin: origin,
 	}, nil
+}
+
+// ServeAtOrigin serves the single registered share at / as well as under its
+// token. The CLI calls this once it knows the public link is a Cloudflare
+// quick tunnel, whose hostname is already unguessable.
+func (s *Server) ServeAtOrigin() {
+	if s.serveOrigin != nil {
+		s.serveOrigin.Store(true)
+	}
 }
 
 // Handler returns the request handler, so the share routes can be mounted

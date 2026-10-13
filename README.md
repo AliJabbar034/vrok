@@ -13,7 +13,7 @@ account. **[alijabbar034.github.io/vrok](https://alijabbar034.github.io/vrok/)**
 $ vrok ./video.mp4
 ✓ Sharing video.mp4
 
-  URL:   https://avi-downtown-justin-postings.trycloudflare.com/s/8kLmP3qR7wXz2vN4bYtJcA/   (copied to clipboard)
+  URL:   https://avi-downtown-justin-postings.trycloudflare.com   (copied to clipboard)
   Expires when stopped · anyone with the link
 
   c copy · q QR code · p add password · e change expiry · 1 one-time link · x stop
@@ -187,7 +187,7 @@ from a colleague without a cloud drive in between.
 $ vrok receive
 ✓ Receiving files into ~/Downloads/vrok
 
-  URL:   https://….trycloudflare.com/s/Qm8x…/   (copied to clipboard)
+  URL:   https://….trycloudflare.com   (copied to clipboard)
   Expires when stopped · anyone with the link
 
   c copy · q QR code · p add password · e change expiry · x stop
@@ -381,7 +381,7 @@ $ vrok config set tunnel relay
 $ vrok config set relay-url https://vrok.example.com
 
 $ vrok ./demo.pdf
-  URL:         https://6acvztrd.vrok.example.com/s/l5S0OXjQDYpB7Cq9JIDveQ/
+  URL:         https://6acvztrd.vrok.example.com/l5S0OXjQDYpB7Cq9JIDveQ/
   Reachable:   anyone with the link
 ```
 

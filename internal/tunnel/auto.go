@@ -128,7 +128,7 @@ func (e *ErrNoRoute) Unwrap() []error { return e.Causes }
 // tunnel it opens needs no Cloudflare account, which is what makes a public
 // URL possible for a user who has set nothing up.
 func (a *autoTunnel) startProvisioned(ctx context.Context, target string) (PublicURL, error) {
-	fetcher := &provisioner{logger: a.logger, notify: a.cfg.Notify}
+	fetcher := &provisioner{logger: a.logger, notify: a.cfg.Notify, status: a.cfg.Status}
 	provider := newProcessTunnel(quickTunnelSpec(fetcher), a.cfg)
 
 	public, err := provider.Start(ctx, target)

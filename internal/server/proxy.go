@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -50,12 +51,15 @@ func (h *ProxyHandler) ServeShare(w http.ResponseWriter, r *http.Request, sr *sh
 		return
 	}
 
-	// The upstream knows nothing about vrok's /s/<token> prefix, so the
+	// The upstream knows nothing about the /<token> prefix, so the
 	// request is rewritten to the path the app actually serves. Everything
 	// else about the request is passed through untouched.
 	out := r.Clone(r.Context())
 	out.URL.Path = "/" + strings.TrimPrefix(sr.Rel, "/")
 	out.URL.RawPath = ""
+	// Redirects and cookies have to stay on the URL the visitor actually
+	// opened. An origin share rewrites them to /, a token share to /<token>/.
+	out = out.WithContext(context.WithValue(out.Context(), proxyBaseKey{}, strings.TrimSuffix(sr.Links.Root(), "/")))
 
 	sr.Share.Touch(sr.Now)
 	cw := &countingWriter{ResponseWriter: w}
@@ -76,7 +80,7 @@ func (h *ProxyHandler) proxyFor(sr *shareRequest) (*httputil.ReverseProxy, error
 	if err != nil {
 		return nil, err
 	}
-	built := h.build(targetURL, NewLinks(sr.Spec.Token))
+	built := h.build(targetURL)
 
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -87,9 +91,11 @@ func (h *ProxyHandler) proxyFor(sr *shareRequest) (*httputil.ReverseProxy, error
 	return built, nil
 }
 
-func (h *ProxyHandler) build(target *url.URL, links Links) *httputil.ReverseProxy {
-	base := strings.TrimSuffix(links.Root(), "/")
+// proxyBaseKey carries the share prefix for this request, "" when the share
+// is served at the origin.
+type proxyBaseKey struct{}
 
+func (h *ProxyHandler) build(target *url.URL) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Transport: proxyTransport,
 		// Flush every write so streaming responses, hot reload and SSE are
@@ -97,17 +103,24 @@ func (h *ProxyHandler) build(target *url.URL, links Links) *httputil.ReverseProx
 		FlushInterval: -1,
 
 		Rewrite: func(pr *httputil.ProxyRequest) {
+			base, _ := pr.In.Context().Value(proxyBaseKey{}).(string)
 			pr.SetURL(target)
 			// Dev servers and frameworks route on Host; give them the one
 			// they are configured for rather than the share's hostname.
 			pr.Out.Host = target.Host
 			pr.SetXForwarded()
 			stripVrokCookies(pr.Out.Header)
+			pr.Out = pr.Out.WithContext(context.WithValue(pr.Out.Context(), proxyBaseKey{}, base))
 		},
 
 		ModifyResponse: func(resp *http.Response) error {
+			base, _ := resp.Request.Context().Value(proxyBaseKey{}).(string)
 			rewriteLocation(resp, target, base)
-			rewriteCookiePaths(resp, base+"/")
+			cookiePath := "/"
+			if base != "" {
+				cookiePath = base + "/"
+			}
+			rewriteCookiePaths(resp, cookiePath)
 			return nil
 		},
 

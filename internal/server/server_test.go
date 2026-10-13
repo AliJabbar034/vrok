@@ -206,6 +206,59 @@ func TestSingleFileSharePreviewAndDownload(t *testing.T) {
 	})
 }
 
+func TestACloudflareShareIsServedAtTheOrigin(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "notes.txt")
+	content := "hello vrok\n"
+	write(t, path, content)
+
+	spec := sharing.Spec{
+		Kind:    sharing.KindFile,
+		Name:    "notes.txt",
+		Token:   "test-token",
+		Entries: []sharing.Entry{{Name: "notes.txt", Path: path, Size: int64(len(content))}},
+	}
+	f := newFixture(t, spec, func(o *server.Options) { o.AtOrigin = true })
+
+	resp, err := f.client.Get(f.server.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.t.Cleanup(func() { resp.Body.Close() })
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("origin status = %d, want 200", resp.StatusCode)
+	}
+	if body := f.body(resp); !strings.Contains(body, "notes.txt") || strings.Contains(body, "/test-token/") {
+		t.Fatalf("origin page = %s", body)
+	}
+
+	raw, err := f.client.Get(f.server.URL + "/?raw=1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.t.Cleanup(func() { raw.Body.Close() })
+	if got := f.body(raw); got != content {
+		t.Errorf("origin raw = %q, want %q", got, content)
+	}
+
+	// The token path still works, for a local link to the same server.
+	if resp := f.get(""); resp.StatusCode != http.StatusOK {
+		t.Fatalf("token path status = %d, want 200", resp.StatusCode)
+	}
+
+	// Without the opt-in, the origin is not the share. A LAN or relay host
+	// is not a secret, so the token has to stay in the path.
+	plain := newFixture(t, spec)
+	miss, err := plain.client.Get(plain.server.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plain.t.Cleanup(func() { miss.Body.Close() })
+	if miss.StatusCode == http.StatusOK && strings.Contains(plain.body(miss), "hello vrok") {
+		t.Fatal("the share was served at the origin without being asked")
+	}
+}
+
 func TestSingleFileShareRejectsASymlinkSwap(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "notes.txt")
@@ -601,7 +654,7 @@ func TestUnavailableSharesReportTheSameWay(t *testing.T) {
 
 	t.Run("unknown token", func(t *testing.T) {
 		f := newFixture(t, sharing.Spec{Kind: sharing.KindFile, Name: "file.txt", Entries: entries})
-		resp, err := f.client.Get(f.server.URL + "/s/some-other-token/")
+		resp, err := f.client.Get(f.server.URL + "/some-other-token/")
 		if err != nil {
 			t.Fatal(err)
 		}

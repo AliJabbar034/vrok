@@ -83,7 +83,7 @@ itself, so one tunnel could serve several shares.
 {
   "stream": 7,
   "method": "GET",
-  "uri": "/s/8kLmP3qR7wXz2vN4bYtJcA/video.mp4?raw=1",
+  "uri": "/8kLmP3qR7wXz2vN4bYtJcA/video.mp4?raw=1",
   "header": { "Range": ["bytes=1048576-"] },
   "remote_addr": "203.0.113.7:51234",
   "has_body": false

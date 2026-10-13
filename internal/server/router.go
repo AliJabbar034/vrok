@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	"github.com/AliJabbar034/vrok/internal/security"
 	"github.com/AliJabbar034/vrok/internal/sharing"
@@ -29,11 +30,59 @@ type dispatcher struct {
 	pages     *pages
 	logger    *slog.Logger
 	handlers  map[sharing.Kind]ShareHandler
+	// serveOrigin, when set, serves the single registered share at / as well
+	// as under its token. A Cloudflare quick tunnel turns this on because the
+	// hostname is the secret; a local or relay link leaves it off.
+	serveOrigin *atomic.Bool
 }
 
-// ServeHTTP handles every /s/{token} request.
+// ServeHTTP handles a request already known to belong to a share.
 func (d *dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sr, ok := d.resolve(w, r, r.PathValue("token"), r.PathValue("rest"))
+	token, rest := splitSharePath(r.URL.Path)
+	d.serve(w, r, token, rest, false)
+}
+
+// route sends a request to its share when the first path segment is a live
+// token, and otherwise to the referer fallback. A proxied dev server asks for
+// absolute paths like /assets/app.js; those are not tokens, so they must not
+// be captured by a catch-all share pattern.
+//
+// A Cloudflare quick tunnel is the exception: its hostname is already
+// unguessable, so the one live share is also served at the origin and the
+// public link has no path.
+func (d *dispatcher) route(w http.ResponseWriter, r *http.Request) {
+	token, rest := splitSharePath(r.URL.Path)
+	if token != "" {
+		if _, err := d.resolver.ByToken(token); err == nil {
+			d.serve(w, r, token, rest, false)
+			return
+		}
+	}
+	if d.serveOrigin != nil && d.serveOrigin.Load() {
+		if only := d.onlyShare(); only != nil {
+			d.serve(w, r, only.Token(), strings.TrimPrefix(r.URL.Path, "/"), true)
+			return
+		}
+	}
+	d.strays(w, r)
+}
+
+// onlyShare returns the single registered share. Several shares need the
+// token in the path to tell them apart, so none of them owns the origin.
+func (d *dispatcher) onlyShare() *sharing.Share {
+	lister, ok := d.resolver.(interface{ List() []*sharing.Share })
+	if !ok {
+		return nil
+	}
+	shares := lister.List()
+	if len(shares) != 1 {
+		return nil
+	}
+	return shares[0]
+}
+
+func (d *dispatcher) serve(w http.ResponseWriter, r *http.Request, token, rest string, atRoot bool) {
+	sr, ok := d.resolve(w, r, token, rest, atRoot)
 	if !ok {
 		return
 	}
@@ -61,7 +110,7 @@ func (d *dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // resolve validates the token, the share's availability and the request path.
 // It writes the response itself when the request cannot proceed.
-func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest string) (*shareRequest, bool) {
+func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest string, atRoot bool) (*shareRequest, bool) {
 	share, err := d.resolver.ByToken(token)
 	if err != nil {
 		d.pages.gone(w, r, nil)
@@ -84,13 +133,17 @@ func (d *dispatcher) resolve(w http.ResponseWriter, r *http.Request, token, rest
 		return nil, false
 	}
 
+	links := NewLinks(snap.Token)
+	if atRoot {
+		links = NewRootLinks()
+	}
 	return &shareRequest{
 		Share:    share,
 		Spec:     snap.Spec,
 		Snap:     snap,
 		Rel:      rel,
 		Delivery: parseDelivery(r),
-		Links:    NewLinks(snap.Token),
+		Links:    links,
 		Now:      now,
 	}, true
 }
@@ -123,7 +176,7 @@ func (d *dispatcher) continuesUpload(err error, spec sharing.Spec, rel string) b
 // triggered from inside an HTTP share.
 //
 // A dev server that emits absolute asset paths ("/assets/app.js") would
-// otherwise 404 the moment it is served under /s/<token>/. The Referer tells
+// otherwise 404 the moment it is served under /<token>/. The Referer tells
 // us which share the browser was looking at, which is enough to route the
 // request without asking the user to configure a base path.
 func (d *dispatcher) strays(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +186,7 @@ func (d *dispatcher) strays(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sr, ok := d.resolve(w, r, token, strings.TrimPrefix(r.URL.Path, "/"))
+	sr, ok := d.resolve(w, r, token, strings.TrimPrefix(r.URL.Path, "/"), false)
 	if !ok {
 		return
 	}
@@ -202,25 +255,38 @@ func tokenFromReferer(r *http.Request) (string, bool) {
 		return "", false
 	}
 	u, err := url.Parse(referer)
-	if err != nil || !strings.HasPrefix(u.Path, sharePrefix) {
+	if err != nil {
 		return "", false
 	}
-	token, _, _ := strings.Cut(strings.TrimPrefix(u.Path, sharePrefix), "/")
+	token, _ := splitSharePath(u.Path)
 	if token == "" {
 		return "", false
 	}
 	return token, true
 }
 
+// splitSharePath returns the first path segment and everything after it.
+// The first segment is the share token when one is being addressed.
+func splitSharePath(path string) (token, rest string) {
+	path = strings.TrimPrefix(path, "/")
+	if path == "" {
+		return "", ""
+	}
+	token, rest, _ = strings.Cut(path, "/")
+	if decoded, err := url.PathUnescape(token); err == nil {
+		token = decoded
+	}
+	return token, rest
+}
+
 // newRouter wires the URL space.
 //
-// Everything vrok owns lives under /s/ or /_vrok/, so no share path can ever
-// shadow a vrok route.
+// /_vrok/ and /healthz are registered on their own so a share token cannot
+// shadow them. Every other path is a share when its first segment is a live
+// token, and a referer fallback otherwise.
 func newRouter(d *dispatcher) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle(sharePrefix+"{token}", d)
-	mux.Handle(sharePrefix+"{token}/{rest...}", d)
 	mux.Handle(staticPrefix+"/", staticHandler())
 
 	// Liveness for tunnels and relays, which need a cheap endpoint that is
@@ -230,7 +296,7 @@ func newRouter(d *dispatcher) http.Handler {
 		w.Write([]byte("ok\n"))
 	})
 
-	mux.HandleFunc("/", d.strays)
+	mux.HandleFunc("/", d.route)
 	return mux
 }
 

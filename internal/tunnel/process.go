@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/AliJabbar034/vrok/internal/humanize"
 )
 
 // readyTimeout is how long a provider gets to report its public URL before
@@ -65,6 +67,8 @@ func (s processSpec) resolve(ctx context.Context) (string, error) {
 type processTunnel struct {
 	spec   processSpec
 	logger *slog.Logger
+	notify func(format string, args ...any)
+	status func(line string)
 
 	mu      sync.Mutex
 	cancel  context.CancelFunc
@@ -77,7 +81,12 @@ func newProcessTunnel(spec processSpec, cfg Config) *processTunnel {
 	if logger == nil {
 		logger = slog.New(slog.DiscardHandler)
 	}
-	return &processTunnel{spec: spec, logger: logger.With(slog.String("tunnel", spec.provider))}
+	return &processTunnel{
+		spec:   spec,
+		logger: logger.With(slog.String("tunnel", spec.provider)),
+		notify: cfg.Notify,
+		status: cfg.Status,
+	}
 }
 
 // Name implements Tunnel.
@@ -135,6 +144,11 @@ func (t *processTunnel) Start(ctx context.Context, target string) (PublicURL, er
 	t.cancel, t.exited = cancel, exited
 	t.mu.Unlock()
 
+	// The URL can take several seconds to appear. Keep one line moving so
+	// the wait does not look like a hang.
+	stop := t.watchOpening()
+	defer stop()
+
 	select {
 	case u := <-urls:
 		t.logger.Debug("tunnel ready", slog.String("url", u.String()))
@@ -152,6 +166,38 @@ func (t *processTunnel) Start(ctx context.Context, target string) (PublicURL, er
 		_ = t.Stop(context.Background())
 		return "", fmt.Errorf("tunnel: %s did not report a URL within %s", t.spec.binary, readyTimeout)
 	}
+}
+
+// watchOpening reports that the tunnel is starting until stop is called.
+func (t *processTunnel) watchOpening() func() {
+	if t.status != nil {
+		done := make(chan struct{})
+		finished := make(chan struct{})
+		start := time.Now()
+		go func() {
+			defer close(finished)
+			t.status("Opening a public link...")
+			tick := time.NewTicker(400 * time.Millisecond)
+			defer tick.Stop()
+			for {
+				select {
+				case <-done:
+					t.status("")
+					return
+				case <-tick.C:
+					t.status("Opening a public link... " + humanize.Elapsed(time.Since(start)))
+				}
+			}
+		}()
+		return func() {
+			close(done)
+			<-finished
+		}
+	}
+	if t.notify != nil {
+		t.notify("Opening a public link...")
+	}
+	return func() {}
 }
 
 // scan reads provider output, extracts the first public URL it sees and keeps

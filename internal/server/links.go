@@ -5,12 +5,9 @@ import (
 	"strings"
 )
 
-// Route prefixes owned by vrok itself. They live outside /s/ so they can never
-// collide with a share token.
-const (
-	sharePrefix  = "/s/"
-	staticPrefix = "/_vrok/static"
-)
+// staticPrefix is vrok's own asset route. It is registered ahead of the share
+// router, so a share token can never shadow it.
+const staticPrefix = "/_vrok/static"
 
 // Query flags that select how a file route responds. A flag, rather than a
 // path segment, keeps the URL of a file identical whether you are looking at
@@ -29,16 +26,27 @@ func SharePath(token string) string { return NewLinks(token).Root() }
 // Links builds every URL a share page needs. Centralising this means path
 // escaping is done once, correctly, instead of at each call site.
 type Links struct {
-	base string // "/s/<token>", never with a trailing slash
+	base string // "/<token>", never with a trailing slash
 }
 
-// NewLinks returns a link builder for a share token.
+// NewLinks returns a link builder for a share token. The token is the whole
+// path, so a link reads https://host/<token>/ with no extra segment.
 func NewLinks(token string) Links {
-	return Links{base: sharePrefix + url.PathEscape(token)}
+	return Links{base: "/" + url.PathEscape(token)}
 }
+
+// NewRootLinks builds links for a share served at the origin itself. A
+// Cloudflare quick tunnel's hostname is already unguessable, so the public
+// link is https://<host> with nothing after it.
+func NewRootLinks() Links { return Links{} }
 
 // Root is the share's landing URL.
-func (l Links) Root() string { return l.base + "/" }
+func (l Links) Root() string {
+	if l.base == "" {
+		return "/"
+	}
+	return l.base + "/"
+}
 
 // Page returns the viewer page for a path relative to the share root.
 func (l Links) Page(rel string) string { return l.join(rel, "") }

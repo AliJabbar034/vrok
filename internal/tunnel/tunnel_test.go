@@ -245,3 +245,15 @@ func TestRelayRequestsCannotLeaveTheLocalServer(t *testing.T) {
 		}
 	}
 }
+
+func TestDownloadLineShowsBytesAndAClock(t *testing.T) {
+	got := downloadLine(12<<20, 37<<20, 3*time.Second)
+	for _, want := range []string{"12 MB", "37 MB", "32%", "3s"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("download line %q does not contain %q", got, want)
+		}
+	}
+	if unknown := downloadLine(12<<20, 0, time.Second); strings.Contains(unknown, "%") {
+		t.Errorf("a download without a known size invented a percentage: %q", unknown)
+	}
+}
